@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { UnifiedWalletModal } from "@/components/unified-wallet-modal"
+import { MobileMenu } from "@/components/mobile-menu"
 import { useWallet } from "@/hooks/use-wallet"
-import { Wallet, Menu } from "lucide-react"
+import { Wallet } from "lucide-react"
 import { useState } from "react"
 import Link from "next/link"
 
@@ -79,9 +80,7 @@ export function Header() {
                 </div>
               )}
 
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="w-5 h-5" />
-              </Button>
+              <MobileMenu />
             </div>
           </div>
         </div>
