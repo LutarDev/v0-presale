@@ -1,0 +1,15 @@
+<svg width="27" height="23" viewBox="0 0 27 23" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_1626_154)">
+<path d="M13.5 4.2085H25.1667" stroke="var(--tui-text-03)" stroke-width="2" stroke-linecap="round"/>
+<path d="M1.83325 4.2085H7.66661" stroke="var(--tui-text-03)" stroke-width="2" stroke-linecap="round"/>
+<path d="M20.7917 18.7915H25.1667" stroke="var(--tui-text-03)" stroke-width="2" stroke-linecap="round"/>
+<path d="M1.83325 18.7915H13.4999" stroke="var(--tui-text-03)" stroke-width="2" stroke-linecap="round"/>
+<path d="M10.5833 7.12483C12.1942 7.12483 13.5 5.81903 13.5 4.20813C13.5 2.59734 12.1942 1.2915 10.5833 1.2915C8.97255 1.2915 7.66675 2.59734 7.66675 4.20813C7.66675 5.81903 8.97255 7.12483 10.5833 7.12483Z" stroke="var(--tui-text-03)" stroke-width="2" stroke-linecap="round"/>
+<path d="M17.875 21.7083C19.4858 21.7083 20.7917 20.4025 20.7917 18.7917C20.7917 17.1808 19.4858 15.875 17.875 15.875C16.2642 15.875 14.9583 17.1808 14.9583 18.7917C14.9583 20.4025 16.2642 21.7083 17.875 21.7083Z" stroke="var(--tui-text-03)" stroke-width="2" stroke-linecap="round"/>
+</g>
+<defs>
+<clipPath id="clip0_1626_154">
+<rect width="27" height="23" fill="var(--tui-text-03)"/>
+</clipPath>
+</defs>
+</svg>
