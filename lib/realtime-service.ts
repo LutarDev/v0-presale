@@ -136,30 +136,52 @@ export class RealtimeService {
   }
 
   private async pollBalanceUpdate(subscription: RealtimeSubscription): Promise<void> {
-    // Mock balance update polling
-    const mockUpdate: BalanceUpdate = {
-      address: subscription.id.split(':')[1] || '',
-      chain: subscription.id.split(':')[0] || '',
-      balances: {
-        native: (Math.random() * 10).toFixed(4),
-        usdc: (Math.random() * 1000).toFixed(2),
-      },
-      timestamp: Date.now(),
-    }
+    try {
+      const [chain, address] = subscription.id.split(':')
+      if (!chain || !address) return
 
-    this.emit('balance', mockUpdate)
+      // Import the balance fetcher dynamically to avoid circular dependencies
+      const { fetchWalletBalances } = await import('./balance-fetcher')
+      const balances = await fetchWalletBalances(address, chain)
+      
+      const update: BalanceUpdate = {
+        address,
+        chain,
+        balances: {
+          native: balances.native?.balance || '0.0000',
+          usdc: balances.usdc?.balance || '0.00',
+        },
+        timestamp: Date.now(),
+      }
+
+      this.emit('balance', update)
+    } catch (error) {
+      console.error('[RealtimeService] Error polling balance update:', error)
+    }
   }
 
   private async pollPriceUpdate(subscription: RealtimeSubscription): Promise<void> {
-    // Mock price update polling
-    const mockUpdate: PriceUpdate = {
-      symbol: subscription.id,
-      price: Math.random() * 100,
-      change24h: (Math.random() - 0.5) * 20,
-      timestamp: Date.now(),
+    try {
+      const symbol = subscription.id
+      
+      // Fetch real price data from CoinGecko API
+      const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${symbol.toLowerCase()}&vs_currencies=usd&include_24hr_change=true`)
+      const data = await response.json()
+      
+      if (data[symbol.toLowerCase()]) {
+        const priceData = data[symbol.toLowerCase()]
+        const update: PriceUpdate = {
+          symbol: symbol.toUpperCase(),
+          price: priceData.usd,
+          change24h: priceData.usd_24h_change || 0,
+          timestamp: Date.now(),
+        }
+        
+        this.emit('price', update)
+      }
+    } catch (error) {
+      console.error('[RealtimeService] Error polling price update:', error)
     }
-
-    this.emit('price', mockUpdate)
   }
 
   private async pollTransactionUpdate(subscription: RealtimeSubscription): Promise<void> {

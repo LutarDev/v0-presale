@@ -26,7 +26,7 @@ export function useWallet() {
     address: null,
     balance: null,
     adapter: null,
-    chain: "ETH",
+    chain: "TRX", // Default to TRX since user is using TronLink
     isConnecting: false,
     error: null,
     lastConnected: null,
@@ -42,17 +42,46 @@ export function useWallet() {
         throw error
       }
 
+      // Auto-detect chain based on wallet adapter if not explicitly provided
+      let detectedChain = chain
+      if (!chain || chain === "ETH") {
+        switch (adapter.name) {
+          case "TronLink":
+            detectedChain = "TRX"
+            break
+          case "Phantom":
+          case "Solflare":
+            detectedChain = "SOL"
+            break
+          case "Tonkeeper":
+            detectedChain = "TON"
+            break
+          case "Unisat":
+          case "Xverse":
+            detectedChain = "BTC"
+            break
+          case "MetaMask":
+            // Keep current chain for MetaMask or default to ETH
+            detectedChain = chain || "ETH"
+            break
+          default:
+            detectedChain = chain || "ETH"
+        }
+      }
+
+      console.log(`[useWallet] Connecting ${adapter.name} to chain: ${detectedChain}`)
+
       // For EVM chains, switch to correct network
-      if (["ETH", "BNB", "POL"].includes(chain) && adapter.name === "MetaMask") {
+      if (["ETH", "BNB", "POL"].includes(detectedChain) && adapter.name === "MetaMask") {
         const chainIds = {
           ETH: "0x1",
           BNB: "0x38",
           POL: "0x89",
         }
         try {
-          await (adapter as any).switchToNetwork(chainIds[chain as keyof typeof chainIds])
+          await (adapter as any).switchToNetwork(chainIds[detectedChain as keyof typeof chainIds])
         } catch (networkError) {
-          console.warn(`[useWallet] Network switch failed for ${chain}:`, networkError)
+          console.warn(`[useWallet] Network switch failed for ${detectedChain}:`, networkError)
           // Continue with connection attempt
         }
       }
@@ -64,15 +93,15 @@ export function useWallet() {
         address,
         balance,
         adapter,
-        chain,
+        chain: detectedChain, // Use the detected chain
         isConnecting: false,
         error: null,
         lastConnected: Date.now(),
       })
 
       // Subscribe to real-time balance updates
-      if (address && chain) {
-        realtimeService.subscribeToBalanceUpdates(address, chain, (balanceUpdate) => {
+      if (address && detectedChain) {
+        realtimeService.subscribeToBalanceUpdates(address, detectedChain, (balanceUpdate) => {
           setWalletState(prev => ({
             ...prev,
             balance: balanceUpdate.balances.native || prev.balance,
@@ -85,7 +114,7 @@ export function useWallet() {
         "wallet_connection",
         JSON.stringify({
           adapterName: adapter.name,
-          chain,
+          chain: detectedChain, // Store the detected chain
           address,
           timestamp: Date.now(),
         }),
