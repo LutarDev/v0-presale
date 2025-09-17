@@ -14,6 +14,14 @@ export interface WalletBalances {
 
 const LUTAR_TOKEN_ADDRESS = "0x2770904185Ed743d991D8fA21C8271ae6Cd4080E"
 
+// Cache for balance data
+const balanceCache = new Map<string, { data: WalletBalances; timestamp: number }>()
+const CACHE_TTL = 30000 // 30 seconds
+
+// Retry configuration
+const MAX_RETRIES = 3
+const RETRY_DELAY = 1000 // 1 second
+
 // ERC-20 ABI for balance checking
 const ERC20_ABI = [
   {
@@ -35,34 +43,73 @@ const ERC20_ABI = [
 export async function fetchWalletBalances(address: string, chain: string): Promise<WalletBalances> {
   console.log("[v0] Fetching balances for:", { address, chain })
 
+  const cacheKey = `${address}-${chain}`
+  
+  // Check cache first
+  const cached = balanceCache.get(cacheKey)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    console.log("[v0] Returning cached balance data")
+    return cached.data
+  }
+
   const balances: WalletBalances = {
     native: { symbol: chain, balance: "0.0000", decimals: 18 },
   }
 
   try {
+    let result: WalletBalances
+    
     switch (chain) {
       case "ETH":
-        return await fetchEthereumBalances(address)
+        result = await fetchEthereumBalances(address)
+        break
       case "BNB":
-        return await fetchBSCBalances(address)
+        result = await fetchBSCBalances(address)
+        break
       case "POL":
-        return await fetchPolygonBalances(address)
+        result = await fetchPolygonBalances(address)
+        break
       case "SOL":
-        return await fetchSolanaBalances(address)
+        result = await fetchSolanaBalances(address)
+        break
       case "TRX":
-        return await fetchTronBalances(address)
+        result = await fetchTronBalances(address)
+        break
       case "BTC":
-        return await fetchBitcoinBalances(address)
+        result = await fetchBitcoinBalances(address)
+        break
       case "TON":
-        return await fetchTonBalances(address)
+        result = await fetchTonBalances(address)
+        break
       default:
         console.warn("[v0] Unsupported chain for balance fetching:", chain)
-        return balances
+        result = balances
     }
+
+    // Cache the result
+    balanceCache.set(cacheKey, { data: result, timestamp: Date.now() })
+    return result
   } catch (error) {
     console.error("[v0] Error fetching balances:", error)
     return balances
   }
+}
+
+// Retry mechanism for failed requests
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = MAX_RETRIES,
+  delay: number = RETRY_DELAY
+): Promise<T> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn()
+    } catch (error) {
+      if (i === maxRetries - 1) throw error
+      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)))
+    }
+  }
+  throw new Error("Max retries exceeded")
 }
 
 async function fetchEthereumBalances(address: string): Promise<WalletBalances> {
@@ -203,10 +250,47 @@ async function fetchPolygonBalances(address: string): Promise<WalletBalances> {
 }
 
 async function fetchSolanaBalances(address: string): Promise<WalletBalances> {
-  return {
+  const balances: WalletBalances = {
     native: { symbol: "SOL", balance: "0.0000", decimals: 9 },
-    usdc: { symbol: "USDC", balance: "0.00", decimals: 6 },
   }
+
+  try {
+    // Use Solana Web3.js for real balance fetching
+    if (typeof window !== "undefined" && (window as any).solana) {
+      const solana = (window as any).solana
+      
+      // Get SOL balance
+      const connection = new (window as any).solanaWeb3.Connection("https://api.mainnet-beta.solana.com")
+      const publicKey = new (window as any).solanaWeb3.PublicKey(address)
+      const solBalance = await connection.getBalance(publicKey)
+      balances.native.balance = (solBalance / Math.pow(10, 9)).toFixed(4)
+
+      // Get USDC balance (SPL token)
+      try {
+        const usdcMint = new (window as any).solanaWeb3.PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")
+        const tokenAccounts = await connection.getTokenAccountsByOwner(publicKey, {
+          mint: usdcMint,
+        })
+        
+        if (tokenAccounts.value.length > 0) {
+          const tokenAccount = tokenAccounts.value[0]
+          const tokenBalance = await connection.getTokenAccountBalance(tokenAccount.pubkey)
+          balances.usdc = {
+            symbol: "USDC",
+            balance: (tokenBalance.value.uiAmount || 0).toFixed(2),
+            decimals: 6,
+            contractAddress: usdcMint.toString(),
+          }
+        }
+      } catch (usdcError) {
+        console.warn("[v0] Error fetching USDC balance on Solana:", usdcError)
+      }
+    }
+  } catch (error) {
+    console.error("[v0] Error fetching Solana balances:", error)
+  }
+
+  return balances
 }
 
 async function fetchTronBalances(address: string): Promise<WalletBalances> {
@@ -227,16 +311,48 @@ async function fetchTronBalances(address: string): Promise<WalletBalances> {
 }
 
 async function fetchBitcoinBalances(address: string): Promise<WalletBalances> {
-  return {
+  const balances: WalletBalances = {
     native: { symbol: "BTC", balance: "0.0000", decimals: 8 },
   }
+
+  try {
+    // Use Blockstream API for Bitcoin balance
+    const response = await fetch(`https://blockstream.info/api/address/${address}`)
+    if (response.ok) {
+      const data = await response.json()
+      const balanceInSats = data.chain_stats?.funded_txo_sum || 0
+      const spentInSats = data.chain_stats?.spent_txo_sum || 0
+      const balanceInBTC = (balanceInSats - spentInSats) / Math.pow(10, 8)
+      balances.native.balance = balanceInBTC.toFixed(8)
+    }
+  } catch (error) {
+    console.error("[v0] Error fetching Bitcoin balances:", error)
+  }
+
+  return balances
 }
 
 async function fetchTonBalances(address: string): Promise<WalletBalances> {
-  return {
+  const balances: WalletBalances = {
     native: { symbol: "TON", balance: "0.0000", decimals: 9 },
-    usdt: { symbol: "USDT", balance: "0.00", decimals: 6 },
   }
+
+  try {
+    // Use TON Center API for TON balance
+    const response = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${address}`)
+    if (response.ok) {
+      const data = await response.json()
+      if (data.ok && data.result) {
+        const balanceInNanoTON = Number(data.result)
+        const balanceInTON = balanceInNanoTON / Math.pow(10, 9)
+        balances.native.balance = balanceInTON.toFixed(4)
+      }
+    }
+  } catch (error) {
+    console.error("[v0] Error fetching TON balances:", error)
+  }
+
+  return balances
 }
 
 async function getERC20Balance(walletAddress: string, tokenAddress: string): Promise<string | null> {

@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Wallet, Copy, CheckCircle, AlertCircle, Download, ArrowLeft } from "lucide-react"
+import { SkeletonBalanceCard } from "@/components/ui/skeleton-card"
+import { Wallet, Copy, CheckCircle, AlertCircle, Download, ArrowLeft, RefreshCw } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useWallet } from "@/hooks/use-wallet"
 import { getWalletAdapters } from "@/lib/wallet-adapters"
@@ -49,6 +50,10 @@ export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps)
   useEffect(() => {
     if (isOpen) {
       setSelectedChain(chain)
+      // Clear any previous errors when modal opens
+      if (error) {
+        // Error state will be cleared by the useWallet hook when connection succeeds
+      }
       if (isConnected) {
         setCurrentStep("wallet-info")
         loadWalletBalances()
@@ -56,7 +61,7 @@ export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps)
         setCurrentStep("chain-selection")
       }
     }
-  }, [isOpen, chain, isConnected])
+  }, [isOpen, chain, isConnected, error])
 
   const loadWalletBalances = async () => {
     if (!address || !chain) return
@@ -78,12 +83,18 @@ export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps)
   }
 
   const handleWalletConnect = async (adapter: any) => {
-    await connect(adapter, selectedChain)
-    if (!error) {
+    try {
+      await connect(adapter, selectedChain)
+      // Connection successful - move to wallet info step
+      setCurrentStep("wallet-info")
+      // Load balances after a short delay to ensure state is updated
       setTimeout(() => {
-        setCurrentStep("wallet-info")
         loadWalletBalances()
-      }, 1000)
+      }, 500)
+    } catch (error) {
+      console.error("[UnifiedWalletModal] Connection error:", error)
+      // Error is handled by the connect function in useWallet hook
+      // Stay on wallet selection step to allow retry
     }
   }
 
@@ -269,50 +280,59 @@ export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps)
             </Card>
 
             {/* Balances Section */}
-            <Card className="p-4">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Balances</span>
-                  {loadingBalances && (
-                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            {loadingBalances ? (
+              <SkeletonBalanceCard />
+            ) : (
+              <Card className="p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Balances</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={loadWalletBalances}
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                    </Button>
+                  </div>
+
+                  {walletBalances && (
+                    <div className="space-y-2">
+                      {/* Native Balance */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">{walletBalances.native.symbol}</span>
+                        <span className="text-sm font-medium">{walletBalances.native.balance}</span>
+                      </div>
+
+                      {/* LUTAR Balance */}
+                      {walletBalances.lutar && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">LUTAR</span>
+                          <span className="text-sm font-medium">{walletBalances.lutar.balance}</span>
+                        </div>
+                      )}
+
+                      {/* USDC Balance */}
+                      {walletBalances.usdc && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">USDC</span>
+                          <span className="text-sm font-medium">{walletBalances.usdc.balance}</span>
+                        </div>
+                      )}
+
+                      {/* USDT Balance */}
+                      {walletBalances.usdt && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">USDT</span>
+                          <span className="text-sm font-medium">{walletBalances.usdt.balance}</span>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
-
-                {walletBalances && (
-                  <div className="space-y-2">
-                    {/* Native Balance */}
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-muted-foreground">{walletBalances.native.symbol}</span>
-                      <span className="text-sm font-medium">{walletBalances.native.balance}</span>
-                    </div>
-
-                    {/* LUTAR Balance */}
-                    {walletBalances.lutar && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">LUTAR</span>
-                        <span className="text-sm font-medium">{walletBalances.lutar.balance}</span>
-                      </div>
-                    )}
-
-                    {/* USDC Balance */}
-                    {walletBalances.usdc && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">USDC</span>
-                        <span className="text-sm font-medium">{walletBalances.usdc.balance}</span>
-                      </div>
-                    )}
-
-                    {/* USDT Balance */}
-                    {walletBalances.usdt && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">USDT</span>
-                        <span className="text-sm font-medium">{walletBalances.usdt.balance}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </Card>
+              </Card>
+            )}
 
             {copied && <div className="text-xs text-green-500 text-center">Address copied to clipboard!</div>}
 

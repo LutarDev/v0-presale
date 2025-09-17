@@ -8,8 +8,9 @@ import { TransactionModal } from "@/components/transaction-modal"
 import { PaymentMethodSelector } from "@/components/payment-method-selector"
 import { PurchaseSummary } from "@/components/purchase-summary"
 import { useWallet } from "@/hooks/use-wallet"
+import { priceService } from "@/lib/price-service"
 import { useState, useEffect } from "react"
-import { ArrowRight, Wallet, CheckCircle, Copy } from "lucide-react"
+import { ArrowRight, Wallet, CheckCircle, Copy, Loader2 } from "lucide-react"
 
 const blockchains = [
   { name: "Bitcoin", symbol: "BTC", color: "bg-[#f7931a]", rate: 0.000001, iconTextColor: "text-white" },
@@ -63,10 +64,55 @@ export function PurchaseInterface() {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [lutarPrice, setLutarPrice] = useState(0.045) // Default price
+  const [exchangeRates, setExchangeRates] = useState<Map<string, number>>(new Map())
+  const [loadingPrices, setLoadingPrices] = useState(true)
 
-  const lutarPrice = 0.045 // $0.045 per LUTAR
   const selectedChainData = blockchains.find((blockchain) => blockchain.symbol === chain)
   const availableTokens = paymentTokens[chain as keyof typeof paymentTokens] || []
+
+  // Load prices and exchange rates on component mount
+  useEffect(() => {
+    const loadPrices = async () => {
+      try {
+        setLoadingPrices(true)
+        
+        // Load LUTAR price (using ETH as proxy for now)
+        const lutarPriceValue = await priceService.getTokenPrice("ETH")
+        setLutarPrice(lutarPriceValue * 0.0001) // Convert to LUTAR price
+        
+        // Load exchange rates for all supported tokens
+        const tokens = ["BTC", "ETH", "BNB", "SOL", "POL", "TRX", "TON"]
+        const rates = new Map<string, number>()
+        
+        for (const token of tokens) {
+          try {
+            const rate = await priceService.getExchangeRate(token, "USD")
+            rates.set(token, rate)
+          } catch (error) {
+            console.warn(`Failed to load rate for ${token}:`, error)
+            // Fallback to mock rates
+            const mockRate = blockchains.find(b => b.symbol === token)?.rate || 1
+            rates.set(token, mockRate)
+          }
+        }
+        
+        setExchangeRates(rates)
+      } catch (error) {
+        console.error("Error loading prices:", error)
+        // Fallback to mock data
+        const rates = new Map<string, number>()
+        blockchains.forEach(blockchain => {
+          rates.set(blockchain.symbol, blockchain.rate)
+        })
+        setExchangeRates(rates)
+      } finally {
+        setLoadingPrices(false)
+      }
+    }
+
+    loadPrices()
+  }, [])
 
   useEffect(() => {
     setSelectedToken(chain)
@@ -74,27 +120,37 @@ export function PurchaseInterface() {
 
   // Calculate LUTAR tokens based on payment amount
   useEffect(() => {
-    if (paymentAmount && !isNaN(Number(paymentAmount))) {
-      const usdValue =
-        selectedToken === "USDC" || selectedToken === "USDT"
-          ? Number(paymentAmount)
-          : Number(paymentAmount) * (selectedChainData?.rate || 1) * 50000 // Mock exchange rate
+    if (paymentAmount && !isNaN(Number(paymentAmount)) && !loadingPrices) {
+      let usdValue: number
+      
+      if (selectedToken === "USDC" || selectedToken === "USDT") {
+        usdValue = Number(paymentAmount)
+      } else {
+        const exchangeRate = exchangeRates.get(selectedToken) || selectedChainData?.rate || 1
+        usdValue = Number(paymentAmount) * exchangeRate
+      }
+      
       const tokens = (usdValue / lutarPrice).toFixed(2)
       setLutarAmount(tokens)
     } else {
       setLutarAmount("")
     }
-  }, [paymentAmount, selectedToken, selectedChainData, lutarPrice])
+  }, [paymentAmount, selectedToken, selectedChainData, lutarPrice, exchangeRates, loadingPrices])
 
   // Calculate payment amount based on LUTAR amount
   const handleLutarAmountChange = (value: string) => {
     setLutarAmount(value)
-    if (value && !isNaN(Number(value))) {
+    if (value && !isNaN(Number(value)) && !loadingPrices) {
       const usdValue = Number(value) * lutarPrice
-      const paymentValue =
-        selectedToken === "USDC" || selectedToken === "USDT"
-          ? usdValue
-          : usdValue / ((selectedChainData?.rate || 1) * 50000)
+      let paymentValue: number
+      
+      if (selectedToken === "USDC" || selectedToken === "USDT") {
+        paymentValue = usdValue
+      } else {
+        const exchangeRate = exchangeRates.get(selectedToken) || selectedChainData?.rate || 1
+        paymentValue = usdValue / exchangeRate
+      }
+      
       setPaymentAmount(paymentValue.toFixed(6))
     } else {
       setPaymentAmount("")
@@ -208,38 +264,50 @@ export function PurchaseInterface() {
           {/* Purchase Amount */}
           <Card className="p-6">
             <h3 className="text-lg font-semibold mb-4">3. Enter Purchase Amount</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium mb-2 block">Pay with {selectedToken}</label>
-                <div className="relative">
-                  <Input
-                    type="number"
-                    placeholder={`Minimum ${getMinimumPurchase()} ${selectedToken}`}
-                    value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
-                    className="pr-16"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                    {selectedToken}
-                  </div>
+            {loadingPrices ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Loading exchange rates...
                 </div>
               </div>
+            ) : (
+              <>
+                <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Pay with {selectedToken}</label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      placeholder={`Minimum ${getMinimumPurchase()} ${selectedToken}`}
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                      className="pr-16"
+                      disabled={loadingPrices}
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                      {selectedToken}
+                    </div>
+                  </div>
+                </div>
 
-              <div className="flex items-center justify-center">
-                <ArrowRight className="w-5 h-5 text-muted-foreground" />
-              </div>
+                <div className="flex items-center justify-center">
+                  <ArrowRight className="w-5 h-5 text-muted-foreground" />
+                </div>
 
-              <div>
-                <label className="text-sm font-medium mb-2 block">Receive LUTAR Tokens</label>
-                <div className="relative">
-                  <Input
-                    type="number"
-                    placeholder="0.00"
-                    value={lutarAmount}
-                    onChange={(e) => handleLutarAmountChange(e.target.value)}
-                    className="pr-16"
-                  />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">LUTAR</div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Receive LUTAR Tokens</label>
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      placeholder="0.00"
+                      value={lutarAmount}
+                      onChange={(e) => handleLutarAmountChange(e.target.value)}
+                      className="pr-16"
+                      disabled={loadingPrices}
+                    />
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">LUTAR</div>
+                  </div>
                 </div>
               </div>
 
@@ -259,7 +327,8 @@ export function PurchaseInterface() {
                   </span>
                 </div>
               </div>
-            </div>
+              </>
+            )}
           </Card>
 
           {/* Wallet Connection */}

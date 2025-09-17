@@ -7,7 +7,7 @@ import { TransactionHistory } from "@/components/transaction-history"
 import { ReferralProgram } from "@/components/referral-program"
 import { VestingSchedule } from "@/components/vesting-schedule"
 import { Footer } from "@/components/footer"
-import { WalletConnectionModal } from "@/components/wallet-connection-modal"
+import { UnifiedWalletModal } from "@/components/unified-wallet-modal"
 import { useWallet } from "@/hooks/use-wallet"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -52,7 +52,7 @@ export default function DashboardPage() {
         </main>
         <Footer />
 
-        <WalletConnectionModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} selectedChain={chain} />
+        <UnifiedWalletModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       </div>
     )
   }

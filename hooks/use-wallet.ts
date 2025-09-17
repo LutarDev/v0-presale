@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { type WalletAdapter, getWalletAdapters } from "@/lib/wallet-adapters"
+import { realtimeService } from "@/lib/realtime-service"
 
 interface WalletState {
   isConnected: boolean
@@ -11,6 +12,12 @@ interface WalletState {
   chain: string
   isConnecting: boolean
   error: string | null
+  lastConnected: number | null
+}
+
+interface ConnectionError extends Error {
+  code?: string
+  type?: 'USER_REJECTED' | 'NETWORK_ERROR' | 'WALLET_NOT_FOUND' | 'UNKNOWN'
 }
 
 export function useWallet() {
@@ -22,6 +29,7 @@ export function useWallet() {
     chain: "ETH",
     isConnecting: false,
     error: null,
+    lastConnected: null,
   })
 
   const connect = useCallback(async (adapter: WalletAdapter, chain: string) => {
@@ -29,7 +37,9 @@ export function useWallet() {
 
     try {
       if (!adapter.isInstalled()) {
-        throw new Error(`${adapter.name} wallet is not installed. Please install it first.`)
+        const error: ConnectionError = new Error(`${adapter.name} wallet is not installed. Please install it first.`)
+        error.type = 'WALLET_NOT_FOUND'
+        throw error
       }
 
       // For EVM chains, switch to correct network
@@ -39,7 +49,12 @@ export function useWallet() {
           BNB: "0x38",
           POL: "0x89",
         }
-        await (adapter as any).switchToNetwork(chainIds[chain as keyof typeof chainIds])
+        try {
+          await (adapter as any).switchToNetwork(chainIds[chain as keyof typeof chainIds])
+        } catch (networkError) {
+          console.warn(`[useWallet] Network switch failed for ${chain}:`, networkError)
+          // Continue with connection attempt
+        }
       }
 
       const { address, balance } = await adapter.connect()
@@ -52,22 +67,53 @@ export function useWallet() {
         chain,
         isConnecting: false,
         error: null,
+        lastConnected: Date.now(),
       })
 
-      // Store connection in localStorage
+      // Subscribe to real-time balance updates
+      if (address && chain) {
+        realtimeService.subscribeToBalanceUpdates(address, chain, (balanceUpdate) => {
+          setWalletState(prev => ({
+            ...prev,
+            balance: balanceUpdate.balances.native || prev.balance,
+          }))
+        })
+      }
+
+      // Store connection in localStorage with timestamp
       localStorage.setItem(
         "wallet_connection",
         JSON.stringify({
           adapterName: adapter.name,
           chain,
           address,
+          timestamp: Date.now(),
         }),
       )
     } catch (error: any) {
+      const connectionError = error as ConnectionError
+      
+      // Determine error type for better user feedback
+      let errorMessage = "Failed to connect wallet"
+      let errorType: ConnectionError['type'] = 'UNKNOWN'
+
+      if (connectionError.type === 'USER_REJECTED') {
+        errorMessage = "Connection was rejected by user"
+        errorType = 'USER_REJECTED'
+      } else if (connectionError.type === 'WALLET_NOT_FOUND') {
+        errorMessage = connectionError.message
+        errorType = 'WALLET_NOT_FOUND'
+      } else if (connectionError.code === 'NETWORK_ERROR' || connectionError.message?.includes('network')) {
+        errorMessage = "Network error occurred. Please check your connection."
+        errorType = 'NETWORK_ERROR'
+      } else {
+        errorMessage = connectionError.message || errorMessage
+      }
+
       setWalletState((prev) => ({
         ...prev,
         isConnecting: false,
-        error: error.message || "Failed to connect wallet",
+        error: errorMessage,
       }))
     }
   }, [])

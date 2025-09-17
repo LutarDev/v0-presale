@@ -20,6 +20,19 @@ export class TransactionHandler {
     try {
       console.log("[v0] Executing transaction:", { currency: currency.symbol, amount, chain: currency.chain })
 
+      // Validate transaction parameters
+      const validation = this.validateTransactionParams(params)
+      if (!validation.valid) {
+        return {
+          success: false,
+          error: validation.error,
+        }
+      }
+
+      // Estimate gas/transaction fees
+      const estimatedFee = await this.estimateGas(params)
+      console.log("[v0] Estimated fee:", estimatedFee)
+
       switch (currency.chain) {
         case "ETH":
           return await this.executeEthereumTransaction(params)
@@ -45,6 +58,27 @@ export class TransactionHandler {
         error: error instanceof Error ? error.message : "Transaction failed",
       }
     }
+  }
+
+  // Validate transaction parameters
+  private static validateTransactionParams(params: TransactionParams): { valid: boolean; error?: string } {
+    if (!params.currency) {
+      return { valid: false, error: "Currency is required" }
+    }
+
+    if (!params.amount || Number(params.amount) <= 0) {
+      return { valid: false, error: "Invalid amount" }
+    }
+
+    if (!params.userAddress) {
+      return { valid: false, error: "User address is required" }
+    }
+
+    if (!params.walletAdapter) {
+      return { valid: false, error: "Wallet adapter is required" }
+    }
+
+    return { valid: true }
   }
 
   private static async executeEthereumTransaction(params: TransactionParams): Promise<TransactionResult> {

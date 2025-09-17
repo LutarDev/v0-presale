@@ -67,7 +67,7 @@ export function Header() {
                   </Button>
                 </div>
               ) : (
-                <Button variant="default" className="hidden sm:flex items-center gap-2" onClick={handleWalletClick}>
+                <Button variant="default" className="hidden sm:flex items-center gap-2 bg-primary hover:bg-primary/90" onClick={handleWalletClick}>
                   <Wallet className="w-4 h-4" />
                   Connect Wallet
                 </Button>
