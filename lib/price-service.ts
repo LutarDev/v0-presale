@@ -56,7 +56,9 @@ export class PriceService {
   private requestQueue: Array<() => Promise<void>> = []
   private isProcessingQueue = false
   private lastRequestTime = 0
-  private readonly MIN_REQUEST_INTERVAL = 1000 // 1 second between requests
+  private readonly MIN_REQUEST_INTERVAL = 2000 // 2 seconds between requests
+  private consecutiveFailures = 0
+  private readonly MAX_FAILURES = 3
 
   static getInstance(): PriceService {
     if (!PriceService.instance) {
@@ -204,12 +206,15 @@ export class PriceService {
       )
       
       if (!response.ok) {
+        this.markRequestFailure()
         throw new Error(`Failed to fetch price for ${symbol}`)
       }
 
       const data = await response.json()
+      this.markRequestSuccess()
       return data.prices?.[upperSymbol] || 0
     } catch (error) {
+      this.markRequestFailure()
       console.error(`[PriceService] API error for ${symbol}, using fallback:`, error)
       // Return fallback price if API fails
       return FALLBACK_PRICES[upperSymbol as keyof typeof FALLBACK_PRICES] || 0
@@ -231,10 +236,12 @@ export class PriceService {
       })
       
       if (!response.ok) {
+        this.markRequestFailure()
         throw new Error("Failed to fetch multiple prices")
       }
 
       const data = await response.json()
+      this.markRequestSuccess()
       const prices = new Map<string, number>()
 
       // Map the response to our expected format
@@ -244,6 +251,7 @@ export class PriceService {
 
       return prices
     } catch (error) {
+      this.markRequestFailure()
       console.error("[PriceService] API error for multiple prices, using fallbacks:", error)
       // Return fallback prices if API fails
       const fallbackPrices = new Map<string, number>()
@@ -313,17 +321,36 @@ export class PriceService {
     rateCache.clear()
   }
 
-  // Rate limiting: ensure minimum time between requests
+  // Rate limiting: ensure minimum time between requests with exponential backoff
   private async rateLimit(): Promise<void> {
     const now = Date.now()
     const timeSinceLastRequest = now - this.lastRequestTime
     
-    if (timeSinceLastRequest < this.MIN_REQUEST_INTERVAL) {
-      const delay = this.MIN_REQUEST_INTERVAL - timeSinceLastRequest
-      await new Promise(resolve => setTimeout(resolve, delay))
+    // Calculate delay based on consecutive failures
+    let delay = this.MIN_REQUEST_INTERVAL
+    if (this.consecutiveFailures > 0) {
+      // Exponential backoff: 2s, 4s, 8s, 16s...
+      delay = this.MIN_REQUEST_INTERVAL * Math.pow(2, this.consecutiveFailures - 1)
+    }
+    
+    if (timeSinceLastRequest < delay) {
+      const waitTime = delay - timeSinceLastRequest
+      console.log(`[PriceService] Rate limiting: waiting ${waitTime}ms (failures: ${this.consecutiveFailures})`)
+      await new Promise(resolve => setTimeout(resolve, waitTime))
     }
     
     this.lastRequestTime = Date.now()
+  }
+
+  // Mark request as successful (reset failure counter)
+  private markRequestSuccess(): void {
+    this.consecutiveFailures = 0
+  }
+
+  // Mark request as failed (increment failure counter)
+  private markRequestFailure(): void {
+    this.consecutiveFailures++
+    console.log(`[PriceService] Request failed, consecutive failures: ${this.consecutiveFailures}`)
   }
 
   // Process queued requests with rate limiting

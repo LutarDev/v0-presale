@@ -28,6 +28,14 @@ export async function GET(request: NextRequest) {
 
     // Determine which tokens to fetch
     const tokensToFetch = singleSymbol ? [singleSymbol] : symbols
+    const cacheKey = tokensToFetch.sort().join(',')
+    
+    // Check cache first
+    const cached = requestCache.get(cacheKey)
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log('[API] GET: Returning cached data for:', cacheKey)
+      return NextResponse.json(cached.data)
+    }
     
     // Map symbols to CoinGecko IDs
     const tokenIds = tokensToFetch
@@ -38,6 +46,8 @@ export async function GET(request: NextRequest) {
     if (!tokenIds) {
       return NextResponse.json({ error: 'No valid tokens found' }, { status: 400 })
     }
+
+    console.log('[API] GET: Making request to CoinGecko for:', cacheKey)
 
     // Make request to CoinGecko API
     const response = await fetch(
@@ -53,11 +63,13 @@ export async function GET(request: NextRequest) {
     )
 
     if (!response.ok) {
-      console.error(`CoinGecko API error: ${response.status} ${response.statusText}`)
+      const errorText = await response.text()
+      console.error(`CoinGecko API error: ${response.status} ${response.statusText} - ${errorText}`)
       return NextResponse.json({ error: 'Failed to fetch prices' }, { status: response.status })
     }
 
     const data = await response.json()
+    console.log('[API] GET: CoinGecko response:', data)
     
     // Transform the response to match our expected format
     const prices: Record<string, number> = {}
@@ -71,10 +83,38 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    // Add fallback prices for tokens not available on CoinGecko
+    const fallbackPrices = {
+      LUTAR: 0.004, // LUTAR token price in USD
+    }
+
+    for (const symbol of tokensToFetch) {
+      const upperSymbol = symbol.toUpperCase()
+      if (!prices[upperSymbol] && fallbackPrices[upperSymbol as keyof typeof fallbackPrices]) {
+        console.log(`[API] GET: Using fallback price for ${upperSymbol}: ${fallbackPrices[upperSymbol as keyof typeof fallbackPrices]}`)
+        prices[upperSymbol] = fallbackPrices[upperSymbol as keyof typeof fallbackPrices]
+      }
+    }
+
+    const result = {
       prices,
       timestamp: Date.now(),
+    }
+
+    // Cache the result
+    requestCache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now(),
     })
+
+    // Clean up old cache entries
+    for (const [key, value] of requestCache.entries()) {
+      if (Date.now() - value.timestamp > CACHE_TTL * 2) {
+        requestCache.delete(key)
+      }
+    }
+
+    return NextResponse.json(result)
 
   } catch (error) {
     console.error('Price API error:', error)

@@ -10,7 +10,7 @@ import { PurchaseSummary } from "@/components/purchase-summary"
 import { useWallet } from "@/hooks/use-wallet"
 import { priceService } from "@/lib/price-service"
 import { useState, useEffect } from "react"
-import { ArrowRight, Wallet, CheckCircle, Copy, Loader2 } from "lucide-react"
+import { ArrowRight, Wallet, CheckCircle, Copy, Loader2, RefreshCw } from "lucide-react"
 
 const blockchains = [
   { name: "Bitcoin", symbol: "BTC", color: "bg-[#f7931a]", rate: 0.000001, iconTextColor: "text-white" },
@@ -57,7 +57,7 @@ const paymentTokens = {
 }
 
 export function PurchaseInterface() {
-  const { chain, isConnected, address, balance, switchChain, isConnecting, adapter } = useWallet()
+  const { chain, isConnected, address, balance, switchChain, isConnecting, adapter, refreshBalance } = useWallet()
   const [selectedToken, setSelectedToken] = useState(chain)
   const [paymentAmount, setPaymentAmount] = useState("")
   const [lutarAmount, setLutarAmount] = useState("")
@@ -383,11 +383,22 @@ export function PurchaseInterface() {
                       </Button>
                     </div>
                   </div>
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between items-center text-sm">
                     <span>Balance:</span>
-                    <span className="font-medium">
-                      {balance} {selectedToken}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">
+                        {balance} {selectedToken}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={refreshBalance}
+                        title="Refresh balance"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 {copied && <div className="text-xs text-green-500 text-center">Address copied to clipboard!</div>}

@@ -216,10 +216,12 @@ export function useWallet() {
   const refreshBalance = useCallback(async () => {
     if (walletState.adapter && walletState.address) {
       try {
+        console.log("[useWallet] Refreshing balance for:", walletState.address)
         const balance = await walletState.adapter.getBalance(walletState.address)
+        console.log("[useWallet] New balance:", balance)
         setWalletState((prev) => ({ ...prev, balance }))
       } catch (error) {
-        console.error("Error refreshing balance:", error)
+        console.error("[useWallet] Error refreshing balance:", error)
       }
     }
   }, [walletState.adapter, walletState.address])

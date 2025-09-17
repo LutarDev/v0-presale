@@ -302,6 +302,13 @@ async function fetchTronBalances(address: string): Promise<WalletBalances> {
     try {
       const balance = await (window as any).tronWeb.trx.getBalance(address)
       balances.native.balance = (balance / 1000000).toFixed(4)
+      
+      console.log("[Balance Fetcher] TRON balance:", {
+        address,
+        rawBalance: balance,
+        balanceInTrx: balances.native.balance,
+        timestamp: new Date().toISOString()
+      })
     } catch (error) {
       console.error("[v0] Error fetching TRON balances:", error)
     }

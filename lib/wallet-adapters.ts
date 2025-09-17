@@ -305,11 +305,19 @@ export class TronLinkAdapter implements WalletAdapter {
       const balance = await tronWeb.trx.getBalance(address)
       const balanceInTrx = balance / 1000000 // Convert from sun to TRX
 
+      console.log("[TronLink Adapter] Connected balance:", {
+        address,
+        rawBalance: balance,
+        balanceInTrx: balanceInTrx.toFixed(4),
+        timestamp: new Date().toISOString()
+      })
+
       return {
         address,
         balance: balanceInTrx.toFixed(4),
       }
     } catch (error) {
+      console.error("[TronLink Adapter] Connection error:", error)
       throw new Error("Failed to connect to TronLink wallet")
     }
   }
@@ -324,8 +332,18 @@ export class TronLinkAdapter implements WalletAdapter {
       const tronWeb = this.tronWeb
       if (!tronWeb) return "0.0000"
       const balance = await tronWeb.trx.getBalance(address)
-      return (balance / 1000000).toFixed(4)
-    } catch {
+      const balanceInTrx = (balance / 1000000).toFixed(4)
+      
+      console.log("[TronLink Adapter] getBalance:", {
+        address,
+        rawBalance: balance,
+        balanceInTrx,
+        timestamp: new Date().toISOString()
+      })
+      
+      return balanceInTrx
+    } catch (error) {
+      console.error("[TronLink Adapter] getBalance error:", error)
       return "0.0000"
     }
   }
