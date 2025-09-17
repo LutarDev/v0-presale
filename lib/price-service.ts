@@ -47,7 +47,7 @@ const TOKEN_IDS = {
   TON: "the-open-network",
   USDC: "usd-coin",
   USDT: "tether",
-  LUTAR: "lutar-token", // LUTAR token ID for API calls
+  // LUTAR: "lutar-token", // LUTAR token ID - not available on CoinGecko, will use fallback
 }
 
 export class PriceService {

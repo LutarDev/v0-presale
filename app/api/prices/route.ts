@@ -11,6 +11,7 @@ const TOKEN_IDS = {
   TON: "the-open-network",
   USDC: "usd-coin",
   USDT: "tether",
+  // LUTAR: "lutar-token", // LUTAR token ID - not available on CoinGecko, will use fallback
 }
 
 const COINGECKO_API = "https://api.coingecko.com/api/v3"
@@ -90,7 +91,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { symbols } = body
 
+    console.log('[API] POST request received with symbols:', symbols)
+
     if (!symbols || !Array.isArray(symbols)) {
+      console.log('[API] Invalid symbols array:', symbols)
       return NextResponse.json({ error: 'Invalid symbols array' }, { status: 400 })
     }
 
@@ -99,6 +103,7 @@ export async function POST(request: NextRequest) {
     
     // Check if we have cached data that's still valid
     if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+      console.log('[API] Returning cached data for:', cacheKey)
       return NextResponse.json(cached.data)
     }
 
@@ -108,10 +113,15 @@ export async function POST(request: NextRequest) {
       .filter(Boolean)
       .join(",")
 
+    console.log('[API] Mapped symbols to token IDs:', tokenIds)
+
     if (!tokenIds) {
+      console.log('[API] No valid tokens found for symbols:', symbols)
       return NextResponse.json({ error: 'No valid tokens found' }, { status: 400 })
     }
 
+    console.log('[API] Making request to CoinGecko:', `${COINGECKO_API}/simple/price?ids=${tokenIds}&vs_currencies=usd`)
+    
     const response = await fetch(
       `${COINGECKO_API}/simple/price?ids=${tokenIds}&vs_currencies=usd`,
       {
@@ -124,11 +134,13 @@ export async function POST(request: NextRequest) {
     )
 
     if (!response.ok) {
-      console.error(`CoinGecko API error: ${response.status} ${response.statusText}`)
+      const errorText = await response.text()
+      console.error(`CoinGecko API error: ${response.status} ${response.statusText} - ${errorText}`)
       return NextResponse.json({ error: 'Failed to fetch prices' }, { status: response.status })
     }
 
     const data = await response.json()
+    console.log('[API] CoinGecko response:', data)
     
     // Transform the response
     const prices: Record<string, number> = {}
@@ -139,6 +151,19 @@ export async function POST(request: NextRequest) {
       )
       if (symbol && priceData && typeof priceData === "object" && "usd" in priceData) {
         prices[symbol] = (priceData as any).usd
+      }
+    }
+
+    // Add fallback prices for tokens not available on CoinGecko
+    const fallbackPrices = {
+      LUTAR: 0.004, // LUTAR token price in USD
+    }
+
+    for (const symbol of symbols) {
+      const upperSymbol = symbol.toUpperCase()
+      if (!prices[upperSymbol] && fallbackPrices[upperSymbol as keyof typeof fallbackPrices]) {
+        console.log(`[API] Using fallback price for ${upperSymbol}: ${fallbackPrices[upperSymbol as keyof typeof fallbackPrices]}`)
+        prices[upperSymbol] = fallbackPrices[upperSymbol as keyof typeof fallbackPrices]
       }
     }
 
