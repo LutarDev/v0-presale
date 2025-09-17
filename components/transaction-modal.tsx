@@ -41,6 +41,9 @@ export function TransactionModal({
   const [txHash, setTxHash] = useState("")
   const [countdown, setCountdown] = useState(30)
   const [error, setError] = useState("")
+  const [distributionStatus, setDistributionStatus] = useState<"pending" | "processing" | "completed" | "failed">("pending")
+  const [distributionTxHash, setDistributionTxHash] = useState("")
+  const [distributionError, setDistributionError] = useState("")
 
   const paymentCurrency = getPaymentCurrency(selectedToken, selectedChain)
 
@@ -116,6 +119,11 @@ export function TransactionModal({
 
       if (result.success && result.txHash) {
         setTxHash(result.txHash)
+        
+        // Start LUTAR token distribution after successful payment
+        console.log("[v0] Payment successful, starting LUTAR distribution")
+        distributeLutarTokens(result.txHash)
+        
         setTimeout(() => {
           setStatus("completed")
         }, 2000)
@@ -127,6 +135,56 @@ export function TransactionModal({
       console.error("[v0] Transaction execution failed:", error)
       setError(error instanceof Error ? error.message : "Transaction failed")
       setStatus("failed")
+    }
+  }
+
+  const distributeLutarTokens = async (paymentTxHash: string) => {
+    try {
+      console.log("[v0] Initiating LUTAR token distribution:", {
+        recipientAddress: bscAddress,
+        lutarAmount,
+        paymentTxHash,
+        paymentChain: selectedChain,
+        paymentToken: selectedToken,
+        paymentAmount
+      })
+
+      setDistributionStatus("processing")
+
+      const response = await fetch('/api/distribute-lutar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipientAddress: bscAddress,
+          lutarAmount: lutarAmount,
+          paymentTxHash: paymentTxHash,
+          paymentChain: selectedChain,
+          paymentToken: selectedToken,
+          paymentAmount: paymentAmount,
+        }),
+      })
+
+      const data = await response.json()
+      console.log("[v0] LUTAR distribution response:", data)
+
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      if (data.success) {
+        setDistributionTxHash(data.distributionTxHash || data.queueId || "")
+        setDistributionStatus("completed")
+        console.log("[v0] LUTAR distribution successful:", data)
+      } else {
+        throw new Error(data.error || "Distribution failed")
+      }
+
+    } catch (error) {
+      console.error("[v0] LUTAR distribution failed:", error)
+      setDistributionStatus("failed")
+      setDistributionError(error instanceof Error ? error.message : "Distribution failed")
     }
   }
 
@@ -178,6 +236,9 @@ export function TransactionModal({
       setTxHash("")
       setCountdown(30)
       setError("")
+      setDistributionStatus("pending")
+      setDistributionTxHash("")
+      setDistributionError("")
     }
   }, [isOpen])
 
@@ -291,15 +352,46 @@ export function TransactionModal({
                 </p>
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
                   <div className="flex items-start gap-2">
-                    <CheckCircle className="w-4 h-4 text-blue-500 mt-0.5" />
-                    <div className="text-sm text-blue-600">
+                    {distributionStatus === "completed" ? (
+                      <CheckCircle className="w-4 h-4 text-green-500 mt-0.5" />
+                    ) : distributionStatus === "processing" ? (
+                      <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mt-0.5" />
+                    ) : distributionStatus === "failed" ? (
+                      <AlertTriangle className="w-4 h-4 text-red-500 mt-0.5" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-blue-500 mt-0.5" />
+                    )}
+                    <div className="text-sm">
                       <p className="font-medium mb-1">LUTAR Tokens Distribution</p>
-                      <p>
-                        Your LUTAR tokens will be automatically sent to your BSC address: {bscAddress}
-                      </p>
-                      <p className="mt-1 text-xs">
-                        Distribution will be processed by our Thirdweb Engine backend after payment confirmation.
-                      </p>
+                      {distributionStatus === "completed" && (
+                        <div className="text-green-600">
+                          <p>✅ LUTAR tokens successfully sent to your BSC address!</p>
+                          <p className="text-xs mt-1">
+                            Distribution TX: {distributionTxHash ? `${distributionTxHash.slice(0, 10)}...` : "Processing"}
+                          </p>
+                        </div>
+                      )}
+                      {distributionStatus === "processing" && (
+                        <div className="text-blue-600">
+                          <p>🔄 Sending {lutarAmount} LUTAR tokens to your BSC address...</p>
+                          <p className="text-xs mt-1">This may take a few moments to complete.</p>
+                        </div>
+                      )}
+                      {distributionStatus === "failed" && (
+                        <div className="text-red-600">
+                          <p>❌ LUTAR token distribution failed</p>
+                          <p className="text-xs mt-1">{distributionError}</p>
+                          <p className="text-xs mt-1">Please contact support for assistance.</p>
+                        </div>
+                      )}
+                      {distributionStatus === "pending" && (
+                        <div className="text-blue-600">
+                          <p>⏳ Preparing LUTAR token distribution...</p>
+                          <p className="text-xs mt-1">
+                            Your {lutarAmount} LUTAR tokens will be sent to: {bscAddress}
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

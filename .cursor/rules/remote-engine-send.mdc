@@ -1,0 +1,110 @@
+---
+description: Send LUTAR tokens from backend wallet using Engine v2 REST API
+globs:
+alwaysApply: true
+---
+
+Here's a full React/TypeScript example to call our self-hosted Engine v2 REST API and send LUTAR ERC20 tokens from engine backend wallet (0xfdCd87e45b13998326cA206Cc9De268f8CA480f8) to another BSC wallet address. This uses the /contract/{chain}/{contract_address}/write endpoint and the transfer function of the ERC20 contract.
+
+We need to properly setup Engine URL, access token, LUTAR contract address, and the recipient address.
+
+
+
+// Send LUTAR tokens from backend wallet using Engine v2 REST API
+
+const ENGINE_URL = "https://engine-production-b94f.up.railway.app"; // Our Engine v2 URL
+const ACCESS_TOKEN = "zBvVLRq77mUNj6-BqNZbHaSYDIULI50GtKghcy9qd28HHEKwkDhpODYyAjkOH7EpL3xIsXO-ATZhnEHxQnYdaA";
+const BACKEND_WALLET =
+  "0xfdCd87e45b13998326cA206Cc9De268f8CA480f8";
+const LUTAR_CONTRACT = "0x2770904185Ed743d991D8fA21C8271ae6Cd4080E"; // LUTAR ERC20 contract address on BSC
+const BSC_CHAIN_ID = "56"; // BNB Smart Chain mainnet
+const RECIPIENT = "0x..."; // Destination wallet address
+const AMOUNT = "1000000000000000000"; // Amount in wei (1 LUTAR  18 decimals)
+
+async function sendLUTAR() {
+  const resp = await fetch(
+    `${ENGINE_URL}/contract/${BSC_CHAIN_ID}/${LUTAR_CONTRACT}/write`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${ACCESS_TOKEN}`,
+        "x-backend-wallet-address": BACKEND_WALLET,
+      },
+      body: JSON.stringify({
+        functionName: "transfer",
+        args: [RECIPIENT, AMOUNT],
+      }),
+    },
+  );
+  const data = await resp.json();
+  console.log("Engine v2 response:", data);
+}
+
+Call sendLUTAR() from your React component or handler.
+Make sure your backend wallet has enough BNB for gas.
+Docs:
+
+Engine v2: Write to a contract (REST API): https://portal.thirdweb.com/engine/v2/features/contracts
+Engine v2 API Reference: https://thirdweb-engine.apidocumentation.com/reference#tag/default
+
+Error Handling
+Always wrap your fetch call in a try/catch block.
+Check resp.ok to detect HTTP errors (like 400/401/500).
+Parse and display error messages from the Engine API response.
+React UI Integration Example
+Here’s a simple React component with error handling and a button to trigger the transfer:
+
+import React, { useState } from "react";
+
+export function SendLUTARButton() {
+  const [status, setStatus] = useState<string | null>(null);
+
+  async function sendLUTAR() {
+    setStatus("Sending...");
+    try {
+      const resp = await fetch(
+        `${ENGINE_URL}/contract/${BSC_CHAIN_ID}/${LUTAR_CONTRACT}/write`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${ACCESS_TOKEN}`,
+            "x-backend-wallet-address": BACKEND_WALLET,
+          },
+          body: JSON.stringify({
+            functionName: "transfer",
+            args: [RECIPIENT, AMOUNT],
+          }),
+        },
+      );
+      const data = await resp.json();
+      if (!resp.ok) {
+        setStatus(
+          `Error: ${data.message || resp.statusText}`,
+        );
+      } else {
+        setStatus(
+          `Success! Tx: ${data.transactionHash || JSON.stringify(data)}`,
+        );
+      }
+    } catch (err: any) {
+      setStatus(`Network error: ${err.message}`);
+    }
+  }
+
+  return (
+    <div>
+      <button onClick={sendLUTAR}>Send LUTAR</button>
+      {status && <div>{status}</div>}
+    </div>
+  );
+}
+
+
+This displays status updates and errors to the user.
+You can further improve UX by disabling the button while sending, or showing a spinner.
+
+
+
+
