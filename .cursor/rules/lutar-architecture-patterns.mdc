@@ -1,0 +1,129 @@
+---
+alwaysApply: true
+description: LUTAR Presale Platform Architecture and Design Patterns
+---
+
+# LUTAR Presale Platform - Architecture & Design Patterns
+
+## Project Overview
+Multi-chain token presale platform built with Next.js 14, TypeScript, and Tailwind CSS. Supports 7 blockchains: BTC, ETH, BSC, SOL, Polygon, TRON, and TON.
+
+## Core Architecture
+
+### Technology Stack
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4 with custom cyberpunk theme
+- **UI Components**: Radix UI primitives with custom shadcn/ui components
+- **State Management**: React hooks with localStorage persistence
+- **Charts**: Recharts for data visualization
+- **Icons**: Lucide React
+
+### Design System
+- **Theme**: Dark-first cyberpunk minimalism
+- **Colors**: Deep space background (#0F1218) with blockchain-specific accents
+- **Typography**: Geist Sans/Mono fonts
+- **Components**: Consistent card-based layouts with hover effects
+
+### File Structure
+```
+app/                    # Next.js App Router pages
+├── page.tsx           # Homepage
+├── buy/page.tsx       # Purchase interface
+├── dashboard/page.tsx # User dashboard
+├── presale/page.tsx   # Presale details
+└── security/page.tsx  # Security center
+
+components/            # Reusable UI components
+├── ui/               # Base UI components (shadcn/ui)
+├── wallet-*.tsx      # Wallet connection components
+├── transaction-*.tsx # Transaction handling components
+└── *-section.tsx     # Page sections
+
+lib/                  # Business logic and utilities
+├── wallet-adapters.ts    # Multi-chain wallet adapters
+├── transaction-handler.ts # Payment processing
+├── payment-config.ts     # Payment wallet addresses
+├── balance-fetcher.ts    # Balance fetching logic
+└── utils.ts             # Utility functions
+
+hooks/                # Custom React hooks
+├── use-wallet.ts     # Wallet connection state
+├── use-mobile.ts     # Mobile detection
+└── use-toast.ts      # Toast notifications
+```
+
+## Key Design Patterns
+
+### 1. Wallet Adapter Pattern
+- **Location**: [lib/wallet-adapters.ts](mdc:lib/wallet-adapters.ts)
+- **Purpose**: Abstract wallet connection across different blockchains
+- **Implementation**: Each blockchain has specific adapter classes implementing common interface
+- **Usage**: Used by [hooks/use-wallet.ts](mdc:hooks/use-wallet.ts) for unified wallet management
+
+### 2. Transaction Handler Pattern
+- **Location**: [lib/transaction-handler.ts](mdc:lib/transaction-handler.ts)
+- **Purpose**: Handle payments across different blockchains
+- **Implementation**: Static class with chain-specific transaction methods
+- **Integration**: Used by [components/transaction-modal.tsx](mdc:components/transaction-modal.tsx)
+
+### 3. Payment Configuration Pattern
+- **Location**: [lib/payment-config.ts](mdc:lib/payment-config.ts)
+- **Purpose**: Centralized payment wallet addresses and currency configurations
+- **Data**: Pre-configured wallet addresses for each supported currency/chain
+- **Usage**: Referenced throughout transaction flow
+
+### 4. Component Composition Pattern
+- **UI Components**: Built with Radix UI primitives
+- **Layout**: Card-based layouts with consistent spacing
+- **State**: Local state with props drilling for simple cases
+- **Modals**: Unified modal system for wallet connection and transactions
+
+## State Management Strategy
+
+### Wallet State
+- **Hook**: [hooks/use-wallet.ts](mdc:hooks/use-wallet.ts)
+- **Persistence**: localStorage for connection state
+- **Scope**: Global wallet connection state across all components
+- **Features**: Auto-reconnection, chain switching, balance tracking
+
+### Component State
+- **Pattern**: useState for local component state
+- **Props**: Props drilling for parent-child communication
+- **Modals**: Controlled modal state with open/close handlers
+
+## Security Considerations
+
+### Wallet Security
+- **Verification**: Address verification before transactions
+- **Phishing Protection**: Anti-phishing banner component
+- **Contract Verification**: Security audit badges and verification
+
+### Transaction Security
+- **Confirmation**: Multi-step transaction confirmation
+- **Validation**: Input validation and amount verification
+- **Error Handling**: Comprehensive error handling with user feedback
+
+## Performance Optimizations
+
+### Loading States
+- **Skeleton Loading**: For data fetching components
+- **Progressive Enhancement**: Graceful degradation for wallet features
+- **Lazy Loading**: Modal components loaded on demand
+
+### Data Fetching
+- **Balance Fetching**: Async balance updates with loading states
+- **Error Boundaries**: Error handling for wallet connection failures
+- **Caching**: localStorage caching for wallet connection state
+
+## Integration Points
+
+### External APIs
+- **Blockchain RPCs**: Direct RPC calls for balance fetching
+- **Wallet APIs**: Browser wallet extension APIs
+- **Price APIs**: Mock exchange rate calculations (needs real API integration)
+
+### Third-party Services
+- **Analytics**: Vercel Analytics integration
+- **Fonts**: Geist font family
+- **Icons**: Lucide React icon library

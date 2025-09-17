@@ -1,0 +1,204 @@
+---
+description: Multi-chain wallet connection logic and implementation
+globs: **/wallet-*.tsx,**/use-wallet.ts,**/wallet-adapters.ts
+---
+
+# LUTAR Wallet Connection System
+
+## Overview
+Multi-chain wallet connection system supporting 7 blockchains with seamless switching and persistent connections.
+
+## Core Components
+
+### 1. Wallet Hook - [hooks/use-wallet.ts](mdc:hooks/use-wallet.ts)
+**Central state management for wallet connections**
+
+#### Key Features:
+- **Multi-chain Support**: BTC, ETH, BSC, SOL, Polygon, TRON, TON
+- **Persistent Connection**: localStorage caching of connection state
+- **Auto-reconnection**: Smart reconnection on chain switches
+- **Error Handling**: Comprehensive error states and recovery
+
+#### State Interface:
+```typescript
+interface WalletState {
+  isConnected: boolean
+  address: string | null
+  balance: string | null
+  adapter: WalletAdapter | null
+  chain: string
+  isConnecting: boolean
+  error: string | null
+}
+```
+
+#### Critical Methods:
+- `connect(adapter, chain)` - Connect wallet for specific chain
+- `disconnect()` - Disconnect and clear state
+- `switchChain(newChain)` - Switch to different blockchain
+- `refreshBalance()` - Update wallet balance
+
+### 2. Wallet Adapters - [lib/wallet-adapters.ts](mdc:lib/wallet-adapters.ts)
+**Blockchain-specific wallet implementations**
+
+#### Supported Wallets:
+- **Bitcoin**: Unisat, Xverse
+- **Ethereum**: MetaMask (with BSC/Polygon support)
+- **Solana**: Phantom, Solflare
+- **TRON**: TronLink
+- **TON**: Tonkeeper
+
+#### Adapter Interface:
+```typescript
+interface WalletAdapter {
+  name: string
+  icon: string
+  description: string
+  isInstalled(): boolean
+  connect(): Promise<{address: string, balance: string}>
+  disconnect(): Promise<void>
+  getBalance(address: string): Promise<string>
+  signTransaction?(transaction: any): Promise<string>
+}
+```
+
+#### Network Switching:
+- **EVM Chains**: Automatic network switching via MetaMask
+- **Chain IDs**: ETH(0x1), BNB(0x38), POL(0x89)
+- **Non-EVM**: Chain-specific wallet switching
+
+### 3. Connection Modals
+
+#### Unified Wallet Modal - [components/unified-wallet-modal.tsx](mdc:components/unified-wallet-modal.tsx)
+**Primary wallet connection interface**
+
+**Flow Steps:**
+1. **Chain Selection**: Choose blockchain
+2. **Wallet Selection**: Choose wallet for selected chain
+3. **Wallet Info**: Display connection details and balances
+
+**Features:**
+- Step-by-step connection flow
+- Real-time balance fetching
+- Wallet installation detection
+- Connection status indicators
+
+#### Wallet Connection Modal - [components/wallet-connection-modal.tsx](mdc:components/wallet-connection-modal.tsx)
+**Simplified connection interface for specific chains**
+
+**Usage:**
+- Used in purchase flow
+- Chain-specific wallet filtering
+- Quick connection without chain selection
+
+#### Wallet Status - [components/wallet-status.tsx](mdc:components/wallet-status.tsx)
+**Connection status display component**
+
+**Features:**
+- Connection state visualization
+- Balance display
+- Address copying
+- Explorer link generation
+- Refresh functionality
+
+## Connection Flow
+
+### 1. Initial Connection
+```
+User clicks "Connect Wallet" 
+→ Modal opens with chain selection
+→ User selects blockchain
+→ Available wallets for chain are shown
+→ User selects wallet
+→ Wallet adapter connects
+→ State updates with connection info
+→ Modal closes, UI updates
+```
+
+### 2. Chain Switching
+```
+User selects different blockchain
+→ Current connection checked
+→ Compatible wallet found for new chain
+→ Auto-reconnection attempted
+→ State updates with new chain info
+→ UI reflects new chain selection
+```
+
+### 3. Persistent Connection
+```
+Page reload/refresh
+→ localStorage checked for saved connection
+→ Saved adapter and chain restored
+→ Wallet reconnection attempted
+→ State initialized with saved connection
+```
+
+## Error Handling
+
+### Connection Errors
+- **Wallet Not Installed**: Show installation link
+- **User Rejected**: Clear error state, allow retry
+- **Network Error**: Show network-specific error message
+- **Timeout**: Implement connection timeout handling
+
+### Recovery Strategies
+- **Auto-retry**: Automatic retry on transient failures
+- **Fallback Wallets**: Suggest alternative wallets
+- **Manual Refresh**: User-triggered connection refresh
+
+## Balance Management
+
+### Balance Fetching - [lib/balance-fetcher.ts](mdc:lib/balance-fetcher.ts)
+**Multi-chain balance retrieval system**
+
+#### Supported Assets:
+- **Native Tokens**: BTC, ETH, BNB, SOL, POL, TRX, TON
+- **Stablecoins**: USDC, USDT on all chains
+- **LUTAR Token**: BSC-based token
+
+#### Implementation:
+- **RPC Calls**: Direct blockchain RPC for native tokens
+- **Contract Calls**: ERC-20/BEP-20 token balance fetching
+- **Error Handling**: Graceful fallback for failed requests
+- **Caching**: Balance caching with refresh intervals
+
+## Security Considerations
+
+### Connection Security
+- **Address Verification**: Verify connected address matches expected
+- **Network Validation**: Ensure correct network for transactions
+- **Session Management**: Secure session handling and cleanup
+
+### User Experience
+- **Loading States**: Clear loading indicators during connection
+- **Error Messages**: User-friendly error descriptions
+- **Recovery Actions**: Clear next steps for failed connections
+
+## Integration Points
+
+### Purchase Flow
+- Wallet connection required before purchase
+- Balance validation for transaction amounts
+- Chain-specific transaction handling
+
+### Dashboard
+- Persistent connection for portfolio viewing
+- Multi-chain balance aggregation
+- Transaction history integration
+
+## Enhancement Opportunities
+
+### Current Limitations
+1. **Mock Balance Data**: Some balance fetching returns mock data
+2. **Limited Error Recovery**: Basic error handling
+3. **No Connection Pooling**: Each connection is independent
+4. **Manual Refresh**: No automatic balance updates
+
+### Recommended Improvements
+1. **Real API Integration**: Replace mock data with real blockchain APIs
+2. **Enhanced Error Handling**: More granular error states and recovery
+3. **Connection Pooling**: Shared connection management
+4. **Auto-refresh**: Periodic balance updates
+5. **Offline Support**: Graceful offline state handling
+6. **Multi-wallet Support**: Support multiple simultaneous connections

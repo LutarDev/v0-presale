@@ -1,0 +1,424 @@
+---
+description: Mock data identification and replacement strategy
+globs: **/*.tsx,**/*.ts
+---
+
+# LUTAR Mock Data Replacement Guide
+
+## Overview
+Comprehensive guide to identify, catalog, and replace all mock/placeholder data with dynamic, real-time data sources for production deployment.
+
+## Mock Data Inventory
+
+### 1. Exchange Rates & Pricing
+
+#### Location: [components/purchase-interface.tsx](mdc:components/purchase-interface.tsx)
+```typescript
+// MOCK DATA - Line 67
+const lutarPrice = 0.045 // $0.045 per LUTAR
+
+// MOCK DATA - Line 81
+Number(paymentAmount) * (selectedChainData?.rate || 1) * 50000 // Mock exchange rate
+
+// MOCK DATA - Lines 14-22
+const blockchains = [
+  { name: "Bitcoin", symbol: "BTC", rate: 0.000001 },
+  { name: "Ethereum", symbol: "ETH", rate: 0.000018 },
+  { name: "BSC", symbol: "BNB", rate: 0.000075 },
+  // ... hardcoded exchange rates
+]
+```
+
+**Replacement Strategy:**
+- Integrate CoinGecko/CoinMarketCap API for real-time prices
+- Implement WebSocket price feeds for live updates
+- Cache prices with appropriate TTL (30-60 seconds)
+
+### 2. Balance Data
+
+#### Location: [lib/balance-fetcher.ts](mdc:lib/balance-fetcher.ts)
+```typescript
+// MOCK DATA - Lines 205-210
+async function fetchSolanaBalances(address: string): Promise<WalletBalances> {
+  return {
+    native: { symbol: "SOL", balance: "0.0000", decimals: 9 },
+    usdc: { symbol: "USDC", balance: "0.00", decimals: 6 },
+  }
+}
+
+// MOCK DATA - Lines 212-227
+async function fetchTronBalances(address: string): Promise<WalletBalances> {
+  const balances: WalletBalances = {
+    native: { symbol: "TRX", balance: "0.0000", decimals: 6 },
+  }
+  // ... returns mock data
+}
+```
+
+**Replacement Strategy:**
+- Implement real RPC calls for each blockchain
+- Use appropriate RPC endpoints for balance fetching
+- Add proper error handling and retry logic
+
+### 3. Presale Statistics
+
+#### Location: [components/presale-stats.tsx](mdc:components/presale-stats.tsx)
+```typescript
+// MOCK DATA - Lines 4-29
+const stats = [
+  { label: "Total Raised", value: "$2,847,392", change: "+12.5%" },
+  { label: "Participants", value: "8,429", change: "+8.2%" },
+  { label: "Soft Cap", value: "$5,000,000", change: "57% Complete" },
+  { label: "Hard Cap", value: "$15,000,000", change: "19% Complete" }
+]
+```
+
+#### Location: [components/presale-metrics.tsx](mdc:components/presale-metrics.tsx)
+```typescript
+// MOCK DATA - Lines 5-34
+const metrics = [
+  { label: "Total Raised", value: "$2,847,392", change: "+12.5% today" },
+  { label: "Participants", value: "8,429", change: "+247 today" },
+  { label: "Countries", value: "67", change: "Global reach" },
+  { label: "Security Score", value: "98/100", change: "Audited" }
+]
+```
+
+**Replacement Strategy:**
+- Connect to presale smart contract for real metrics
+- Implement real-time updates via WebSocket
+- Track historical data for trend calculations
+
+### 4. Transaction History
+
+#### Location: [components/transaction-history.tsx](mdc:components/transaction-history.tsx)
+```typescript
+// MOCK DATA - Lines 11-62
+const transactions = [
+  {
+    id: "0x1234...5678",
+    type: "Purchase",
+    amount: "$1,000.00",
+    tokens: "22,222 LUTAR",
+    chain: "ETH",
+    status: "Completed",
+    date: "2024-03-15 14:30",
+    hash: "0x1234567890abcdef1234567890abcdef12345678"
+  }
+  // ... more mock transactions
+]
+```
+
+**Replacement Strategy:**
+- Fetch real transactions from blockchain APIs
+- Aggregate transactions across all supported chains
+- Implement real-time transaction status updates
+
+### 5. Investment Portfolio
+
+#### Location: [components/investment-portfolio.tsx](mdc:components/investment-portfolio.tsx)
+```typescript
+// MOCK DATA - Lines 7-32
+const investments = [
+  {
+    date: "2024-03-15",
+    amount: "$1,000.00",
+    tokens: "22,222",
+    bonus: "3,333",
+    chain: "ETH",
+    status: "completed"
+  }
+  // ... more mock investments
+]
+
+// MOCK DATA - Lines 34-38
+const portfolioData = [
+  { name: "Ethereum", value: 40, color: "#627eea" },
+  { name: "BSC", value: 32, color: "#f3ba2f" },
+  { name: "Solana", value: 28, color: "#8c24a2" }
+]
+```
+
+**Replacement Strategy:**
+- Connect to user's actual transaction history
+- Calculate real portfolio distribution
+- Fetch current token values for accurate portfolio valuation
+
+### 6. Dashboard Overview
+
+#### Location: [components/dashboard-overview.tsx](mdc:components/dashboard-overview.tsx)
+```typescript
+// MOCK DATA - Lines 13-46
+const stats = [
+  {
+    icon: Wallet,
+    label: "Total Investment",
+    value: "$2,450.00",
+    change: "+$450 this month",
+    color: "text-primary"
+  }
+  // ... more mock stats
+]
+```
+
+**Replacement Strategy:**
+- Calculate real investment totals from transaction history
+- Fetch current token values for portfolio valuation
+- Implement real-time portfolio updates
+
+### 7. Referral Program
+
+#### Location: [components/referral-program.tsx](mdc:components/referral-program.tsx)
+```typescript
+// MOCK DATA - Lines 10-25
+const referralStats = [
+  { icon: Users, label: "Total Referrals", value: "3", color: "text-primary" },
+  { icon: Gift, label: "Rewards Earned", value: "1,125 LUTAR", color: "text-accent" }
+]
+
+// MOCK DATA - Lines 27-49
+const referralHistory = [
+  {
+    address: "0x1234...5678",
+    amount: "$500.00",
+    reward: "375 LUTAR",
+    date: "2024-03-18",
+    status: "Claimed"
+  }
+  // ... more mock referrals
+]
+```
+
+**Replacement Strategy:**
+- Connect to referral smart contract
+- Track real referral activities
+- Calculate actual referral rewards
+
+### 8. Security Dashboard
+
+#### Location: [components/security-dashboard.tsx](mdc:components/security-dashboard.tsx)
+```typescript
+// MOCK DATA - Lines 10-35
+const securityMetrics = [
+  {
+    label: "Wallet Security Score",
+    value: "98/100",
+    status: "excellent",
+    description: "Your wallet connection is secure"
+  }
+  // ... more mock security data
+]
+
+// MOCK DATA - Lines 37-50
+const securityAlerts = [
+  {
+    type: "info",
+    title: "Security Update Available",
+    message: "A new security patch is available for your wallet.",
+    timestamp: "2 hours ago"
+  }
+  // ... more mock alerts
+]
+```
+
+**Replacement Strategy:**
+- Implement real security scanning
+- Connect to actual audit reports
+- Track real security events and alerts
+
+### 9. Vesting Schedule
+
+#### Location: [components/vesting-schedule.tsx](mdc:components/vesting-schedule.tsx)
+```typescript
+// MOCK DATA - Lines 7-32
+const vestingData = [
+  {
+    phase: "Phase 1",
+    percentage: "20%",
+    amount: "11,250",
+    unlockDate: "2024-06-01",
+    status: "unlocked"
+  }
+  // ... more mock vesting data
+]
+```
+
+**Replacement Strategy:**
+- Connect to vesting smart contract
+- Calculate real vesting schedules based on purchase dates
+- Implement real-time vesting status updates
+
+### 10. Presale Progress
+
+#### Location: [components/presale-progress.tsx](mdc:components/presale-progress.tsx)
+```typescript
+// MOCK DATA - Lines 5-11
+const progressPercentage = 57 // 57% to soft cap
+const timeLeft = {
+  days: 12,
+  hours: 8,
+  minutes: 34,
+  seconds: 22
+}
+```
+
+**Replacement Strategy:**
+- Calculate real progress from presale contract
+- Implement live countdown timer
+- Update progress in real-time
+
+## Replacement Implementation Plan
+
+### Phase 1: Core Data APIs
+1. **Price APIs**: CoinGecko/CoinMarketCap integration
+2. **Balance APIs**: Real blockchain RPC integration
+3. **Transaction APIs**: Blockchain transaction fetching
+4. **Presale APIs**: Smart contract data integration
+
+### Phase 2: Real-time Updates
+1. **WebSocket Integration**: Live data streaming
+2. **Price Feeds**: Real-time price updates
+3. **Transaction Monitoring**: Live transaction status
+4. **Progress Updates**: Real-time presale progress
+
+### Phase 3: Advanced Features
+1. **Analytics**: Real user analytics and metrics
+2. **Notifications**: Real-time notifications
+3. **Historical Data**: Historical data tracking
+4. **Predictive Analytics**: AI-powered insights
+
+## API Integration Requirements
+
+### 1. Price Data APIs
+```typescript
+// Required price data sources
+const PRICE_APIS = {
+  COINGECKO: "https://api.coingecko.com/api/v3/",
+  COINMARKETCAP: "https://pro-api.coinmarketcap.com/v1/",
+  BINANCE: "https://api.binance.com/api/v3/",
+  COINBASE: "https://api.coinbase.com/v2/"
+}
+
+// Implementation needed
+interface PriceService {
+  getTokenPrice(symbol: string): Promise<number>
+  getExchangeRate(from: string, to: string): Promise<number>
+  subscribeToPriceUpdates(symbols: string[]): void
+}
+```
+
+### 2. Blockchain APIs
+```typescript
+// Required blockchain RPC endpoints
+const BLOCKCHAIN_APIS = {
+  ETH: "https://mainnet.infura.io/v3/",
+  BNB: "https://bsc-dataseed.binance.org/",
+  SOL: "https://api.mainnet-beta.solana.com",
+  POL: "https://polygon-rpc.com/",
+  TRX: "https://api.trongrid.io",
+  TON: "https://toncenter.com/api/v2/",
+  BTC: "https://blockstream.info/api/"
+}
+
+// Implementation needed
+interface BlockchainService {
+  getBalance(address: string, chain: string): Promise<string>
+  getTransactionHistory(address: string, chain: string): Promise<Transaction[]>
+  getTransactionStatus(txHash: string, chain: string): Promise<TransactionStatus>
+}
+```
+
+### 3. Presale Contract APIs
+```typescript
+// LUTAR contract integration
+const LUTAR_CONTRACT = "0x2770904185Ed743d991D8fA21C8271ae6Cd4080E" // BSC
+
+// Implementation needed
+interface PresaleService {
+  getPresaleMetrics(): Promise<PresaleMetrics>
+  getUserInvestments(address: string): Promise<Investment[]>
+  getVestingSchedule(address: string): Promise<VestingSchedule>
+  getReferralStats(address: string): Promise<ReferralStats>
+}
+```
+
+## Data Migration Strategy
+
+### 1. Environment Configuration
+```typescript
+// Environment-based data source selection
+const DATA_SOURCES = {
+  development: {
+    useMockData: true,
+    mockDataPath: "/mock-data/",
+    apiEndpoints: "staging"
+  },
+  staging: {
+    useMockData: false,
+    apiEndpoints: "staging",
+    fallbackToMock: true
+  },
+  production: {
+    useMockData: false,
+    apiEndpoints: "production",
+    fallbackToMock: false
+  }
+}
+```
+
+### 2. Gradual Migration
+1. **Feature Flags**: Use feature flags to toggle between mock and real data
+2. **A/B Testing**: Test real data with subset of users
+3. **Fallback Strategy**: Fallback to mock data if APIs fail
+4. **Monitoring**: Monitor API performance and error rates
+
+### 3. Data Validation
+```typescript
+// Data validation and sanitization
+interface DataValidator {
+  validatePriceData(data: PriceData): boolean
+  validateBalanceData(data: BalanceData): boolean
+  validateTransactionData(data: TransactionData): boolean
+  sanitizeUserInput(input: any): any
+}
+```
+
+## Testing Strategy
+
+### 1. Mock Data Testing
+- **Unit Tests**: Test components with mock data
+- **Integration Tests**: Test API integrations
+- **Error Scenarios**: Test error handling with mock failures
+- **Performance Tests**: Test with large mock datasets
+
+### 2. Real Data Testing
+- **API Testing**: Test real API endpoints
+- **Data Accuracy**: Validate data accuracy
+- **Performance Testing**: Test with real data volumes
+- **Error Handling**: Test API error scenarios
+
+### 3. Migration Testing
+- **Feature Flag Testing**: Test mock/real data switching
+- **Fallback Testing**: Test fallback mechanisms
+- **User Experience**: Test user experience during migration
+- **Data Consistency**: Ensure data consistency across sources
+
+## Success Metrics
+
+### 1. Data Accuracy
+- **Price Accuracy**: Real-time price accuracy vs mock data
+- **Balance Accuracy**: Balance data accuracy
+- **Transaction Accuracy**: Transaction data accuracy
+- **User Satisfaction**: User satisfaction with real data
+
+### 2. Performance Metrics
+- **API Response Times**: Real API vs mock data performance
+- **Error Rates**: API error rates and recovery
+- **Uptime**: API availability and reliability
+- **Cache Performance**: Caching effectiveness
+
+### 3. User Experience
+- **Data Freshness**: Real-time data freshness
+- **Loading Times**: Data loading performance
+- **Error Recovery**: Error recovery success rates
+- **Feature Completeness**: Feature completeness with real data

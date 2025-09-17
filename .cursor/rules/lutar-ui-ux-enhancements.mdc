@@ -1,0 +1,266 @@
+---
+description: UI/UX improvements and design enhancements
+globs: **/*.tsx,**/*.css
+---
+
+# LUTAR UI/UX Enhancement Guide
+
+## Current Design System Analysis
+
+### Theme Implementation - [app/globals.css](mdc:app/globals.css)
+**Cyberpunk minimalist design with dark-first approach**
+
+#### Color Palette:
+- **Background**: Deep space (#0F1218)
+- **Cards**: Dark card backgrounds (#1a1d22)
+- **Primary**: BTC Orange (#f7931a)
+- **Accent**: BSC Yellow (#f3ba2f)
+- **Ring**: Solana Purple (#8c24a2)
+- **Charts**: Blockchain-specific colors
+
+#### Current Strengths:
+- Consistent dark theme implementation
+- Blockchain-specific color coding
+- Good contrast ratios
+- Responsive design foundation
+
+### Component Architecture
+**Built on shadcn/ui with Radix UI primitives**
+
+#### Current Components:
+- **Cards**: Consistent card-based layouts
+- **Buttons**: Multiple variants with proper states
+- **Modals**: Unified modal system
+- **Forms**: Form components with validation
+- **Charts**: Recharts integration for data visualization
+
+## Identified UI/UX Issues
+
+### 1. Loading States & Feedback
+**Current Issues:**
+- Limited loading indicators during wallet connection
+- No skeleton loading for data fetching
+- Basic error states without recovery actions
+- Missing success feedback animations
+
+**Enhancement Opportunities:**
+- Implement skeleton loading for balance fetching
+- Add micro-animations for state transitions
+- Enhanced error states with clear recovery actions
+- Success animations for completed transactions
+
+### 2. Mobile Experience
+**Current Issues:**
+- Modal sizes not optimized for mobile
+- Touch targets could be larger
+- Horizontal scrolling on smaller screens
+- Limited mobile-specific interactions
+
+**Enhancement Opportunities:**
+- Mobile-first modal designs
+- Improved touch targets (minimum 44px)
+- Better mobile navigation
+- Swipe gestures for mobile interactions
+
+### 3. Accessibility
+**Current Issues:**
+- Limited ARIA labels and descriptions
+- Color-only information conveyance
+- Keyboard navigation gaps
+- Screen reader compatibility issues
+
+**Enhancement Opportunities:**
+- Comprehensive ARIA implementation
+- Alternative text for visual indicators
+- Full keyboard navigation support
+- High contrast mode support
+
+### 4. Visual Hierarchy
+**Current Issues:**
+- Some information density issues
+- Inconsistent spacing patterns
+- Limited visual emphasis for important actions
+- Card layouts could be more scannable
+
+**Enhancement Opportunities:**
+- Improved information hierarchy
+- Consistent spacing system
+- Better visual emphasis for CTAs
+- Enhanced card designs with better content organization
+
+## Recommended UI/UX Enhancements
+
+### 1. Enhanced Loading States
+
+#### Skeleton Loading Components
+```typescript
+// New component needed
+<SkeletonCard />
+<SkeletonText />
+<SkeletonChart />
+<SkeletonTable />
+```
+
+#### Implementation Areas:
+- **Balance Loading**: [components/unified-wallet-modal.tsx](mdc:components/unified-wallet-modal.tsx)
+- **Transaction History**: [components/transaction-history.tsx](mdc:components/transaction-history.tsx)
+- **Dashboard Data**: [components/dashboard-overview.tsx](mdc:components/dashboard-overview.tsx)
+
+### 2. Improved Error Handling
+
+#### Enhanced Error Components
+```typescript
+// New error components needed
+<ErrorBoundary />
+<RetryButton />
+<ErrorRecovery />
+<ConnectionStatus />
+```
+
+#### Implementation Areas:
+- **Wallet Connection Errors**: Better error messages with recovery actions
+- **Transaction Failures**: Clear error explanations with retry options
+- **Network Issues**: Offline state handling and reconnection
+
+### 3. Micro-Interactions & Animations
+
+#### Animation Enhancements:
+- **Button States**: Hover, active, and loading animations
+- **Modal Transitions**: Smooth open/close animations
+- **Status Changes**: Smooth transitions between states
+- **Success Feedback**: Celebration animations for completed transactions
+
+#### Implementation:
+- Use Framer Motion for complex animations
+- CSS transitions for simple state changes
+- Loading spinners with blockchain-specific styling
+- Progress indicators for multi-step processes
+
+### 4. Mobile-First Improvements
+
+#### Mobile Enhancements:
+- **Bottom Sheet Modals**: Mobile-optimized modal designs
+- **Touch Gestures**: Swipe to dismiss, pull to refresh
+- **Responsive Typography**: Better mobile text scaling
+- **Thumb-Friendly Navigation**: Bottom navigation for mobile
+
+#### Implementation Areas:
+- **Wallet Modals**: [components/unified-wallet-modal.tsx](mdc:components/unified-wallet-modal.tsx)
+- **Purchase Flow**: [components/purchase-interface.tsx](mdc:components/purchase-interface.tsx)
+- **Transaction Modal**: [components/transaction-modal.tsx](mdc:components/transaction-modal.tsx)
+
+### 5. Accessibility Improvements
+
+#### ARIA Implementation:
+- **Modal Accessibility**: Proper ARIA labels and focus management
+- **Form Labels**: Comprehensive form labeling
+- **Status Announcements**: Screen reader announcements for state changes
+- **Keyboard Navigation**: Full keyboard accessibility
+
+#### Implementation Areas:
+- **All Modals**: Proper focus trapping and ARIA labels
+- **Forms**: [components/purchase-interface.tsx](mdc:components/purchase-interface.tsx)
+- **Navigation**: [components/header.tsx](mdc:components/header.tsx)
+
+### 6. Visual Design Enhancements
+
+#### Design System Improvements:
+- **Typography Scale**: More refined typography hierarchy
+- **Spacing System**: Consistent spacing scale
+- **Icon System**: Consistent icon usage and sizing
+- **Color Refinements**: Better color contrast and accessibility
+
+#### Component Enhancements:
+- **Card Designs**: More sophisticated card layouts
+- **Button Variants**: Additional button styles for different contexts
+- **Progress Indicators**: Better progress visualization
+- **Status Indicators**: Clearer status communication
+
+### 7. Data Visualization Improvements
+
+#### Chart Enhancements:
+- **Interactive Charts**: Better chart interactions
+- **Real-time Updates**: Live data updates in charts
+- **Better Tooltips**: More informative chart tooltips
+- **Responsive Charts**: Better mobile chart experience
+
+#### Implementation Areas:
+- **Portfolio Charts**: [components/investment-portfolio.tsx](mdc:components/investment-portfolio.tsx)
+- **Presale Progress**: [components/presale-progress.tsx](mdc:components/presale-progress.tsx)
+
+### 8. User Onboarding
+
+#### Onboarding Flow:
+- **Welcome Tour**: Interactive product tour
+- **Feature Highlights**: Progressive feature discovery
+- **Help System**: Contextual help and tooltips
+- **Tutorial Mode**: Guided first-time user experience
+
+#### Implementation:
+- New onboarding components
+- Progressive disclosure of features
+- Contextual help tooltips
+- Interactive tutorials
+
+## Implementation Priority
+
+### Phase 1: Critical UX Issues
+1. **Loading States**: Implement skeleton loading
+2. **Error Handling**: Enhanced error recovery
+3. **Mobile Optimization**: Mobile-first modal designs
+4. **Accessibility**: Basic ARIA implementation
+
+### Phase 2: Visual Polish
+1. **Micro-animations**: Smooth state transitions
+2. **Visual Hierarchy**: Improved information design
+3. **Component Refinements**: Enhanced component designs
+4. **Typography**: Refined typography system
+
+### Phase 3: Advanced Features
+1. **Advanced Interactions**: Gestures and animations
+2. **User Onboarding**: Comprehensive onboarding flow
+3. **Personalization**: User preference customization
+4. **Advanced Accessibility**: Full accessibility compliance
+
+## Technical Implementation
+
+### New Dependencies Needed:
+```json
+{
+  "framer-motion": "^10.x.x", // For animations
+  "react-hotkeys-hook": "^4.x.x", // For keyboard shortcuts
+  "react-intersection-observer": "^9.x.x" // For scroll animations
+}
+```
+
+### CSS Enhancements:
+- **Custom Properties**: Extended CSS custom properties
+- **Animation Classes**: Reusable animation classes
+- **Responsive Utilities**: Enhanced responsive design utilities
+- **Accessibility Classes**: Focus and high-contrast utilities
+
+### Component Architecture:
+- **Composition Pattern**: Better component composition
+- **Hook-based Logic**: Extract UI logic into custom hooks
+- **Context Providers**: Theme and state context providers
+- **Error Boundaries**: Comprehensive error boundary system
+
+## Success Metrics
+
+### User Experience Metrics:
+- **Task Completion Rate**: Measure successful purchase completion
+- **Time to Complete**: Reduce time from landing to purchase
+- **Error Recovery Rate**: Improve error recovery success
+- **Mobile Usage**: Increase mobile transaction completion
+
+### Accessibility Metrics:
+- **WCAG Compliance**: Achieve WCAG 2.1 AA compliance
+- **Keyboard Navigation**: 100% keyboard accessibility
+- **Screen Reader Compatibility**: Full screen reader support
+- **Color Contrast**: Meet accessibility contrast requirements
+
+### Performance Metrics:
+- **Loading Times**: Reduce perceived loading times
+- **Animation Performance**: 60fps animations
+- **Mobile Performance**: Optimize for mobile devices
+- **Bundle Size**: Maintain reasonable bundle sizes

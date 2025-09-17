@@ -1,0 +1,245 @@
+---
+description: Payment processing flow and transaction handling
+globs: **/transaction-*.tsx,**/payment-*.tsx,**/purchase-*.tsx,**/transaction-handler.ts,**/payment-config.ts
+---
+
+# LUTAR Payment Processing System
+
+## Overview
+Multi-chain payment processing system supporting native cryptocurrencies and stablecoins across 7 blockchains with real-time transaction handling.
+
+## Core Components
+
+### 1. Payment Configuration - [lib/payment-config.ts](mdc:lib/payment-config.ts)
+**Centralized payment wallet addresses and currency configurations**
+
+#### Payment Wallets (Pre-configured addresses):
+```typescript
+// Native currencies
+BTC: "bc1qarvyg3f4ymcwrp0naftqm6zq05j233s82cpaq2"
+ETH: "0x047693b22f3f9F246A563872E58056f0C766337b"
+BNB: "0xb23DdB2b79d9af4e4DCE7C457e48F7912e242e9a"
+SOL: "EgJbUJKNn8eUpKLEqXPbogEUiUsYE7J5MWLXcEBWHA29"
+POL: "0xC8a68Cf65CBf292A0Bc3677af6C932926f2aBAd3"
+TRX: "TZFV48S6UVGYvFmLybPgTAwtqm4pKQX4eQ"
+TON: "EQBNY7a1Gsy1O7TX0OhGBnM8YhpHQ6mAWIjq2glCTuJ1SlxF"
+
+// Stablecoins
+USDC-ERC20: "0x931EecD3bf8f4ed5359C52016fb8F06D29C6202a"
+USDC-BEP20: "0x5d882e17B8aeeB0f0e82701DB436C42dE2990a83"
+USDT-TRC20: "TY8JjNbWDVA6wbTFot8vEL8vMNXFYdsibg"
+// ... additional stablecoin addresses
+```
+
+#### Currency Interface:
+```typescript
+interface PaymentCurrency {
+  symbol: string
+  name: string
+  chain: string
+  type: "native" | "token"
+  contractAddress?: string
+  decimals: number
+  wallet: PaymentWallet
+}
+```
+
+### 2. Transaction Handler - [lib/transaction-handler.ts](mdc:lib/transaction-handler.ts)
+**Multi-chain transaction execution engine**
+
+#### Supported Chains:
+- **EVM Chains**: ETH, BNB, POL (via MetaMask)
+- **Bitcoin**: BTC (via Unisat/Xverse)
+- **Solana**: SOL (via Phantom/Solflare)
+- **TRON**: TRX (via TronLink)
+- **TON**: TON (via Tonkeeper)
+
+#### Transaction Flow:
+```typescript
+interface TransactionParams {
+  currency: PaymentCurrency
+  amount: string // Amount in currency's base unit
+  userAddress: string
+  walletAdapter: any
+}
+```
+
+#### Chain-Specific Implementation:
+1. **EVM Transactions**: Native transfers + ERC-20/BEP-20 token transfers
+2. **Bitcoin**: UTXO-based transfers with proper fee calculation
+3. **Solana**: SPL token transfers with account creation
+4. **TRON**: TRC-20 token transfers with energy/bandwidth
+5. **TON**: Jetton transfers with proper message handling
+
+### 3. Purchase Interface - [components/purchase-interface.tsx](mdc:components/purchase-interface.tsx)
+**Main purchase flow component**
+
+#### Flow Steps:
+1. **Blockchain Selection**: Choose payment blockchain
+2. **Payment Token Selection**: Choose native token or stablecoin
+3. **Amount Input**: Enter payment amount or LUTAR tokens desired
+4. **Wallet Connection**: Connect appropriate wallet
+5. **Transaction Execution**: Process payment
+
+#### Key Features:
+- **Real-time Calculations**: USD value and LUTAR token calculations
+- **Exchange Rate Integration**: Mock exchange rates (needs real API)
+- **Amount Validation**: Minimum purchase validation
+- **Balance Checking**: Sufficient balance verification
+
+#### Calculation Logic:
+```typescript
+// LUTAR token calculation
+const lutarPrice = 0.045 // $0.045 per LUTAR
+const usdValue = selectedToken === "USDC" || selectedToken === "USDT" 
+  ? Number(paymentAmount)
+  : Number(paymentAmount) * exchangeRate * 50000 // Mock rate
+const lutarTokens = usdValue / lutarPrice
+```
+
+### 4. Transaction Modal - [components/transaction-modal.tsx](mdc:components/transaction-modal.tsx)
+**Transaction confirmation and processing interface**
+
+#### Transaction States:
+1. **Security Check**: User confirms transaction details
+2. **Verification**: Contract and address verification
+3. **Confirming**: User approval in wallet
+4. **Processing**: Transaction broadcast to blockchain
+5. **Completed**: Transaction confirmed
+6. **Failed**: Error handling and retry options
+
+#### Security Features:
+- **Transaction Details**: Clear display of all transaction parameters
+- **Address Verification**: Contract address verification
+- **Amount Confirmation**: Double confirmation of payment amount
+- **Gas Estimation**: Estimated gas fees display
+
+### 5. Purchase Summary - [components/purchase-summary.tsx](mdc:components/purchase-summary.tsx)
+**Transaction summary and confirmation**
+
+#### Display Elements:
+- **Payment Method**: Selected token and blockchain
+- **Amounts**: Payment amount and LUTAR tokens received
+- **Bonus Calculation**: Early bird bonus (15%)
+- **Gas Fees**: Estimated transaction fees
+- **Price Information**: Current and next phase pricing
+
+## Payment Flow Architecture
+
+### 1. Purchase Initiation
+```
+User enters purchase amount
+→ System calculates LUTAR tokens
+→ User selects payment method
+→ Wallet connection verified
+→ Transaction modal opens
+```
+
+### 2. Transaction Processing
+```
+User confirms transaction details
+→ Security checks performed
+→ Wallet transaction initiated
+→ User approves in wallet
+→ Transaction broadcast to blockchain
+→ Confirmation waiting
+→ Success/failure handling
+```
+
+### 3. Post-Transaction
+```
+Transaction confirmed
+→ LUTAR tokens allocated to user
+→ Transaction recorded in history
+→ User dashboard updated
+→ Receipt generated
+```
+
+## Security Implementation
+
+### 1. Transaction Security - [components/transaction-security-check.tsx](mdc:components/transaction-security-check.tsx)
+**Multi-step security verification**
+
+#### Security Checks:
+- **Contract Address**: Verify correct contract address
+- **Amount Validation**: Confirm payment amount
+- **Recipient Verification**: Verify payment recipient
+- **Gas Limits**: Validate gas parameters
+- **Network Confirmation**: Ensure correct network
+
+### 2. Security Verification - [components/security-verification.tsx](mdc:components/security-verification.tsx)
+**Advanced security validation**
+
+#### Verification Steps:
+- **Smart Contract Verification**: Contract code verification
+- **Address Validation**: Recipient address validation
+- **Transaction Simulation**: Dry-run transaction simulation
+- **Risk Assessment**: Transaction risk analysis
+
+## Integration with LUTAR Token Distribution
+
+### Automatic Token Distribution
+According to project requirements:
+- **Thirdweb Engine**: Self-hosted instance for token distribution
+- **Webhook Integration**: Payment confirmation triggers token distribution
+- **BSC Delivery**: LUTAR tokens sent to user's BSC address
+- **Vesting Schedule**: Tokens subject to vesting schedule
+
+### Token Allocation
+- **Base Tokens**: Calculated based on payment amount
+- **Bonus Tokens**: 15% early bird bonus
+- **Referral Rewards**: 5% referral commission
+- **Vesting**: Gradual token release schedule
+
+## Error Handling
+
+### Transaction Errors
+- **Insufficient Balance**: Clear error with balance check
+- **Network Errors**: Retry mechanisms
+- **User Rejection**: Graceful handling of user cancellation
+- **Timeout**: Transaction timeout handling
+
+### Recovery Strategies
+- **Retry Logic**: Automatic retry for transient failures
+- **Fallback Methods**: Alternative payment methods
+- **Manual Recovery**: User-initiated retry options
+
+## Current Limitations & Enhancements Needed
+
+### Mock Data Issues
+1. **Exchange Rates**: Currently using mock rates (50000 multiplier)
+2. **Balance Fetching**: Some chains return mock balance data
+3. **Gas Estimation**: Basic gas estimation, needs real-time data
+4. **Price Data**: LUTAR price is hardcoded ($0.045)
+
+### Required Improvements
+1. **Real Exchange APIs**: Integrate real cryptocurrency exchange APIs
+2. **Dynamic Pricing**: Real-time LUTAR token pricing
+3. **Gas Optimization**: Dynamic gas price calculation
+4. **Transaction Monitoring**: Real-time transaction status tracking
+5. **Webhook Integration**: Implement Thirdweb engine webhook
+6. **Error Recovery**: Enhanced error handling and recovery
+7. **Multi-signature**: Optional multi-signature for large transactions
+8. **Batch Processing**: Support for batch transactions
+
+### API Integrations Needed
+1. **Price APIs**: CoinGecko, CoinMarketCap for real-time prices
+2. **Gas APIs**: ETH Gas Station, GasNow for gas estimation
+3. **Blockchain APIs**: Infura, Alchemy for reliable RPC access
+4. **Exchange APIs**: Real exchange rate APIs
+5. **Webhook Services**: Thirdweb engine integration
+
+## Testing Considerations
+
+### Test Scenarios
+1. **Multi-chain Testing**: Test all 7 supported blockchains
+2. **Wallet Compatibility**: Test all supported wallet types
+3. **Error Scenarios**: Test all error conditions
+4. **Security Testing**: Penetration testing for transaction security
+5. **Performance Testing**: High-volume transaction testing
+
+### Mock Data Replacement Strategy
+1. **Environment Configuration**: Separate dev/prod configurations
+2. **API Fallbacks**: Graceful fallback to mock data
+3. **Feature Flags**: Enable/disable real API integration
+4. **Monitoring**: Track API usage and performance

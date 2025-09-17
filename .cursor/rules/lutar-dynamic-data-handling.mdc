@@ -1,0 +1,311 @@
+---
+description: Dynamic data handling and real-time updates
+globs: **/*.ts,**/balance-fetcher.ts,**/use-wallet.ts,**/*-stats.tsx,**/*-metrics.tsx
+---
+
+# LUTAR Dynamic Data Handling
+
+## Overview
+Implementation strategy for dynamic data fetching, real-time updates, and contract data integration to replace static/mock data with live blockchain information.
+
+## Current Data Sources
+
+### 1. Balance Fetching - [lib/balance-fetcher.ts](mdc:lib/balance-fetcher.ts)
+**Multi-chain balance retrieval system**
+
+#### Current Implementation:
+```typescript
+export async function fetchWalletBalances(address: string, chain: string): Promise<WalletBalances> {
+  switch (chain) {
+    case "ETH": return await fetchEthereumBalances(address)
+    case "BNB": return await fetchBSCBalances(address)
+    case "SOL": return await fetchSolanaBalances(address)
+    // ... other chains
+  }
+}
+```
+
+#### Current Issues:
+- **Mock Data**: Some chains return hardcoded mock data
+- **No Caching**: No caching mechanism for balance data
+- **Limited Error Handling**: Basic error handling without retry logic
+- **No Real-time Updates**: Static balance fetching without live updates
+
+#### Enhancement Requirements:
+- **Real API Integration**: Replace mock data with actual blockchain APIs
+- **Caching Strategy**: Implement intelligent caching with TTL
+- **Real-time Updates**: WebSocket or polling for live balance updates
+- **Error Recovery**: Robust error handling with exponential backoff
+
+### 2. Presale Statistics - [components/presale-stats.tsx](mdc:components/presale-stats.tsx)
+**Static presale metrics display**
+
+#### Current Static Data:
+```typescript
+const stats = [
+  { label: "Total Raised", value: "$2,847,392", change: "+12.5%" },
+  { label: "Participants", value: "8,429", change: "+8.2%" },
+  { label: "Soft Cap", value: "$5,000,000", change: "57% Complete" },
+  { label: "Hard Cap", value: "$15,000,000", change: "19% Complete" }
+]
+```
+
+#### Enhancement Requirements:
+- **Real-time Metrics**: Live presale statistics from smart contracts
+- **Historical Data**: Track presale progress over time
+- **Participant Analytics**: Real participant count and growth
+- **Dynamic Progress**: Live progress bars and countdown timers
+
+### 3. Transaction History - [components/transaction-history.tsx](mdc:components/transaction-history.tsx)
+**Static transaction data**
+
+#### Current Mock Data:
+```typescript
+const transactions = [
+  {
+    id: "0x1234...5678",
+    type: "Purchase",
+    amount: "$1,000.00",
+    tokens: "22,222 LUTAR",
+    chain: "ETH",
+    status: "Completed",
+    date: "2024-03-15 14:30"
+  }
+  // ... more mock transactions
+]
+```
+
+#### Enhancement Requirements:
+- **Blockchain Integration**: Fetch real transaction data from blockchains
+- **Cross-chain Aggregation**: Aggregate transactions across all chains
+- **Real-time Updates**: Live transaction status updates
+- **Transaction Details**: Detailed transaction information and confirmations
+
+## Dynamic Data Architecture
+
+### 1. Data Fetching Strategy
+
+#### API Integration Layer
+```typescript
+// New service layer needed
+interface DataService {
+  getPresaleMetrics(): Promise<PresaleMetrics>
+  getWalletBalances(address: string, chain: string): Promise<WalletBalances>
+  getTransactionHistory(address: string): Promise<Transaction[]>
+  getTokenPrice(symbol: string): Promise<number>
+  getExchangeRate(from: string, to: string): Promise<number>
+}
+```
+
+#### Implementation Areas:
+- **Blockchain RPCs**: Direct blockchain node connections
+- **Price APIs**: CoinGecko, CoinMarketCap integration
+- **Analytics APIs**: Presale metrics and participant data
+- **WebSocket Services**: Real-time data streaming
+
+### 2. Real-time Updates
+
+#### WebSocket Integration
+```typescript
+// Real-time data streaming
+interface RealtimeService {
+  subscribeToBalances(address: string, chain: string): void
+  subscribeToPresaleMetrics(): void
+  subscribeToTransactionUpdates(txHash: string): void
+  subscribeToPriceUpdates(symbols: string[]): void
+}
+```
+
+#### Update Strategies:
+- **Balance Updates**: Real-time balance changes
+- **Price Updates**: Live cryptocurrency price feeds
+- **Transaction Status**: Real-time transaction confirmations
+- **Presale Progress**: Live presale metrics updates
+
+### 3. Caching Strategy
+
+#### Intelligent Caching
+```typescript
+interface CacheService {
+  get<T>(key: string): Promise<T | null>
+  set<T>(key: string, value: T, ttl: number): Promise<void>
+  invalidate(pattern: string): Promise<void>
+  refresh<T>(key: string, fetcher: () => Promise<T>): Promise<T>
+}
+```
+
+#### Cache Layers:
+- **Memory Cache**: Fast access for frequently used data
+- **Local Storage**: Persistent cache for user-specific data
+- **IndexedDB**: Large data storage for transaction history
+- **Service Worker**: Offline data caching
+
+## Contract Data Integration
+
+### 1. Smart Contract Integration
+
+#### Contract Addresses (from project requirements):
+```typescript
+const LUTAR_CONTRACT = "0x2770904185Ed743d991D8fA21C8271ae6Cd4080E" // BSC
+```
+
+#### Contract Data Sources:
+- **Presale Contract**: Total raised, participant count, progress
+- **Token Contract**: Token supply, vesting schedules, distribution
+- **Vesting Contract**: User token vesting information
+- **Referral Contract**: Referral rewards and statistics
+
+#### Implementation:
+```typescript
+interface ContractService {
+  getPresaleInfo(): Promise<PresaleInfo>
+  getUserVesting(address: string): Promise<VestingInfo>
+  getReferralStats(address: string): Promise<ReferralStats>
+  getTokenSupply(): Promise<TokenSupply>
+}
+```
+
+### 2. Multi-chain Data Aggregation
+
+#### Cross-chain Data Strategy:
+- **Primary Chain**: BSC for LUTAR token operations
+- **Payment Chains**: Aggregate payment data from all 7 chains
+- **Unified Dashboard**: Combine data from all chains
+- **Transaction Mapping**: Map cross-chain transactions to user accounts
+
+## Implementation Plan
+
+### Phase 1: Core Data Services
+1. **Balance Service**: Real blockchain balance fetching
+2. **Price Service**: Live cryptocurrency prices
+3. **Transaction Service**: Real transaction data
+4. **Cache Service**: Intelligent caching layer
+
+### Phase 2: Real-time Updates
+1. **WebSocket Integration**: Real-time data streaming
+2. **Live Metrics**: Real-time presale statistics
+3. **Transaction Monitoring**: Live transaction status
+4. **Price Feeds**: Real-time price updates
+
+### Phase 3: Contract Integration
+1. **Smart Contract Reading**: Contract data integration
+2. **Multi-chain Aggregation**: Cross-chain data combination
+3. **Vesting Data**: User vesting information
+4. **Referral System**: Real referral tracking
+
+## Required API Integrations
+
+### 1. Blockchain APIs
+```typescript
+// Required RPC endpoints
+const BLOCKCHAIN_RPCS = {
+  ETH: "https://mainnet.infura.io/v3/",
+  BNB: "https://bsc-dataseed.binance.org/",
+  SOL: "https://api.mainnet-beta.solana.com",
+  POL: "https://polygon-rpc.com/",
+  TRX: "https://api.trongrid.io",
+  TON: "https://toncenter.com/api/v2/",
+  BTC: "https://blockstream.info/api/"
+}
+```
+
+### 2. Price APIs
+```typescript
+// Price data sources
+const PRICE_APIS = {
+  COINGECKO: "https://api.coingecko.com/api/v3/",
+  COINMARKETCAP: "https://pro-api.coinmarketcap.com/v1/",
+  BINANCE: "https://api.binance.com/api/v3/",
+  COINBASE: "https://api.coinbase.com/v2/"
+}
+```
+
+### 3. Analytics APIs
+```typescript
+// Analytics and metrics
+const ANALYTICS_APIS = {
+  PRESALE_METRICS: "https://api.lutar.io/presale/metrics",
+  PARTICIPANT_DATA: "https://api.lutar.io/participants",
+  TRANSACTION_DATA: "https://api.lutar.io/transactions"
+}
+```
+
+## Data Flow Architecture
+
+### 1. Data Fetching Flow
+```
+User Action → Cache Check → API Call → Data Processing → UI Update
+     ↓              ↓           ↓            ↓            ↓
+   Trigger    Cache Hit?   Fetch Data   Transform    Render
+   Event      Return       from API     Data         Component
+```
+
+### 2. Real-time Update Flow
+```
+WebSocket → Data Processing → Cache Update → UI Update
+    ↓            ↓               ↓            ↓
+  Receive    Parse Data      Update Cache   Trigger
+  Event      & Validate      with New      Re-render
+```
+
+### 3. Error Handling Flow
+```
+API Error → Error Classification → Retry Logic → Fallback → User Notification
+    ↓             ↓                    ↓           ↓            ↓
+  Catch       Network/Data         Exponential   Show Cached   Display
+  Error       Error Types          Backoff       Data         Error
+```
+
+## Performance Considerations
+
+### 1. Data Optimization
+- **Lazy Loading**: Load data only when needed
+- **Pagination**: Implement pagination for large datasets
+- **Debouncing**: Debounce frequent API calls
+- **Request Batching**: Batch multiple API requests
+
+### 2. Caching Strategy
+- **TTL Management**: Appropriate cache expiration times
+- **Cache Invalidation**: Smart cache invalidation
+- **Preloading**: Preload critical data
+- **Background Refresh**: Refresh data in background
+
+### 3. Error Recovery
+- **Retry Logic**: Exponential backoff for failed requests
+- **Fallback Data**: Show cached data when APIs fail
+- **Graceful Degradation**: Maintain functionality with limited data
+- **User Feedback**: Clear error messages and recovery actions
+
+## Testing Strategy
+
+### 1. Data Service Testing
+- **Unit Tests**: Test individual data services
+- **Integration Tests**: Test API integrations
+- **Mock Services**: Mock external APIs for testing
+- **Error Scenarios**: Test error handling and recovery
+
+### 2. Real-time Testing
+- **WebSocket Testing**: Test real-time data streams
+- **Performance Testing**: Test with high data volumes
+- **Network Testing**: Test with poor network conditions
+- **Concurrency Testing**: Test concurrent data updates
+
+### 3. Cache Testing
+- **Cache Hit/Miss**: Test caching behavior
+- **Cache Invalidation**: Test cache expiration
+- **Memory Management**: Test memory usage
+- **Offline Testing**: Test offline data availability
+
+## Monitoring & Analytics
+
+### 1. Data Quality Monitoring
+- **API Response Times**: Monitor API performance
+- **Data Accuracy**: Validate data accuracy
+- **Error Rates**: Track API error rates
+- **Cache Performance**: Monitor cache hit rates
+
+### 2. User Experience Metrics
+- **Data Load Times**: Measure data loading performance
+- **Real-time Latency**: Track real-time update delays
+- **Error Recovery**: Measure error recovery success
+- **User Satisfaction**: Track user experience metrics
