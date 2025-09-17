@@ -115,28 +115,28 @@ A multi-chain LUTAR token presale platform that allows users to participate in L
 - Automatic LUTAR Token sending to BSC user address he provided(performed by Thirdweb engine self-hosted instance after webhook receiving)
 - Security auditing for payment processing
 ## Wallet list:
-BTC: bc1qarvyg3f4ymcwrp0naftqm6zq05j233s82cpaq2
-ETH: 0x047693b22f3f9F246A563872E58056f0C766337b
-BNB: 0xb23DdB2b79d9af4e4DCE7C457e48F7912e242e9a
-TRX: TLyKLx3w3hJGJgzhSjvdRJbYt85RLdBX7M
-SOL: EgJbUJKNn8eUpKLEqXPbogEUiUsYE7J5MWLXcEBWHA29
-POL: 0xC8a68Cf65CBf292A0Bc3677af6C932926f2aBAd3
+BTC: bc1qwftz8tm698pmmg5y0nrqffe5egtd05uaf0cflc
+ETH: 0x6e8E31e66826424B318aBcD97DcabAF0C0d52736
+BNB: 0x6e8E31e66826424B318aBcD97DcabAF0C0d52736
+TRX: TPmj9q2R53ytGGu8gL7CFLwCqGxprEUe9r
+SOL: 2qyJAaBoeNBnXb2zmnYBzLAGRKGhmHqgb2ZejqMpuoue
+POL: 0x6e8E31e66826424B318aBcD97DcabAF0C0d52736
 TON: {
-    address: EQBNY7a1Gsy1O7TX0OhGBnM8YhpHQ6mAWIjq2glCTuJ1SlxF
-    comment, tag or note: 4122895226
+    address: UQAKRgdm0BN7Bgfojsj-bJMrwvFUw0sY5BPGeGgF8mtckTQI
+    comment, tag or note:
 }
-USDC ERC-20: 0x931EecD3bf8f4ed5359C52016fb8F06D29C6202a
-USDC BEP-20: 0x5d882e17B8aeeB0f0e82701DB436C42dE2990a83
-USDC POL: 0x131050060158C764331Df2588a172d02406dfF14
-USDC SOL: 7cGELFBgYjGjZ9ruo5ckXf4ZomNkgQxoRGjrMPwwKAho
+USDC ERC-20: 0x6e8E31e66826424B318aBcD97DcabAF0C0d52736
+USDC BEP-20: 0x6e8E31e66826424B318aBcD97DcabAF0C0d52736
+USDC POL: 0x6e8E31e66826424B318aBcD97DcabAF0C0d52736
+USDC SOL: 2qyJAaBoeNBnXb2zmnYBzLAGRKGhmHqgb2ZejqMpuoue
 
-USDT TRC-20: TY8JjNbWDVA6wbTFot8vEL8vMNXFYdsibg
+USDT TRC-20: TPmj9q2R53ytGGu8gL7CFLwCqGxprEUe9r
 USDT TON: { 
-    address: EQBNY7a1Gsy1O7TX0OhGBnM8YhpHQ6mAWIjq2glCTuJ1SlxF
-    comment, tag or note: 7749351237
+    address: UQAKRgdm0BN7Bgfojsj-bJMrwvFUw0sY5BPGeGgF8mtckTQI
+    comment, tag or note:
 }
-USDT POL: 0x3e62F373D69062A0B5b2851b677Ad8ab1F557aF1
-USDT ERC-20: 0xBf8A4341Fe649018D3C56f85092233EdC7242f12
+USDT POL: 0x6e8E31e66826424B318aBcD97DcabAF0C0d52736
+USDT ERC-20: 0x6e8E31e66826424B318aBcD97DcabAF0C0d52736
 
 
 Integrate it so depending on what payment currency selected the user, by clicking the buy button prepared transaction will be executed and user will be able to approve it from correct connected wallet

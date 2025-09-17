@@ -23,7 +23,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     type: "native",
     decimals: 8,
     wallet: {
-      address: "bc1qarvyg3f4ymcwrp0naftqm6zq05j233s82cpaq2",
+      address: "bc1qwftz8tm698pmmg5y0nrqffe5egtd05uaf0cflc",
     },
   },
   ETH: {
@@ -33,7 +33,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     type: "native",
     decimals: 18,
     wallet: {
-      address: "0x047693b22f3f9F246A563872E58056f0C766337b",
+      address: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
     },
   },
   BNB: {
@@ -43,7 +43,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     type: "native",
     decimals: 18,
     wallet: {
-      address: "0xb23DdB2b79d9af4e4DCE7C457e48F7912e242e9a",
+      address: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
     },
   },
   TRX: {
@@ -53,7 +53,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     type: "native",
     decimals: 6,
     wallet: {
-      address: "TLyKLx3w3hJGJgzhSjvdRJbYt85RLdBX7M",
+      address: "TPmj9q2R53ytGGu8gL7CFLwCqGxprEUe9r",
     },
   },
   SOL: {
@@ -63,7 +63,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     type: "native",
     decimals: 9,
     wallet: {
-      address: "EgJbUJKNn8eUpKLEqXPbogEUiUsYE7J5MWLXcEBWHA29SlxF",
+      address: "2qyJAaBoeNBnXb2zmnYBzLAGRKGhmHqgb2ZejqMpuoue",
     },
   },
   POL: {
@@ -73,7 +73,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     type: "native",
     decimals: 18,
     wallet: {
-      address: "0xC8a68a33E6441c8C06DD2c5b0b5B3173a6c5b8c2",
+      address: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
     },
   },
   TON: {
@@ -83,8 +83,8 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     type: "native",
     decimals: 9,
     wallet: {
-      address: "EQBNY7a1Gsy1O7TX0OhGBnM8YhpHQ6mAWIjq2glCTuJ1SlxF",
-      comment: "4122895226",
+      address: "UQAKRgdm0BN7Bgfojsj-bJMrwvFUw0sY5BPGeGgF8mtckTQI",
+      comment: "",
     },
   },
   "USDC-ERC20": {
@@ -95,7 +95,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     contractAddress: "0xA0b86a33E6441c8C06DD2c5b0b5B3173a6c5b8c2",
     decimals: 6,
     wallet: {
-      address: "0x931EecD3bf8f4ed5359C52016fb8F06D29C6202a",
+      address: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
     },
   },
   "USDC-BEP20": {
@@ -106,7 +106,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     contractAddress: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
     decimals: 18,
     wallet: {
-      address: "0x5d882e17B8aeeB0f0e82701DB436C42dE2990a83",
+      address: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
     },
   },
   "USDC-POL": {
@@ -117,7 +117,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     contractAddress: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
     decimals: 6,
     wallet: {
-      address: "0x131050060158C764331Df2588a172d02406dfF14",
+      address: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
     },
   },
   "USDC-SOL": {
@@ -128,7 +128,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     contractAddress: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
     decimals: 6,
     wallet: {
-      address: "7cGELFBgYjGjZ9ruo5ckXf4ZomNkgQxoRGjrMPwwKAho",
+      address: "2qyJAaBoeNBnXb2zmnYBzLAGRKGhmHqgb2ZejqMpuoue",
     },
   },
   "USDT-TRC20": {
@@ -139,7 +139,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     contractAddress: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
     decimals: 6,
     wallet: {
-      address: "TY8JjNbWDVA6wbTFot8vEL8vMNXFYdsibg",
+      address: "TPmj9q2R53ytGGu8gL7CFLwCqGxprEUe9r",
     },
   },
   "USDT-TON": {
@@ -150,8 +150,8 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     contractAddress: "EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs",
     decimals: 6,
     wallet: {
-      address: "EQBNY7a1Gsy1O7TX0OhGBnM8YhpHQ6mAWIjq2glCTuJ1SlxF",
-      comment: "7749351237",
+      address: "UQAKRgdm0BN7Bgfojsj-bJMrwvFUw0sY5BPGeGgF8mtckTQI",
+      comment: "",
     },
   },
   "USDT-POL": {
@@ -162,7 +162,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     contractAddress: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
     decimals: 6,
     wallet: {
-      address: "0x3e62F373D69062A0B5b2851b677Ad8ab1F557aF1",
+      address: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
     },
   },
   "USDT-ERC20": {
@@ -173,7 +173,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     contractAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
     decimals: 6,
     wallet: {
-      address: "0xBf8A4341Fe649018D3C56f85092233EdC7242f12",
+      address: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
     },
   },
 }
