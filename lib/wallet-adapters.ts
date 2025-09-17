@@ -282,6 +282,10 @@ export class TronLinkAdapter implements WalletAdapter {
   icon = "🔴"
   description = "Official TRON wallet"
 
+  get tronWeb() {
+    return typeof window !== "undefined" ? (window as any).tronWeb : null
+  }
+
   isInstalled(): boolean {
     return typeof window !== "undefined" && "tronWeb" in window
   }
@@ -292,8 +296,8 @@ export class TronLinkAdapter implements WalletAdapter {
     }
 
     try {
-      const tronWeb = (window as any).tronWeb
-      if (!tronWeb.ready) {
+      const tronWeb = this.tronWeb
+      if (!tronWeb || !tronWeb.ready) {
         throw new Error("TronLink is not ready")
       }
 
@@ -317,7 +321,9 @@ export class TronLinkAdapter implements WalletAdapter {
   async getBalance(address: string): Promise<string> {
     if (!this.isInstalled()) return "0.0000"
     try {
-      const balance = await (window as any).tronWeb.trx.getBalance(address)
+      const tronWeb = this.tronWeb
+      if (!tronWeb) return "0.0000"
+      const balance = await tronWeb.trx.getBalance(address)
       return (balance / 1000000).toFixed(4)
     } catch {
       return "0.0000"

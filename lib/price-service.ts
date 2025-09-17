@@ -33,6 +33,7 @@ const FALLBACK_PRICES = {
   TON: 2.5,
   USDC: 1,
   USDT: 1,
+  LUTAR: 0.004, // LUTAR token price in USD
 }
 
 // Supported tokens mapping
@@ -46,6 +47,7 @@ const TOKEN_IDS = {
   TON: "the-open-network",
   USDC: "usd-coin",
   USDT: "tether",
+  LUTAR: "lutar-token", // LUTAR token ID for API calls
 }
 
 export class PriceService {

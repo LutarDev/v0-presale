@@ -145,30 +145,60 @@ export class TransactionHandler {
   private static async executeTronTransaction(params: TransactionParams): Promise<TransactionResult> {
     const { currency, amount, walletAdapter } = params
 
-    if (!walletAdapter?.tronWeb) {
-      throw new Error("TronLink wallet not connected")
+    console.log("[v0] TronLink transaction debug:", {
+      hasWindow: typeof window !== "undefined",
+      hasTronWeb: typeof window !== "undefined" && !!(window as any).tronWeb,
+      walletAdapter: walletAdapter?.name,
+      currency: currency.symbol,
+      amount
+    })
+
+    // Check if TronLink is available
+    if (typeof window === "undefined" || !(window as any).tronWeb) {
+      throw new Error("TronLink wallet not installed")
     }
 
-    const tronWeb = walletAdapter.tronWeb
+    const tronWeb = (window as any).tronWeb
 
-    if (currency.type === "native") {
-      // Native TRX transfer
-      const tx = await tronWeb.transactionBuilder.sendTrx(
-        currency.wallet.address,
-        Number.parseInt(amount),
-        tronWeb.defaultAddress.base58,
-      )
+    console.log("[v0] TronWeb status:", {
+      ready: tronWeb.ready,
+      hasDefaultAddress: !!tronWeb.defaultAddress,
+      address: tronWeb.defaultAddress?.base58,
+      fullAddress: tronWeb.defaultAddress
+    })
 
-      const signedTx = await tronWeb.trx.sign(tx)
-      const result = await tronWeb.trx.sendRawTransaction(signedTx)
+    // Check if TronLink is ready and connected
+    if (!tronWeb.ready) {
+      throw new Error("TronLink wallet is not ready. Please refresh the page and try again.")
+    }
 
-      return { success: result.result, txHash: result.txid }
-    } else {
-      // TRC-20 token transfer
-      const contract = await tronWeb.contract().at(currency.contractAddress)
-      const result = await contract.transfer(currency.wallet.address, amount).send()
+    if (!tronWeb.defaultAddress || !tronWeb.defaultAddress.base58) {
+      throw new Error("TronLink wallet not connected. Please connect your wallet first.")
+    }
 
-      return { success: true, txHash: result }
+    try {
+      if (currency.type === "native") {
+        // Native TRX transfer
+        const tx = await tronWeb.transactionBuilder.sendTrx(
+          currency.wallet.address,
+          Number.parseInt(amount),
+          tronWeb.defaultAddress.base58,
+        )
+
+        const signedTx = await tronWeb.trx.sign(tx)
+        const result = await tronWeb.trx.sendRawTransaction(signedTx)
+
+        return { success: result.result, txHash: result.txid }
+      } else {
+        // TRC-20 token transfer
+        const contract = await tronWeb.contract().at(currency.contractAddress)
+        const result = await contract.transfer(currency.wallet.address, amount).send()
+
+        return { success: true, txHash: result }
+      }
+    } catch (error) {
+      console.error("[v0] TronLink transaction error:", error)
+      throw new Error(`TronLink transaction failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 

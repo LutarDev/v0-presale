@@ -21,6 +21,7 @@ interface TransactionModalProps {
   paymentAmount: string
   lutarAmount: string
   walletAddress: string
+  bscAddress: string
 }
 
 type TransactionStatus = "security-check" | "verification" | "confirming" | "processing" | "completed" | "failed"
@@ -33,6 +34,7 @@ export function TransactionModal({
   paymentAmount,
   lutarAmount,
   walletAddress,
+  bscAddress,
 }: TransactionModalProps) {
   const { adapter } = useWallet()
   const [status, setStatus] = useState<TransactionStatus>("security-check")
@@ -93,6 +95,17 @@ export function TransactionModal({
 
       // Convert payment amount to the currency's base unit (wei, satoshi, etc.)
       const amountInBaseUnit = (Number.parseFloat(paymentAmount) * Math.pow(10, paymentCurrency.decimals)).toString()
+
+      console.log("[v0] Transaction parameters:", {
+        paymentAmount,
+        amountInBaseUnit,
+        currency: paymentCurrency.symbol,
+        chain: paymentCurrency.chain,
+        decimals: paymentCurrency.decimals,
+        walletAddress,
+        adapterName: adapter?.name,
+        adapterType: typeof adapter
+      })
 
       const result = await TransactionHandler.executeTransaction({
         currency: paymentCurrency,
@@ -215,8 +228,12 @@ export function TransactionModal({
                     <span>{lutarAmount} LUTAR</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">To Address</span>
+                    <span className="text-muted-foreground">Payment To</span>
                     <span className="font-mono text-xs">{paymentCurrency?.wallet.address}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">LUTAR To</span>
+                    <span className="font-mono text-xs">{bscAddress}</span>
                   </div>
                   {paymentCurrency?.wallet.comment && (
                     <div className="flex justify-between">
@@ -272,6 +289,20 @@ export function TransactionModal({
                 <p className="text-sm text-muted-foreground mb-4">
                   You have successfully purchased {lutarAmount} LUTAR tokens
                 </p>
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-blue-500 mt-0.5" />
+                    <div className="text-sm text-blue-600">
+                      <p className="font-medium mb-1">LUTAR Tokens Distribution</p>
+                      <p>
+                        Your LUTAR tokens will be automatically sent to your BSC address: {bscAddress}
+                      </p>
+                      <p className="mt-1 text-xs">
+                        Distribution will be processed by our Thirdweb Engine backend after payment confirmation.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <Card className="p-4 text-left">

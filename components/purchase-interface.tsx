@@ -64,9 +64,10 @@ export function PurchaseInterface() {
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
   const [copied, setCopied] = useState(false)
-  const [lutarPrice, setLutarPrice] = useState(0.045) // Default price
+  const [lutarPrice, setLutarPrice] = useState(0.004) // Correct LUTAR price: $0.004 USD
   const [exchangeRates, setExchangeRates] = useState<Map<string, number>>(new Map())
   const [loadingPrices, setLoadingPrices] = useState(true)
+  const [bscAddress, setBscAddress] = useState("") // BSC address for receiving LUTAR tokens
 
   const selectedChainData = blockchains.find((blockchain) => blockchain.symbol === chain)
   const availableTokens = paymentTokens[chain as keyof typeof paymentTokens] || []
@@ -77,9 +78,8 @@ export function PurchaseInterface() {
       try {
         setLoadingPrices(true)
         
-        // Load LUTAR price (using ETH as proxy for now)
-        const lutarPriceValue = await priceService.getTokenPrice("ETH")
-        setLutarPrice(lutarPriceValue * 0.0001) // Convert to LUTAR price
+        // Load LUTAR price - use fixed price of $0.004
+        setLutarPrice(0.004)
         
         // Load exchange rates for all supported tokens
         const tokens = ["BTC", "ETH", "BNB", "SOL", "POL", "TRX", "TON"]
@@ -165,6 +165,7 @@ export function PurchaseInterface() {
       lutarAmount,
       isConnected,
       address,
+      bscAddress,
     })
 
     if (!isConnected) {
@@ -180,6 +181,12 @@ export function PurchaseInterface() {
 
     if (!lutarAmount || Number.parseFloat(lutarAmount) <= 0) {
       console.log("[v0] Invalid LUTAR amount:", lutarAmount)
+      return
+    }
+
+    if (!bscAddress || !bscAddress.startsWith("0x") || bscAddress.length !== 42) {
+      console.log("[v0] Invalid BSC address:", bscAddress)
+      alert("Please enter a valid BSC wallet address (0x...)")
       return
     }
 
@@ -314,16 +321,16 @@ export function PurchaseInterface() {
               <div className="bg-muted/50 rounded-lg p-3">
                 <div className="flex justify-between text-sm">
                   <span>Token Price:</span>
-                  <span className="font-medium">${lutarPrice}</span>
+                  <span className="font-medium">${lutarPrice.toFixed(3)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Next Phase Price:</span>
-                  <span className="font-medium text-accent">$0.055</span>
+                  <span className="font-medium text-accent">$0.005</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span>Your Savings:</span>
                   <span className="font-medium text-green-500">
-                    {lutarAmount ? `$${((0.055 - lutarPrice) * Number(lutarAmount)).toFixed(2)}` : "$0.00"}
+                    {lutarAmount ? `$${((0.005 - lutarPrice) * Number(lutarAmount)).toFixed(2)}` : "$0.00"}
                   </span>
                 </div>
               </div>
@@ -387,6 +394,43 @@ export function PurchaseInterface() {
               </div>
             )}
           </Card>
+
+          {/* BSC Address Input */}
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold mb-4">5. BSC Wallet Address</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">
+                  BSC Wallet Address for LUTAR Tokens
+                </label>
+                <Input
+                  type="text"
+                  placeholder="0x..."
+                  value={bscAddress}
+                  onChange={(e) => setBscAddress(e.target.value)}
+                  className="font-mono"
+                />
+                <p className="text-xs text-muted-foreground mt-2">
+                  Enter your BSC wallet address to receive LUTAR tokens after payment confirmation.
+                  LUTAR tokens will be sent immediately after successful payment.
+                </p>
+              </div>
+              {bscAddress && (
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="w-4 h-4 text-blue-500 mt-0.5" />
+                    <div className="text-sm text-blue-600">
+                      <p className="font-medium mb-1">Important</p>
+                      <p>
+                        LUTAR tokens will be automatically sent to this BSC address after payment confirmation.
+                        Make sure this is the correct address as transfers cannot be reversed.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
         </div>
 
         {/* Purchase Summary */}
@@ -414,6 +458,7 @@ export function PurchaseInterface() {
         paymentAmount={paymentAmount}
         lutarAmount={lutarAmount}
         walletAddress={address || ""}
+        bscAddress={bscAddress}
       />
     </div>
   )

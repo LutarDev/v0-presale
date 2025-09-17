@@ -53,7 +53,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     type: "native",
     decimals: 6,
     wallet: {
-      address: "TZFV48S6UVGYvFmLybPgTAwtqm4pKQX4eQ",
+      address: "TLyKLx3w3hJGJgzhSjvdRJbYt85RLdBX7M",
     },
   },
   SOL: {
