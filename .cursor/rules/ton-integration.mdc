@@ -1,0 +1,390 @@
+---
+description: TON Blockchain Integration Guidelines for LUTAR Presale Widget
+globs: lib/blockchain-config.ts,lib/wallet-adapters.ts,components/presale-widget/**/*
+---
+
+# TON Blockchain Integration Guidelines
+
+## Overview
+This rule provides comprehensive guidelines for integrating TON blockchain support into the LUTAR presale widget, extending the existing multi-chain infrastructure.
+
+## TON Configuration
+
+### Blockchain Configuration
+Extend [lib/blockchain-config.ts](mdc:lib/blockchain-config.ts) with TON support:
+
+```typescript
+TON: {
+  symbol: 'TON',
+  name: 'TON',
+  icon: 'ton',
+  color: '#0088cc',
+  textColor: 'text-[#0088cc]',
+  iconTextColor: 'text-white',
+  chainId: 'ton',
+  rpcUrl: 'https://toncenter.com/api/v2/',
+  explorerUrl: 'https://tonscan.org/',
+  nativeCurrency: {
+    name: 'TON',
+    symbol: 'TON',
+    decimals: 9
+  },
+  supportedTokens: ['TON', 'USDT', 'USDC'],
+  walletAdapters: ['Tonkeeper', 'TonWallet']
+}
+```
+
+### Payment Configuration
+Extend [lib/payment-config.ts](mdc:lib/payment-config.ts) with TON addresses:
+
+```typescript
+TON: {
+  address: 'UQAKRgdm0BN7Bgfojsj-bJMrwvFUw0sY5BPGeGgF8mtckTQI',
+  comment: 'LUTAR Presale Payment'
+},
+
+USDT_TON: {
+  address: 'UQAKRgdm0BN7Bgfojsj-bJMrwvFUw0sY5BPGeGgF8mtckTQI',
+  comment: 'USDT on TON - LUTAR Presale'
+},
+
+USDC_TON: {
+  address: 'UQAKRgdm0BN7Bgfojsj-bJMrwvFUw0sY5BPGeGgF8mtckTQI',
+  comment: 'USDC on TON - LUTAR Presale'
+}
+```
+
+## Wallet Adapters
+
+### TON Wallet Adapters
+Extend [lib/wallet-adapters.ts](mdc:lib/wallet-adapters.ts) with TON wallet support:
+
+```typescript
+export class TonkeeperAdapter implements WalletAdapter {
+  name = 'Tonkeeper'
+  icon = 'tonkeeper'
+  description = 'Connect with Tonkeeper wallet'
+  
+  isInstalled(): boolean {
+    return typeof window !== 'undefined' && !!window.tonkeeper
+  }
+  
+  async connect(): Promise<{address: string, balance: string}> {
+    if (!this.isInstalled()) {
+      throw new Error('Tonkeeper wallet not installed')
+    }
+    
+    const accounts = await window.tonkeeper.send('ton_requestAccounts')
+    const balance = await this.getBalance(accounts[0])
+    
+    return {
+      address: accounts[0],
+      balance: balance
+    }
+  }
+  
+  async getBalance(address: string): Promise<string> {
+    // Implementation for TON balance fetching
+  }
+  
+  async sendTransaction(to: string, amount: string, comment?: string): Promise<string> {
+    // Implementation for TON transaction sending
+  }
+}
+
+export class TonWalletAdapter implements WalletAdapter {
+  name = 'TonWallet'
+  icon = 'tonwallet'
+  description = 'Connect with TonWallet'
+  
+  // Similar implementation to TonkeeperAdapter
+}
+```
+
+## Currency Support
+
+### Extended Currency List
+Add TON variants to the presale widget currency selection:
+
+```typescript
+const TON_CURRENCIES = [
+  {
+    symbol: 'TON',
+    name: 'TON',
+    chain: 'ton',
+    icon: 'ton',
+    type: 'native',
+    decimals: 9
+  },
+  {
+    symbol: 'USDT',
+    name: 'Tether on TON',
+    chain: 'ton',
+    icon: 'usdt-ton',
+    type: 'token',
+    contractAddress: 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs',
+    decimals: 6
+  },
+  {
+    symbol: 'USDC',
+    name: 'USD Coin on TON',
+    chain: 'ton',
+    icon: 'usdc-ton',
+    type: 'token',
+    contractAddress: 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs',
+    decimals: 6
+  }
+]
+```
+
+## Icon Integration
+
+### TON Icons
+Ensure TON icons are available in the icon system:
+
+```typescript
+// Add to lib/icon-mapping.ts
+export const TON_ICON_MAP = {
+  'TON': 'ton',
+  'USDT-TON': 'usdt-ton',
+  'USDC-TON': 'usdc-ton',
+  'Tonkeeper': 'tonkeeper',
+  'TonWallet': 'tonwallet'
+}
+```
+
+### Icon Assets
+Required icon files in `/public/images/icons/`:
+- `coins/ton.svg` - TON blockchain icon
+- `coins/usdt-ton.svg` - USDT on TON icon
+- `coins/usdc-ton.svg` - USDC on TON icon
+- `wallets/tonkeeper.svg` - Tonkeeper wallet icon
+- `wallets/tonwallet.svg` - TonWallet icon
+
+## Transaction Handling
+
+### TON Transaction Processing
+Extend [lib/transaction-handler.ts](mdc:lib/transaction-handler.ts) with TON support:
+
+```typescript
+export class TonTransactionHandler {
+  async sendTransaction(
+    to: string,
+    amount: string,
+    comment?: string,
+    walletAdapter?: WalletAdapter
+  ): Promise<string> {
+    if (!walletAdapter) {
+      throw new Error('Wallet adapter required for TON transactions')
+    }
+    
+    try {
+      const txHash = await walletAdapter.sendTransaction(to, amount, comment)
+      return txHash
+    } catch (error) {
+      throw new Error(`TON transaction failed: ${error.message}`)
+    }
+  }
+  
+  async getTransactionStatus(txHash: string): Promise<TransactionStatus> {
+    // Implementation for TON transaction status checking
+  }
+  
+  async estimateGas(to: string, amount: string): Promise<string> {
+    // TON doesn't use gas fees, return minimal fee
+    return '0.01' // Minimal TON amount for transaction
+  }
+}
+```
+
+## Balance Fetching
+
+### TON Balance Integration
+Extend [lib/balance-fetcher.ts](mdc:lib/balance-fetcher.ts) with TON support:
+
+```typescript
+export async function fetchTonBalances(address: string): Promise<WalletBalances> {
+  try {
+    const response = await fetch(`https://toncenter.com/api/v2/getAddressBalance?address=${address}`)
+    const data = await response.json()
+    
+    const tonBalance = (parseInt(data.result) / 1e9).toFixed(4)
+    
+    // Fetch USDT and USDC balances if needed
+    const usdtBalance = await fetchTonTokenBalance(address, 'USDT')
+    const usdcBalance = await fetchTonTokenBalance(address, 'USDC')
+    
+    return {
+      native: { symbol: 'TON', balance: tonBalance, decimals: 9 },
+      usdt: { symbol: 'USDT', balance: usdtBalance, decimals: 6 },
+      usdc: { symbol: 'USDC', balance: usdcBalance, decimals: 6 }
+    }
+  } catch (error) {
+    console.error('Failed to fetch TON balances:', error)
+    return {
+      native: { symbol: 'TON', balance: '0.0000', decimals: 9 },
+      usdt: { symbol: 'USDT', balance: '0.00', decimals: 6 },
+      usdc: { symbol: 'USDC', balance: '0.00', decimals: 6 }
+    }
+  }
+}
+
+async function fetchTonTokenBalance(address: string, token: string): Promise<string> {
+  // Implementation for TON token balance fetching
+  // This would use TON API to get jetton balances
+}
+```
+
+## QR Code Generation
+
+### TON Payment QR Codes
+Implement TON-specific QR code generation:
+
+```typescript
+export function generateTonQRCode(
+  address: string,
+  amount: string,
+  comment?: string
+): string {
+  const tonLink = `ton://transfer/${address}?amount=${amount}&text=${encodeURIComponent(comment || '')}`
+  return tonLink
+}
+
+export function generateTonPaymentQR(
+  address: string,
+  amount: string,
+  comment?: string
+): string {
+  // Generate QR code data for TON payment
+  const paymentData = {
+    address,
+    amount,
+    comment: comment || 'LUTAR Presale Payment'
+  }
+  
+  return JSON.stringify(paymentData)
+}
+```
+
+## Widget Integration
+
+### Currency Selection
+Update the presale widget to include TON currencies:
+
+```typescript
+const SUPPORTED_CURRENCIES = [
+  // Existing currencies...
+  { symbol: 'TON', name: 'TON', chain: 'ton', icon: 'ton' },
+  { symbol: 'USDT', name: 'Tether on TON', chain: 'ton', icon: 'usdt-ton' },
+  { symbol: 'USDC', name: 'USD Coin on TON', chain: 'ton', icon: 'usdc-ton' }
+]
+```
+
+### Wallet Selection
+Update wallet selection modal to show TON-compatible wallets:
+
+```typescript
+const getAvailableWallets = (currency: PaymentCurrency): WalletAdapter[] => {
+  switch (currency.chain) {
+    case 'ton':
+      return [TonkeeperAdapter, TonWalletAdapter]
+    // Other cases...
+  }
+}
+```
+
+## Error Handling
+
+### TON-Specific Errors
+Implement proper error handling for TON operations:
+
+```typescript
+export class TonError extends Error {
+  constructor(message: string, public code?: string) {
+    super(message)
+    this.name = 'TonError'
+  }
+}
+
+export const TON_ERROR_MESSAGES = {
+  WALLET_NOT_INSTALLED: 'TON wallet not installed. Please install Tonkeeper or TonWallet.',
+  INSUFFICIENT_BALANCE: 'Insufficient TON balance for transaction.',
+  INVALID_ADDRESS: 'Invalid TON address format.',
+  TRANSACTION_FAILED: 'TON transaction failed. Please try again.',
+  NETWORK_ERROR: 'TON network error. Please check your connection.'
+}
+```
+
+## Testing
+
+### TON Integration Tests
+Create comprehensive tests for TON integration:
+
+```typescript
+describe('TON Integration', () => {
+  test('should connect to Tonkeeper wallet', async () => {
+    // Test wallet connection
+  })
+  
+  test('should fetch TON balance', async () => {
+    // Test balance fetching
+  })
+  
+  test('should send TON transaction', async () => {
+    // Test transaction sending
+  })
+  
+  test('should generate TON QR code', () => {
+    // Test QR code generation
+  })
+})
+```
+
+## Security Considerations
+
+### TON Address Validation
+Implement proper TON address validation:
+
+```typescript
+export function isValidTonAddress(address: string): boolean {
+  // TON address validation logic
+  const tonAddressRegex = /^[A-Za-z0-9_-]{48}$/
+  return tonAddressRegex.test(address)
+}
+
+export function validateTonTransaction(
+  to: string,
+  amount: string,
+  from: string
+): { valid: boolean; error?: string } {
+  if (!isValidTonAddress(to)) {
+    return { valid: false, error: 'Invalid recipient address' }
+  }
+  
+  if (!isValidTonAddress(from)) {
+    return { valid: false, error: 'Invalid sender address' }
+  }
+  
+  if (parseFloat(amount) <= 0) {
+    return { valid: false, error: 'Invalid amount' }
+  }
+  
+  return { valid: true }
+}
+```
+
+## Performance Optimization
+
+### TON API Optimization
+- Implement caching for balance requests
+- Use batch requests when possible
+- Handle rate limiting gracefully
+- Provide fallback mechanisms
+
+### Mobile Optimization
+- Optimize for mobile TON wallets
+- Ensure proper touch targets
+- Handle mobile-specific wallet interactions
+- Test on various mobile devices
+
+This integration ensures seamless TON blockchain support in the LUTAR presale widget while maintaining consistency with existing multi-chain infrastructure.

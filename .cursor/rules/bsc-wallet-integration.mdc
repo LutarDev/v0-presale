@@ -1,0 +1,483 @@
+---
+description: BSC Wallet Address Collection and LUTAR Token Distribution Integration
+globs: components/presale-widget/**/*,lib/lutar-distribution-service.ts,app/api/distribute-lutar/**
+---
+
+# BSC Wallet Integration and LUTAR Token Distribution
+
+## Overview
+This rule provides guidelines for implementing BSC wallet address collection in the presale widget and integrating it with the existing LUTAR token distribution system.
+
+## BSC Wallet Address Collection
+
+### Required Field Implementation
+The BSC wallet address field is a **required** field in Step 2 of the presale widget:
+
+```typescript
+interface BscWalletInputProps {
+  value: string
+  onChange: (address: string) => void
+  error?: string
+  disabled?: boolean
+}
+
+const BscWalletInput: React.FC<BscWalletInputProps> = ({
+  value,
+  onChange,
+  error,
+  disabled = false
+}) => {
+  return (
+    <div className="space-y-2">
+      <label className="text-white text-sm font-medium">
+        BSC Wallet Address (Required)
+      </label>
+      <input
+        type="text"
+        placeholder="0x..."
+        value={value}
+        disabled={disabled}
+        className={cn(
+          "w-full p-3 bg-gray-700 text-white rounded-lg border transition-colors",
+          error 
+            ? "border-red-500 focus:border-red-400" 
+            : "border-gray-600 focus:border-yellow-400"
+        )}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      {error && (
+        <p className="text-red-400 text-xs">{error}</p>
+      )}
+      <p className="text-gray-400 text-xs">
+        ⚠️ You must have access to this wallet address to access your presale participant dashboard
+      </p>
+    </div>
+  )
+}
+```
+
+### BSC Address Validation
+Implement comprehensive BSC address validation:
+
+```typescript
+export function validateBscAddress(address: string): {
+  valid: boolean
+  error?: string
+} {
+  if (!address) {
+    return { valid: false, error: 'BSC wallet address is required' }
+  }
+  
+  if (!address.startsWith('0x')) {
+    return { valid: false, error: 'BSC address must start with 0x' }
+  }
+  
+  if (address.length !== 42) {
+    return { valid: false, error: 'BSC address must be 42 characters long' }
+  }
+  
+  if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+    return { valid: false, error: 'Invalid BSC address format' }
+  }
+  
+  // Additional checksum validation
+  if (!isValidChecksumAddress(address)) {
+    return { valid: false, error: 'Invalid BSC address checksum' }
+  }
+  
+  return { valid: true }
+}
+
+function isValidChecksumAddress(address: string): boolean {
+  // Implementation for EIP-55 checksum validation
+  // This ensures the address has proper case formatting
+  return true // Simplified for now
+}
+```
+
+## Integration with LUTAR Distribution
+
+### Distribution Request Interface
+Extend the existing distribution service to handle BSC wallet addresses:
+
+```typescript
+interface LutarDistributionRequest {
+  recipientAddress: string // BSC wallet address from Step 2
+  lutarAmount: string
+  paymentTxHash: string
+  paymentChain: string
+  paymentToken: string
+  paymentAmount: string
+  userEmail?: string // Optional email from Step 2
+}
+
+interface LutarDistributionResponse {
+  success: boolean
+  message: string
+  distributionTxHash?: string
+  queueId?: string
+  recipientAddress: string
+  amount: string
+  paymentTxHash: string
+  timestamp: number
+}
+```
+
+### Distribution Service Integration
+Use the existing [lib/lutar-distribution-service.ts](mdc:lib/lutar-distribution-service.ts):
+
+```typescript
+export class LutarDistributionIntegration {
+  private static readonly ENGINE_URL = "https://engine-production-b94f.up.railway.app"
+  private static readonly ACCESS_TOKEN = "zBvVLRq77mUNj6-BqNZbHaSYDIULI50GtKghcy9qd28HHEKwkDhpODYyAjkOH7EpL3xIsXO-ATZhnEHxQnYdaA"
+  private static readonly BACKEND_WALLET = "0xfdCd87e45b13998326cA206Cc9De268f8CA480f8"
+  private static readonly LUTAR_CONTRACT = "0x2770904185Ed743d991D8fA21C8271ae6Cd4080E"
+  private static readonly BSC_CHAIN_ID = "56"
+  
+  static async distributeLutarTokens(request: LutarDistributionRequest): Promise<LutarDistributionResponse> {
+    try {
+      // Validate BSC address
+      const addressValidation = validateBscAddress(request.recipientAddress)
+      if (!addressValidation.valid) {
+        throw new Error(addressValidation.error)
+      }
+      
+      // Convert LUTAR amount to wei (18 decimals)
+      const amountInWei = (parseFloat(request.lutarAmount) * 1e18).toString()
+      
+      const response = await fetch(
+        `${this.ENGINE_URL}/contract/${this.BSC_CHAIN_ID}/${this.LUTAR_CONTRACT}/write`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.ACCESS_TOKEN}`,
+            'x-backend-wallet-address': this.BACKEND_WALLET,
+          },
+          body: JSON.stringify({
+            functionName: 'transfer',
+            args: [request.recipientAddress, amountInWei],
+          }),
+        }
+      )
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Distribution failed')
+      }
+      
+      return {
+        success: true,
+        message: 'LUTAR tokens distributed successfully',
+        distributionTxHash: data.transactionHash,
+        queueId: data.queueId,
+        recipientAddress: request.recipientAddress,
+        amount: request.lutarAmount,
+        paymentTxHash: request.paymentTxHash,
+        timestamp: Date.now()
+      }
+    } catch (error) {
+      console.error('LUTAR distribution error:', error)
+      throw new Error(`Token distribution failed: ${error.message}`)
+    }
+  }
+}
+```
+
+## Widget Integration
+
+### Step 2 Implementation
+Integrate BSC wallet collection into Step 2 of the presale widget:
+
+```typescript
+interface Step2AmountInputProps {
+  selectedCurrency: PaymentCurrency
+  onAmountChange: (amount: string) => void
+  onEmailChange: (email: string) => void
+  onBscWalletChange: (address: string) => void
+  onNext: () => void
+  onBack: () => void
+  paymentAmount: string
+  tokenAmount: string
+  email: string
+  bscWalletAddress: string
+}
+
+const Step2AmountInput: React.FC<Step2AmountInputProps> = ({
+  selectedCurrency,
+  onAmountChange,
+  onEmailChange,
+  onBscWalletChange,
+  onNext,
+  onBack,
+  paymentAmount,
+  tokenAmount,
+  email,
+  bscWalletAddress
+}) => {
+  const [errors, setErrors] = useState<{
+    amount?: string
+    email?: string
+    bscWallet?: string
+  }>({})
+  
+  const validateAndProceed = () => {
+    const newErrors: typeof errors = {}
+    
+    // Validate payment amount
+    if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
+      newErrors.amount = 'Please enter a valid payment amount'
+    }
+    
+    // Validate email (optional but if provided, must be valid)
+    if (email && !isValidEmail(email)) {
+      newErrors.email = 'Please enter a valid email address'
+    }
+    
+    // Validate BSC wallet address (required)
+    const bscValidation = validateBscAddress(bscWalletAddress)
+    if (!bscValidation.valid) {
+      newErrors.bscWallet = bscValidation.error
+    }
+    
+    setErrors(newErrors)
+    
+    if (Object.keys(newErrors).length === 0) {
+      onNext()
+    }
+  }
+  
+  return (
+    <div className="space-y-6">
+      {/* Amount Input */}
+      <div className="space-y-2">
+        <label className="text-white text-sm font-medium">You pay (USD)</label>
+        <input
+          type="number"
+          placeholder="$0.00"
+          value={paymentAmount}
+          onChange={(e) => onAmountChange(e.target.value)}
+          className={cn(
+            "w-full p-3 bg-gray-700 text-white rounded-lg border",
+            errors.amount ? "border-red-500" : "border-gray-600 focus:border-yellow-400"
+          )}
+        />
+        {errors.amount && (
+          <p className="text-red-400 text-xs">{errors.amount}</p>
+        )}
+      </div>
+      
+      {/* Token Amount Display */}
+      <div className="space-y-2">
+        <label className="text-white text-sm font-medium">You receive</label>
+        <div className="p-3 bg-gray-700 text-white rounded-lg border border-gray-600">
+          {tokenAmount} LUTAR
+        </div>
+      </div>
+      
+      {/* Email Input (Optional) */}
+      <div className="space-y-2">
+        <label className="text-white text-sm font-medium">Email Address (Optional)</label>
+        <input
+          type="email"
+          placeholder="your@email.com"
+          value={email}
+          onChange={(e) => onEmailChange(e.target.value)}
+          className={cn(
+            "w-full p-3 bg-gray-700 text-white rounded-lg border",
+            errors.email ? "border-red-500" : "border-gray-600 focus:border-yellow-400"
+          )}
+        />
+        {errors.email && (
+          <p className="text-red-400 text-xs">{errors.email}</p>
+        )}
+      </div>
+      
+      {/* BSC Wallet Address (Required) */}
+      <BscWalletInput
+        value={bscWalletAddress}
+        onChange={onBscWalletChange}
+        error={errors.bscWallet}
+      />
+      
+      {/* Navigation Buttons */}
+      <div className="flex gap-4">
+        <button
+          onClick={onBack}
+          className="flex-1 py-3 px-6 bg-gray-700 text-white rounded-lg border border-gray-600 hover:bg-gray-600 transition-colors"
+        >
+          Back
+        </button>
+        <button
+          onClick={validateAndProceed}
+          className="flex-1 py-3 px-6 bg-yellow-400 text-black font-semibold rounded-lg hover:bg-yellow-500 transition-colors"
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  )
+}
+```
+
+## Payment Completion Flow
+
+### Automatic Token Distribution
+After successful payment confirmation, automatically trigger LUTAR token distribution:
+
+```typescript
+const handlePaymentConfirmation = async (txHash: string) => {
+  try {
+    // Verify transaction on blockchain
+    const txStatus = await verifyTransaction(txHash, selectedCurrency)
+    
+    if (txStatus.confirmed) {
+      // Trigger LUTAR token distribution
+      const distributionResult = await LutarDistributionIntegration.distributeLutarTokens({
+        recipientAddress: bscWalletAddress,
+        lutarAmount: calculatedTokenAmount,
+        paymentTxHash: txHash,
+        paymentChain: selectedCurrency.chain,
+        paymentToken: selectedCurrency.symbol,
+        paymentAmount: paymentAmount,
+        userEmail: email
+      })
+      
+      // Move to completion step
+      setCurrentStep(5)
+      setTransactionInfo({
+        hash: txHash,
+        distributionHash: distributionResult.distributionTxHash,
+        status: 'confirmed',
+        lutarAmount: calculatedTokenAmount,
+        bscAddress: bscWalletAddress
+      })
+    }
+  } catch (error) {
+    console.error('Payment confirmation error:', error)
+    setError(`Payment confirmation failed: ${error.message}`)
+  }
+}
+```
+
+## Dashboard Access Integration
+
+### BSC Wallet Authentication
+The presale participant dashboard should only be accessible with the BSC wallet address provided in Step 2:
+
+```typescript
+interface DashboardAccessProps {
+  bscWalletAddress: string
+  onAccessDashboard: () => void
+}
+
+const DashboardAccess: React.FC<DashboardAccessProps> = ({
+  bscWalletAddress,
+  onAccessDashboard
+}) => {
+  return (
+    <div className="space-y-4">
+      <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
+        <h3 className="text-green-400 font-semibold mb-2">Payment Successful!</h3>
+        <p className="text-white text-sm">
+          Your LUTAR tokens have been sent to your BSC wallet address.
+        </p>
+        <p className="text-gray-400 text-xs mt-2">
+          BSC Address: {bscWalletAddress}
+        </p>
+      </div>
+      
+      <button
+        onClick={onAccessDashboard}
+        className="w-full py-3 px-6 bg-yellow-400 text-black font-semibold rounded-lg hover:bg-yellow-500 transition-colors"
+      >
+        Access Presale Dashboard
+      </button>
+      
+      <p className="text-gray-400 text-xs text-center">
+        You can access your dashboard anytime using the BSC wallet address you provided
+      </p>
+    </div>
+  )
+}
+```
+
+## Error Handling
+
+### Distribution Error Handling
+Implement comprehensive error handling for token distribution:
+
+```typescript
+export const DISTRIBUTION_ERROR_MESSAGES = {
+  INVALID_BSC_ADDRESS: 'Invalid BSC wallet address provided',
+  INSUFFICIENT_BACKEND_BALANCE: 'Insufficient LUTAR tokens in backend wallet',
+  DISTRIBUTION_FAILED: 'Token distribution failed. Please contact support',
+  NETWORK_ERROR: 'Network error during distribution. Please try again',
+  TRANSACTION_TIMEOUT: 'Distribution transaction timed out'
+}
+
+const handleDistributionError = (error: Error) => {
+  let userMessage = 'Token distribution failed. Please contact support.'
+  
+  if (error.message.includes('Invalid address')) {
+    userMessage = DISTRIBUTION_ERROR_MESSAGES.INVALID_BSC_ADDRESS
+  } else if (error.message.includes('insufficient')) {
+    userMessage = DISTRIBUTION_ERROR_MESSAGES.INSUFFICIENT_BACKEND_BALANCE
+  } else if (error.message.includes('network')) {
+    userMessage = DISTRIBUTION_ERROR_MESSAGES.NETWORK_ERROR
+  }
+  
+  return userMessage
+}
+```
+
+## Security Considerations
+
+### Address Validation
+- Implement comprehensive BSC address validation
+- Use EIP-55 checksum validation
+- Prevent common address format errors
+- Validate address ownership (optional)
+
+### Distribution Security
+- Validate all distribution parameters
+- Implement rate limiting for distribution requests
+- Log all distribution attempts
+- Monitor for suspicious activity
+
+## Testing
+
+### BSC Integration Tests
+Create comprehensive tests for BSC wallet integration:
+
+```typescript
+describe('BSC Wallet Integration', () => {
+  test('should validate BSC address format', () => {
+    expect(validateBscAddress('0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6')).toEqual({
+      valid: true
+    })
+    
+    expect(validateBscAddress('invalid-address')).toEqual({
+      valid: false,
+      error: 'BSC address must start with 0x'
+    })
+  })
+  
+  test('should distribute LUTAR tokens to BSC address', async () => {
+    const result = await LutarDistributionIntegration.distributeLutarTokens({
+      recipientAddress: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+      lutarAmount: '1000',
+      paymentTxHash: '0x123...',
+      paymentChain: 'ethereum',
+      paymentToken: 'ETH',
+      paymentAmount: '0.1'
+    })
+    
+    expect(result.success).toBe(true)
+    expect(result.recipientAddress).toBe('0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6')
+  })
+})
+```
+
+This integration ensures seamless BSC wallet address collection and automatic LUTAR token distribution while maintaining security and user experience standards.

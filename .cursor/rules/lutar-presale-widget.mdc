@@ -1,0 +1,226 @@
+---
+description: LUTAR Token Presale Widget Implementation Guidelines
+globs: components/presale-widget/**/*,lib/presale-widget/**/*,stores/presale-widget-store.ts,hooks/use-presale-widget.ts
+---
+
+# LUTAR Token Presale Widget Implementation Guidelines
+
+## Overview
+This rule provides comprehensive guidelines for implementing the LUTAR Token presale widget that replicates the Radom design while extending it with TON support and BSC wallet integration.
+
+## Design System Requirements
+
+### Visual Design
+- **Background**: `rgba(0, 0, 0, 0.84)` - Dark theme matching Radom exactly
+- **Border Radius**: `25px` for main container, `15px` for input fields
+- **Typography**: Inter font family, white text with opacity variations
+- **Accent Color**: `rgb(255, 199, 0)` for primary buttons
+- **Container Width**: `450px` with responsive design
+- **Spacing**: Consistent padding and margins matching Radom layout
+
+### Component Structure
+```
+components/presale-widget/
+├── PresaleWidget.tsx           # Main widget container
+├── steps/                      # Individual step components
+├── shared/                     # Reusable components
+└── types/                      # TypeScript definitions
+```
+
+## Implementation Standards
+
+### State Management
+- Use Zustand for widget state management
+- Implement proper TypeScript interfaces for all state
+- Follow the state structure defined in [LUTAR_PRESALE_WIDGET_IMPLEMENTATION_PLAN.md](mdc:LUTAR_PRESALE_WIDGET_IMPLEMENTATION_PLAN.md)
+
+### Currency Support
+- **Existing**: SOL, POL, BNB, USDT (ETH/Polygon), USDC (Polygon)
+- **Extended**: TON, USDT (TON), USDC (TON)
+- Use existing icon system from [lib/icon-mapping.ts](mdc:lib/icon-mapping.ts)
+- Extend blockchain config in [lib/blockchain-config.ts](mdc:lib/blockchain-config.ts)
+
+### BSC Wallet Integration
+- **Required Field**: BSC wallet address collection in Step 2
+- **Validation**: Proper BSC address format validation
+- **Warning**: Clear message about wallet access requirement
+- **Integration**: Connect to existing LUTAR distribution system
+
+## Step-by-Step Implementation
+
+### Step 1: Currency Selection
+- 3x3 grid layout matching Radom design
+- Visual feedback for selected currency
+- Integration with existing [components/ui/icon.tsx](mdc:components/ui/icon.tsx)
+- Support for all currencies including TON variants
+
+### Step 2: Amount Input & User Details
+- Real-time LUTAR token calculation
+- Email field (optional)
+- **BSC Wallet Address field (required)**
+- Input validation and error handling
+- Integration with existing [lib/price-service.ts](mdc:lib/price-service.ts)
+
+### Step 3: Payment Details & QR Code
+- QR code generation for payment address
+- Payment information display
+- Copy functionality for address and amount
+- Countdown timer implementation
+- Wallet connection button
+
+### Step 3.1: Wallet Selection Modal
+- Dynamic wallet list based on selected currency
+- Wallet detection and status display
+- Modal design matching Radom styling
+- Integration with existing [lib/wallet-adapters.ts](mdc:lib/wallet-adapters.ts)
+
+### Step 4: Connected Wallet Interface
+- Connected wallet address display
+- Disconnect functionality
+- "Open Wallet" button for transaction approval
+- Transaction monitoring
+- Integration with existing [hooks/use-wallet.ts](mdc:hooks/use-wallet.ts)
+
+### Step 5: Completion & Dashboard Access
+- Transaction confirmation display
+- LUTAR token distribution status
+- Dashboard access button
+- Integration with existing [lib/lutar-distribution-service.ts](mdc:lib/lutar-distribution-service.ts)
+
+## Integration Requirements
+
+### Existing Infrastructure
+- **Wallet System**: Use existing [hooks/use-wallet.ts](mdc:hooks/use-wallet.ts)
+- **Transaction Handling**: Integrate with [lib/transaction-handler.ts](mdc:lib/transaction-handler.ts)
+- **Payment Config**: Use [lib/payment-config.ts](mdc:lib/payment-config.ts)
+- **Icon System**: Leverage [components/ui/icon.tsx](mdc:components/ui/icon.tsx)
+
+### LUTAR Distribution
+- **API Integration**: Use existing `/api/distribute-lutar` endpoint
+- **Token Distribution**: Automatic LUTAR token sending to BSC address
+- **Status Monitoring**: Real-time distribution status updates
+- **Error Handling**: Comprehensive error handling and recovery
+
+## Code Standards
+
+### TypeScript
+- Strict type checking enabled
+- Proper interface definitions for all props and state
+- Use existing types from [lib/asset-types.ts](mdc:lib/asset-types.ts)
+- Extend types as needed for widget functionality
+
+### Styling
+- Use Tailwind CSS classes
+- Match Radom design exactly
+- Responsive design for mobile devices
+- Dark theme consistency
+
+### Error Handling
+- Comprehensive error boundaries
+- User-friendly error messages
+- Retry mechanisms for failed operations
+- Fallback UI for error states
+
+### Performance
+- Lazy loading for heavy components
+- Optimized re-renders
+- Efficient state updates
+- Mobile performance optimization
+
+## Testing Requirements
+
+### Unit Tests
+- Component rendering tests
+- State management tests
+- Utility function tests
+- Integration tests with existing systems
+
+### E2E Tests
+- Complete user journey testing
+- Cross-browser compatibility
+- Mobile device testing
+- Payment flow validation
+
+## Security Considerations
+
+### Input Validation
+- BSC address format validation
+- Email format validation (if provided)
+- Amount validation and limits
+- XSS prevention
+
+### Wallet Security
+- Secure wallet connection handling
+- Transaction verification
+- Address validation
+- Private key protection
+
+## Accessibility
+
+### WCAG Compliance
+- Proper ARIA labels
+- Keyboard navigation support
+- Screen reader compatibility
+- High contrast support
+
+### User Experience
+- Clear instructions and labels
+- Error message clarity
+- Loading state indicators
+- Success feedback
+
+## File Organization
+
+### Component Files
+- Follow existing project structure
+- Use descriptive file names
+- Group related components
+- Maintain consistent exports
+
+### Type Definitions
+- Centralized type definitions
+- Proper interface naming
+- Documentation for complex types
+- Reusable type definitions
+
+## Integration Points
+
+### Existing Components
+- [components/purchase-interface.tsx](mdc:components/purchase-interface.tsx) - Reference for existing patterns
+- [components/unified-wallet-modal.tsx](mdc:components/unified-wallet-modal.tsx) - Wallet connection patterns
+- [components/transaction-modal.tsx](mdc:components/transaction-modal.tsx) - Transaction handling patterns
+
+### Existing Services
+- [lib/balance-fetcher.ts](mdc:lib/balance-fetcher.ts) - Balance fetching patterns
+- [lib/price-service.ts](mdc:lib/price-service.ts) - Price calculation patterns
+- [lib/lutar-distribution-service.ts](mdc:lib/lutar-distribution-service.ts) - Token distribution patterns
+
+## Deployment Considerations
+
+### Environment Configuration
+- Development mode with mock data
+- Staging environment with testnet
+- Production environment with mainnet
+- Feature flags for gradual rollout
+
+### Monitoring
+- Error tracking and reporting
+- Performance monitoring
+- User analytics
+- Transaction success rates
+
+## Maintenance Guidelines
+
+### Code Quality
+- Regular code reviews
+- Automated testing
+- Performance monitoring
+- Security audits
+
+### Updates
+- Version control for widget versions
+- Backward compatibility
+- Migration strategies
+- Documentation updates
+
+This rule ensures consistent implementation of the LUTAR presale widget while maintaining integration with existing systems and following established patterns.

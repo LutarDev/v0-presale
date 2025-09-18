@@ -1,0 +1,373 @@
+---
+description: Radom Widget Design System and Styling Guidelines
+globs: components/presale-widget/**/*.tsx,components/presale-widget/**/*.css
+---
+
+# Radom Widget Design System
+
+## Overview
+This rule defines the exact design system requirements for replicating the Radom widget design in the LUTAR presale widget implementation.
+
+## Color Palette
+
+### Primary Colors
+```css
+:root {
+  /* Background Colors */
+  --radom-bg-primary: rgba(0, 0, 0, 0.84);
+  --radom-bg-secondary: rgba(255, 255, 255, 0.05);
+  --radom-bg-input: rgba(255, 255, 255, 0.1);
+  
+  /* Text Colors */
+  --radom-text-primary: rgb(255, 255, 255);
+  --radom-text-secondary: rgba(255, 255, 255, 0.45);
+  --radom-text-muted: rgba(255, 255, 255, 0.65);
+  
+  /* Accent Colors */
+  --radom-accent-primary: rgb(255, 199, 0);
+  --radom-accent-text: rgba(0, 0, 0, 0.95);
+  
+  /* Border Colors */
+  --radom-border: rgba(255, 255, 255, 0.1);
+}
+```
+
+### Usage Guidelines
+- **Primary Background**: Use `--radom-bg-primary` for main container
+- **Secondary Background**: Use `--radom-bg-secondary` for input fields and buttons
+- **Primary Text**: Use `--radom-text-primary` for main headings and content
+- **Secondary Text**: Use `--radom-text-secondary` for labels and descriptions
+- **Accent Color**: Use `--radom-accent-primary` for primary action buttons
+
+## Typography
+
+### Font Family
+```css
+font-family: Inter, sans-serif;
+```
+
+### Font Sizes and Weights
+```css
+/* Main Title */
+.widget-title {
+  font-size: 46px;
+  font-weight: 800;
+  color: var(--radom-text-primary);
+}
+
+/* Price Display */
+.price-text {
+  color: var(--radom-text-secondary);
+  font-size: 14px;
+}
+
+/* Input Labels */
+.input-label {
+  color: var(--radom-text-secondary);
+  font-size: 14px;
+}
+
+/* Button Text */
+.button-text {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Countdown Timer */
+.countdown-label {
+  text-transform: uppercase;
+  color: var(--radom-text-muted);
+  font-size: 10px;
+}
+
+.countdown-value {
+  color: var(--radom-text-primary);
+  font-size: 18px;
+}
+```
+
+## Layout Specifications
+
+### Container Dimensions
+```css
+.presale-widget {
+  width: 450px;
+  min-height: 550px;
+  max-width: 100%;
+  background: var(--radom-bg-primary);
+  padding: 30px;
+  border-radius: 25px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+```
+
+### Spacing System
+```css
+/* Standard Spacing */
+--radom-spacing-xs: 5px;
+--radom-spacing-sm: 10px;
+--radom-spacing-md: 15px;
+--radom-spacing-lg: 20px;
+--radom-spacing-xl: 30px;
+
+/* Component Spacing */
+.widget-header {
+  margin-bottom: var(--radom-spacing-xl);
+}
+
+.input-group {
+  gap: var(--radom-spacing-md);
+  margin-bottom: var(--radom-spacing-md);
+}
+
+.currency-grid {
+  gap: var(--radom-spacing-sm);
+}
+```
+
+## Component Styling
+
+### Input Fields
+```css
+.radom-input {
+  border: 1px solid var(--radom-border);
+  border-radius: 15px;
+  padding: 15px;
+  background: transparent;
+  color: var(--radom-text-primary);
+  font-size: 16px;
+}
+
+.radom-input:focus {
+  outline: none;
+  border-color: var(--radom-accent-primary);
+}
+
+.radom-input::placeholder {
+  color: var(--radom-text-secondary);
+}
+```
+
+### Buttons
+```css
+.radom-button {
+  border-radius: 15px;
+  padding: 5px 10px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.radom-button-primary {
+  background: var(--radom-accent-primary);
+  color: var(--radom-accent-text);
+}
+
+.radom-button-secondary {
+  background: var(--radom-bg-secondary);
+  color: var(--radom-text-primary);
+}
+
+.radom-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+```
+
+### Currency Selector
+```css
+.currency-option {
+  border: 1px solid var(--radom-border);
+  border-radius: 15px;
+  padding: 15px;
+  background: var(--radom-bg-secondary);
+  color: var(--radom-text-secondary);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.currency-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.currency-option.selected {
+  border-color: var(--radom-accent-primary);
+  background: rgba(255, 199, 0, 0.1);
+}
+```
+
+### Countdown Timer
+```css
+.countdown-container {
+  border: 1px solid var(--radom-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.countdown-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: 100%;
+  padding: 15px;
+}
+
+.countdown-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.countdown-footer {
+  color: var(--radom-text-muted);
+  font-size: 12px;
+  text-align: center;
+  background-color: var(--radom-bg-secondary);
+  width: 100%;
+  padding: 3px;
+}
+```
+
+## Icon Integration
+
+### Icon Specifications
+```css
+.currency-icon {
+  width: 20px;
+  height: 20px;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.wallet-icon {
+  width: 28px;
+  height: 28px;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+```
+
+### Icon Usage
+- Use existing icon system from [components/ui/icon.tsx](mdc:components/ui/icon.tsx)
+- Maintain consistent sizing across components
+- Ensure proper contrast with background colors
+- Use SVG icons for crisp rendering at all sizes
+
+## Responsive Design
+
+### Mobile Adaptations
+```css
+@media (max-width: 480px) {
+  .presale-widget {
+    width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+    padding: 20px;
+  }
+  
+  .widget-title {
+    font-size: 36px;
+  }
+  
+  .currency-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+```
+
+### Tablet Adaptations
+```css
+@media (max-width: 768px) {
+  .presale-widget {
+    width: 90%;
+    max-width: 400px;
+  }
+}
+```
+
+## Animation and Transitions
+
+### Standard Transitions
+```css
+.radom-transition {
+  transition: all 0.2s ease;
+}
+
+.radom-transition-fast {
+  transition: all 0.1s ease;
+}
+
+.radom-transition-slow {
+  transition: all 0.3s ease;
+}
+```
+
+### Hover Effects
+```css
+.radom-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.radom-hover-subtle:hover {
+  opacity: 0.8;
+}
+```
+
+## Accessibility
+
+### Focus States
+```css
+.radom-focus:focus {
+  outline: 2px solid var(--radom-accent-primary);
+  outline-offset: 2px;
+}
+
+.radom-focus-visible:focus-visible {
+  outline: 2px solid var(--radom-accent-primary);
+  outline-offset: 2px;
+}
+```
+
+### High Contrast Support
+```css
+@media (prefers-contrast: high) {
+  :root {
+    --radom-border: rgba(255, 255, 255, 0.3);
+    --radom-text-secondary: rgba(255, 255, 255, 0.8);
+  }
+}
+```
+
+## Implementation Guidelines
+
+### CSS Custom Properties
+- Use CSS custom properties for all colors and spacing
+- Maintain consistency with existing design system
+- Allow for easy theme customization
+
+### Component Structure
+- Follow BEM methodology for CSS class naming
+- Use semantic HTML elements
+- Maintain proper heading hierarchy
+
+### Performance
+- Use CSS transforms for animations
+- Minimize layout thrashing
+- Optimize for mobile performance
+
+### Browser Support
+- Support modern browsers (Chrome, Firefox, Safari, Edge)
+- Use progressive enhancement
+- Provide fallbacks for older browsers
+
+This design system ensures pixel-perfect replication of the Radom widget design while maintaining consistency and accessibility standards.
