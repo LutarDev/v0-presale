@@ -95,17 +95,35 @@ export const WALLET_ICON_MAP: Record<string, WalletIcon> = {
 // ============================================================================
 
 export const STABLECOIN_ICON_MAP: Record<string, CoinIcon> = {
-  // Using chain icons as fallbacks for stablecoins since specific stablecoin icons aren't available
-  'USDC': 'eth-contrast',  // USDC is primarily on Ethereum
-  'USDT': 'tron',          // USDT is primarily on TRON
-  'USDC_ERC20': 'eth-contrast',
-  'USDC_BEP20': 'bnb',
-  'USDC_POL': 'polygon',
-  'USDC_SOL': 'solana',
-  'USDT_TRC20': 'tron',
-  'USDT_TON': 'ton',
-  'USDT_POL': 'polygon',
-  'USDT_ERC20': 'eth-contrast',
+  // USDT icons by chain
+  //'USDT': 'usdt',
+  'USDT_ETH': 'usdt-erc20',
+  'USDT_BSC': 'usdt-bep20',
+  'USDT_SOL': 'usdt-solana',
+  'USDT_POL': 'usdt-polygon',
+  'USDT_TRON': 'usdt-tron',
+  'USDT_TON': 'usdt-ton',
+  
+  // USDC icons by chain
+  //'USDC': 'usdc',
+  'USDC_ETH': 'usdc-erc20',
+  'USDC_BSC': 'usdc-bep20',
+  'USDC_SOL': 'usdc-solana',
+  'USDC_POL': 'usdc-polygon',
+  'USDC_TRON': 'usdc-tron',
+  'USDC_TON': 'usdc-ton',
+  
+  // Legacy mappings for backward compatibility
+  'USDC': 'usdc',
+  'USDT': 'usdt',
+  'USDC_ERC20': 'usdc-erc20',
+  'USDC_BEP20': 'usdc-bep20',
+  //'USDC_POL': 'usdc-polygon',
+  //'USDC_SOL': 'usdc-solana',
+  //'USDT_TRC20': 'usdt-tron',
+  //'USDT_TON': 'usdt-ton',
+  //'USDT_POL': 'usdt-polygon',
+  'USDT_ERC20': 'usdt-erc20',
 }
 
 // ============================================================================
@@ -141,14 +159,24 @@ export function getStablecoinIcon(symbol: string): CoinIcon {
  */
 export function isStablecoin(symbol: string): boolean {
   const normalizedSymbol = symbol.toUpperCase()
-  return Object.keys(STABLECOIN_ICON_MAP).includes(normalizedSymbol)
+  return normalizedSymbol === 'USDT' || normalizedSymbol === 'USDC' || 
+         Object.keys(STABLECOIN_ICON_MAP).includes(normalizedSymbol)
 }
 
 /**
  * Get the appropriate icon for any token/currency symbol
+ * @param symbol - Token symbol
+ * @param chain - Optional chain to get chain-specific icon
  */
-export function getTokenIcon(symbol: string): CoinIcon {
+export function getTokenIcon(symbol: string, chain?: string): CoinIcon {
   if (isStablecoin(symbol)) {
+    // For stablecoins, try to get chain-specific icon first
+    if (chain) {
+      const chainSpecificIcon = STABLECOIN_ICON_MAP[`${symbol}_${chain.toUpperCase()}`]
+      if (chainSpecificIcon) {
+        return chainSpecificIcon
+      }
+    }
     return getStablecoinIcon(symbol)
   }
   return getBlockchainIcon(symbol)

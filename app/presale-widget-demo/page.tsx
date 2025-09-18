@@ -32,7 +32,7 @@ export default function PresaleWidgetDemo() {
           onError={handleError}
           config={{
             lutarPrice: 0.004,
-            supportedCurrencies: ['SOL', 'POL', 'BNB', 'USDT', 'USDC', 'TON'],
+            supportedCurrencies: ['BTC', 'ETH', 'SOL', 'POL', 'BNB', 'TRX', 'USDT', 'USDC', 'TON'],
             paymentTimeout: 1800000,
             minPurchaseAmount: 10
           }}

@@ -8,6 +8,7 @@ import { paymentService } from '@/lib/payment-service'
 import { walletService } from '@/lib/wallet-service'
 
 // Step components
+import { Step0StartView } from './steps/Step0StartView'
 import { Step1CurrencySelection } from './steps/Step1CurrencySelection'
 import { Step2AmountInput } from './steps/Step2AmountInput'
 import { Step3PaymentDetails } from './steps/Step3PaymentDetails'
@@ -60,7 +61,7 @@ export const PresaleWidget: React.FC<PresaleWidgetProps> = ({
     if (widgetConfig.presaleEndTime) {
       const interval = setInterval(() => {
         const now = Date.now()
-        const timeLeft = Math.max(0, widgetConfig.presaleEndTime - now)
+        const timeLeft = Math.max(0, (widgetConfig.presaleEndTime || 0) - now)
         setCountdownTime(timeLeft)
       }, 1000)
 
@@ -71,14 +72,20 @@ export const PresaleWidget: React.FC<PresaleWidgetProps> = ({
   // Handle errors
   useEffect(() => {
     if (error && onError) {
-      onError(error)
+      // Use setTimeout to avoid calling onError during render phase
+      setTimeout(() => {
+        onError(error)
+      }, 0)
     }
   }, [error, onError])
 
   // Handle completion
   useEffect(() => {
     if (transactionInfo && onComplete) {
-      onComplete(transactionInfo)
+      // Use setTimeout to avoid calling onComplete during render phase
+      setTimeout(() => {
+        onComplete(transactionInfo)
+      }, 0)
     }
   }, [transactionInfo, onComplete])
 
@@ -105,7 +112,6 @@ export const PresaleWidget: React.FC<PresaleWidgetProps> = ({
           adapter: walletName,
           address: result.address,
           chain: result.chain,
-          name: result.walletName,
           balance: '0',
           connected: true
         })
@@ -132,121 +138,221 @@ export const PresaleWidget: React.FC<PresaleWidgetProps> = ({
       onError: handleError
     }
 
-    switch (currentStep) {
-      case 1:
-        return (
-          <Step1CurrencySelection
-            {...commonProps}
-            selectedCurrency={selectedCurrency}
-            onCurrencySelect={(currency) => {
-              usePresaleWidgetStore.getState().setSelectedCurrency(currency)
-            }}
-          />
-        )
-
-      case 2:
-        if (!selectedCurrency) {
-          handleError('Please select a payment currency first')
-          return null
-        }
-        return (
-          <Step2AmountInput
-            {...commonProps}
-            selectedCurrency={selectedCurrency}
-            paymentAmount={paymentAmount}
-            tokenAmount={tokenAmount}
-            email={email}
-            bscWalletAddress={bscWalletAddress}
-            onAmountChange={(amount) => {
-              usePresaleWidgetStore.getState().setPaymentAmount(amount)
-            }}
-            onEmailChange={(email) => {
-              usePresaleWidgetStore.getState().setEmail(email)
-            }}
-            onBscWalletChange={(address) => {
-              usePresaleWidgetStore.getState().setBscWalletAddress(address)
-            }}
-            onNext={async () => {
-              // Generate payment details before proceeding to step 3
-              if (selectedCurrency && paymentAmount) {
-                try {
-                  const paymentDetails = await paymentService.generatePaymentDetails(
-                    selectedCurrency,
-                    paymentAmount,
-                    'LUTAR Presale Payment'
-                  )
-                  usePresaleWidgetStore.getState().setPaymentDetails(paymentDetails)
-                  proceedToNextStep()
-                } catch (error) {
-                  handleError('Failed to generate payment details')
+    try {
+      switch (currentStep) {
+        case 0:
+          return (
+            <Step0StartView 
+              {...commonProps}
+              onNext={() => {
+                // Main continue flow - validate and proceed to amount input
+                if (!selectedCurrency) {
+                  handleError('Please select a payment currency first')
+                  return
                 }
-              } else {
+                usePresaleWidgetStore.getState().setCurrentStep(2)
+              }}
+              onCurrencySelect={() => {
+                // Go to currency selection step
+                usePresaleWidgetStore.getState().setCurrentStep(1)
+              }}
+            />
+          )
+        
+        case 1:
+          return (
+            <Step1CurrencySelection
+              {...commonProps}
+              selectedCurrency={selectedCurrency}
+              onCurrencySelect={(currency) => {
+                usePresaleWidgetStore.getState().setSelectedCurrency(currency)
+              }}
+              onNext={() => {
+                // After selecting currency, go back to step 0 to show the updated UI
+                usePresaleWidgetStore.getState().setCurrentStep(0)
+              }}
+              onBack={() => {
+                // Go back to step 0
+                usePresaleWidgetStore.getState().setCurrentStep(0)
+              }}
+            />
+          )
+
+        case 2:
+          if (!selectedCurrency) {
+            // Don't call handleError during render - just show a fallback
+            return (
+              <div className="flex flex-col items-center justify-center py-8">
+                <p className="text-red-400 text-sm mb-4">Please select a payment currency first</p>
+                <button
+                  onClick={() => usePresaleWidgetStore.getState().setCurrentStep(1)}
+                  className="px-4 py-2 bg-yellow-400 text-black rounded-lg font-semibold"
+                >
+                  Select Currency
+                </button>
+              </div>
+            )
+          }
+          return (
+            <Step2AmountInput
+              {...commonProps}
+              selectedCurrency={selectedCurrency}
+              paymentAmount={paymentAmount}
+              tokenAmount={tokenAmount}
+              email={email}
+              bscWalletAddress={bscWalletAddress}
+              onAmountChange={(amount: string) => {
+                usePresaleWidgetStore.getState().setPaymentAmount(amount)
+              }}
+              onEmailChange={(email: string) => {
+                usePresaleWidgetStore.getState().setEmail(email)
+              }}
+              onBscWalletChange={(address: string) => {
+                usePresaleWidgetStore.getState().setBscWalletAddress(address)
+              }}
+              onNext={async () => {
+                // Generate payment details before proceeding to step 3
+                if (selectedCurrency && paymentAmount) {
+                  try {
+                    const paymentDetails = await paymentService.generatePaymentDetails(
+                      selectedCurrency,
+                      paymentAmount,
+                      'LUTAR Presale Payment'
+                    )
+                    usePresaleWidgetStore.getState().setPaymentDetails(paymentDetails)
+                    proceedToNextStep()
+                  } catch (error) {
+                    handleError('Failed to generate payment details')
+                  }
+                } else {
+                  proceedToNextStep()
+                }
+              }}
+            />
+          )
+
+        case 3:
+          if (!paymentDetails) {
+            // Don't call handleError during render - show fallback
+            return (
+              <div className="flex flex-col items-center justify-center py-8">
+                <p className="text-red-400 text-sm mb-4">Payment details not available</p>
+                <button
+                  onClick={() => usePresaleWidgetStore.getState().setCurrentStep(2)}
+                  className="px-4 py-2 bg-yellow-400 text-black rounded-lg font-semibold"
+                >
+                  Go Back
+                </button>
+              </div>
+            )
+          }
+          return (
+            <Step3PaymentDetails
+              {...commonProps}
+              paymentDetails={paymentDetails}
+              connectedWallet={connectedWallet}
+              onWalletConnect={handleWalletConnect}
+              onWalletDisconnect={handleWalletDisconnect}
+            />
+          )
+
+        case 4:
+          if (!connectedWallet || !paymentDetails) {
+            // Don't call handleError during render - show fallback
+            return (
+              <div className="flex flex-col items-center justify-center py-8">
+                <p className="text-red-400 text-sm mb-4">Wallet connection or payment details not available</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => usePresaleWidgetStore.getState().setCurrentStep(3)}
+                    className="px-4 py-2 bg-gray-600 text-white rounded-lg font-semibold"
+                  >
+                    Go Back
+                  </button>
+                  <button
+                    onClick={handleWalletConnect}
+                    className="px-4 py-2 bg-yellow-400 text-black rounded-lg font-semibold"
+                  >
+                    Connect Wallet
+                  </button>
+                </div>
+              </div>
+            )
+          }
+          return (
+            <Step4WalletConnected
+              {...commonProps}
+              connectedWallet={connectedWallet}
+              paymentDetails={paymentDetails}
+              onOpenWallet={() => {
+                // Open wallet for transaction approval
+                console.log('Opening wallet for transaction approval')
+              }}
+              onDisconnect={handleWalletDisconnect}
+              onNext={() => {
+                // Create transaction info and move to completion step
+                const transactionInfo = {
+                  hash: `0x${Math.random().toString(16).substr(2, 64)}`, // Mock transaction hash
+                  status: 'confirmed' as const,
+                  lutarAmount: tokenAmount,
+                  bscAddress: bscWalletAddress,
+                  timestamp: Date.now()
+                }
+                usePresaleWidgetStore.getState().setTransactionInfo(transactionInfo)
                 proceedToNextStep()
-              }
-            }}
-          />
-        )
+              }}
+            />
+          )
 
-      case 3:
-        if (!paymentDetails) {
-          handleError('Payment details not available')
-          return null
-        }
-        return (
-          <Step3PaymentDetails
-            {...commonProps}
-            paymentDetails={paymentDetails}
-            connectedWallet={connectedWallet}
-            onWalletConnect={handleWalletConnect}
-            onWalletDisconnect={handleWalletDisconnect}
-          />
-        )
+        case 5:
+          if (!transactionInfo) {
+            // Don't call handleError during render - show fallback
+            return (
+              <div className="flex flex-col items-center justify-center py-8">
+                <p className="text-red-400 text-sm mb-4">Transaction information not available</p>
+                <button
+                  onClick={() => usePresaleWidgetStore.getState().setCurrentStep(4)}
+                  className="px-4 py-2 bg-yellow-400 text-black rounded-lg font-semibold"
+                >
+                  Go Back
+                </button>
+              </div>
+            )
+          }
+          return (
+            <Step5Completion
+              {...commonProps}
+              transactionInfo={transactionInfo}
+              onAccessDashboard={handleAccessDashboard}
+            />
+          )
 
-      case 4:
-        if (!connectedWallet || !paymentDetails) {
-          handleError('Wallet connection or payment details not available')
-          return null
-        }
-        return (
-          <Step4WalletConnected
-            {...commonProps}
-            connectedWallet={connectedWallet}
-            paymentDetails={paymentDetails}
-            onOpenWallet={() => {
-              // Open wallet for transaction approval
-              console.log('Opening wallet for transaction approval')
-            }}
-            onDisconnect={handleWalletDisconnect}
-            onNext={() => {
-              // Create transaction info and move to completion step
-              const transactionInfo = {
-                hash: `0x${Math.random().toString(16).substr(2, 64)}`, // Mock transaction hash
-                status: 'confirmed' as const,
-                lutarAmount: tokenAmount,
-                bscAddress: bscWalletAddress,
-                timestamp: Date.now()
-              }
-              usePresaleWidgetStore.getState().setTransactionInfo(transactionInfo)
-              proceedToNextStep()
-            }}
-          />
-        )
-
-      case 5:
-        if (!transactionInfo) {
-          handleError('Transaction information not available')
-          return null
-        }
-        return (
-          <Step5Completion
-            {...commonProps}
-            transactionInfo={transactionInfo}
-            onAccessDashboard={handleAccessDashboard}
-          />
-        )
-
-      default:
-        return null
+        default:
+          return (
+            <div className="flex flex-col items-center justify-center py-8">
+              <p className="text-red-400 text-sm mb-4">Invalid step: {currentStep}</p>
+              <button
+                onClick={() => usePresaleWidgetStore.getState().setCurrentStep(0)}
+                className="px-4 py-2 bg-yellow-400 text-black rounded-lg font-semibold"
+              >
+                Start Over
+              </button>
+            </div>
+          )
+      }
+    } catch (error) {
+      console.error('Error rendering current step:', error)
+      return (
+        <div className="flex flex-col items-center justify-center py-8">
+          <p className="text-red-400 text-sm mb-4">An error occurred while rendering this step</p>
+          <button
+            onClick={() => usePresaleWidgetStore.getState().setCurrentStep(0)}
+            className="px-4 py-2 bg-yellow-400 text-black rounded-lg font-semibold"
+          >
+            Start Over
+          </button>
+        </div>
+      )
     }
   }
 

@@ -1,4 +1,53 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 56 56" fill="none"><script xmlns="" id="argent-x-extension" data-extension-id="dlcobpjiigpikoobohmabehhmhfoodbb"/>
-<path d="M28 56C43.464 56 56 43.464 56 28C56 12.536 43.464 0 28 0C12.536 0 0 12.536 0 28C0 43.464 12.536 56 28 56Z" fill="#0098EA"/>
-<path d="M37.5603 15.6277H18.4386C14.9228 15.6277 12.6944 19.4202 14.4632 22.4861L26.2644 42.9409C27.0345 44.2765 28.9644 44.2765 29.7345 42.9409L41.5381 22.4861C43.3045 19.4251 41.0761 15.6277 37.5627 15.6277H37.5603ZM26.2548 36.8068L23.6847 31.8327L17.4833 20.7414C17.0742 20.0315 17.5795 19.1218 18.4362 19.1218H26.2524V36.8092L26.2548 36.8068ZM38.5108 20.739L32.3118 31.8351L29.7417 36.8068V19.1194H37.5579C38.4146 19.1194 38.9199 20.0291 38.5108 20.739Z" fill="white"/>
-</svg>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg:svg
+   width="60"
+   height="60"
+   viewBox="0 0 60 60"
+   fill="none"
+   version="1.1"
+   id="svg6"
+   sodipodi:docname="ton.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <svg:defs
+     id="defs10" />
+  <sodipodi:namedview
+     id="namedview8"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:showpageshadow="false"
+     showborder="false"
+     inkscape:zoom="12.839286"
+     inkscape:cx="27.961057"
+     inkscape:cy="28"
+     inkscape:window-width="1920"
+     inkscape:window-height="1066"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg6" />
+  <script
+     id="argent-x-extension"
+     data-extension-id="dlcobpjiigpikoobohmabehhmhfoodbb" />
+  <svg:path
+     d="M 30,60 C 46.568571,60 60,46.568571 60,30 60,13.431429 46.568571,0 30,0 13.431429,0 0,13.431429 0,30 0,46.568571 13.431429,60 30,60 Z"
+     fill="#0098ea"
+     id="path2"
+     style="stroke-width:1.07143" />
+  <svg:path
+     d="M 40.243179,16.743964 H 19.755643 c -3.766929,0 -6.1545,4.063393 -4.259357,7.348286 l 12.644143,21.915857 c 0.825107,1.431 2.892857,1.431 3.717964,0 L 44.505107,24.09225 c 1.892572,-3.279643 -0.495,-7.348286 -4.259357,-7.348286 z M 28.130143,39.435857 25.376464,34.106464 18.732107,22.222929 c -0.438321,-0.760608 0.103072,-1.735286 1.020964,-1.735286 h 8.3745 v 18.950786 z m 13.131428,-17.2155 -6.641785,11.888679 -2.753679,5.326821 V 20.485071 h 8.3745 c 0.917893,0 1.459286,0.974679 1.020964,1.735286 z"
+     fill="#ffffff"
+     id="path4"
+     style="stroke-width:1.07143" />
+</svg:svg>

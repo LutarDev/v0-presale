@@ -5,11 +5,11 @@ import Image from 'next/image'
 import { 
   IconMetadata, 
   IconCategory, 
-  CoinIcon, 
-  WalletIcon, 
-  ArrowIcon, 
-  CheckmarkIcon, 
-  BlockchainFilterIcon,
+  type CoinIcon, 
+  type WalletIcon, 
+  type ArrowIcon, 
+  type CheckmarkIcon, 
+  type BlockchainFilterIcon,
   ICON_SIZES,
   ICON_COLORS 
 } from '@/lib/asset-types'
@@ -114,6 +114,37 @@ interface ChainIconProps extends BaseIconProps {
 
 export function ChainIcon({ chain, size = 'md', className = '', ...props }: ChainIconProps) {
   const iconName = getBlockchainIcon(chain)
+  return (
+    <Icon
+      category="coins"
+      name={iconName}
+      size={size}
+      className={className}
+      {...props}
+    />
+  )
+}
+
+// ============================================================================
+// CURRENCY ICON COMPONENT (For PaymentCurrency objects)
+// ============================================================================
+
+interface CurrencyIconProps extends BaseIconProps {
+  currency: {
+    symbol: string
+    chain: string
+    icon: string
+    type: 'native' | 'token'
+  }
+}
+
+export function CurrencyIcon({ currency, size = 'md', className = '', ...props }: CurrencyIconProps) {
+  // For stablecoins (USDT/USDC), use the specific icon defined in the currency object
+  // For native currencies, use the chain-based icon
+  const iconName = currency.type === 'token' && (currency.symbol === 'USDT' || currency.symbol === 'USDC')
+    ? currency.icon as CoinIcon
+    : getBlockchainIcon(currency.chain)
+  
   return (
     <Icon
       category="coins"

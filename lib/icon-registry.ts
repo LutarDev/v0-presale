@@ -31,14 +31,14 @@ export const ICON_REGISTRY: IconRegistry = {
       size: { width: 24, height: 24 },
       format: 'svg'
     },
-    'lutar-white': {
+    /* 'lutar-white': {
       category: 'coins',
       name: 'lutar-white',
       path: '/images/icons/coins/lutar-white.svg',
       size: { width: 24, height: 24 },
       format: 'svg',
       theme: 'dark'
-    },
+    }, */
     
     // Major cryptocurrencies
     'bitcoin': {
@@ -198,6 +198,104 @@ export const ICON_REGISTRY: IconRegistry = {
       path: '/images/icons/coins/pancakeswap.svg',
       size: { width: 24, height: 24 },
       format: 'svg'
+    },
+    /* 'usdc': {
+      category: 'coins',
+      name: 'usdc',
+      path: '/images/icons/coins/usdc.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
+    'usdt': {
+      category: 'coins',
+      name: 'usdt',
+      path: '/images/icons/coins/usdt.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    }, */
+    'usdc-tron': {
+      category: 'coins',
+      name: 'usdc-tron',
+      path: '/images/icons/coins/usdc-tron.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
+    'usdt-tron': {
+      category: 'coins',
+      name: 'usdt-tron',
+      path: '/images/icons/coins/usdt-tron.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
+    'usdc-solana': {
+      category: 'coins',
+      name: 'usdc-solana',
+      path: '/images/icons/coins/usdc-solana.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
+    'usdt-solana': {
+      category: 'coins',
+      name: 'usdt-solana',
+      path: '/images/icons/coins/usdt-solana.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
+    'usdc-polygon': {
+      category: 'coins',
+      name: 'usdc-polygon',
+      path: '/images/icons/coins/usdc-polygon.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
+    'usdt-polygon': {
+      category: 'coins',
+      name: 'usdt-polygon',
+      path: '/images/icons/coins/usdt-polygon.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
+    'usdc-ton': {
+      category: 'coins',
+      name: 'usdc-ton',
+      path: '/images/icons/coins/usdc-ton.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
+    'usdt-ton': {
+      category: 'coins',
+      name: 'usdt-ton',
+      path: '/images/icons/coins/usdt-ton.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
+    'usdc-erc20': {
+      category: 'coins',
+      name: 'usdc-erc20',
+      path: '/images/icons/coins/usdc-erc20.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
+    'usdt-erc20': {
+      category: 'coins',
+      name: 'usdt-erc20',
+      path: '/images/icons/coins/usdt-erc20.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
+    'usdc-bep20': {
+      category: 'coins',
+      name: 'usdc-bep20',
+      path: '/images/icons/coins/usdc-bep20.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
+    'usdt-bep20': {
+      category: 'coins',
+      name: 'usdt-bep20',
+      path: '/images/icons/coins/usdt-bep20.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
     }
   },
 
@@ -344,7 +442,21 @@ export const ICON_REGISTRY: IconRegistry = {
       path: '/images/icons/wallets/keystone.svg',
       size: { width: 24, height: 24 },
       format: 'svg'
-    }
+    },
+    'backpack': {
+      category: 'wallets',
+      name: 'backpack',
+      path: '/images/icons/wallets/backpack.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
+    'trust': {
+      category: 'wallets',
+      name: 'trust',
+      path: '/images/icons/wallets/trust.svg',
+      size: { width: 24, height: 24 },
+      format: 'svg'
+    },
   },
 
   // ============================================================================
@@ -377,6 +489,20 @@ export const ICON_REGISTRY: IconRegistry = {
       name: 'arrow-up-green',
       path: '/images/icons/arrow/arrow-up-green.svg',
       size: { width: 7, height: 4 },
+      format: 'svg'
+    },
+    'arrow-up-grey': {
+      category: 'arrows',
+      name: 'arrow-up-grey',
+      path: '/images/icons/arrow/arrow-up-grey.svg',
+      size: { width: 13, height: 9 },
+      format: 'svg'
+    },
+    'arrow-up-white': {
+      category: 'arrows',
+      name: 'arrow-up-white',
+      path: '/images/icons/arrow/arrow-up-white.svg',
+      size: { width: 13, height: 9 },
       format: 'svg'
     },
     'arrow-right-green': {

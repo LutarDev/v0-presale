@@ -44,7 +44,7 @@ interface PresaleWidgetStore extends PresaleWidgetState {
 }
 
 const initialState: PresaleWidgetState = {
-  currentStep: 1,
+  currentStep: 0,
   selectedCurrency: null,
   paymentAmount: '',
   tokenAmount: '',
@@ -67,7 +67,7 @@ export const usePresaleWidgetStore = create<PresaleWidgetStore>()(
       setCurrentStep: (step: number) => set({ currentStep: step }),
       setSelectedCurrency: (currency: PaymentCurrency) => set({ selectedCurrency: currency }),
       setPaymentAmount: (amount: string) => set({ paymentAmount: amount }),
-      setTokenAmount: (amount: string) => set({ amount }),
+      setTokenAmount: (amount: string) => set({ tokenAmount: amount }),
       setEmail: (email: string) => set({ email }),
       setBscWalletAddress: (address: string) => set({ bscWalletAddress: address }),
       setConnectedWallet: (wallet: WalletConnection | null) => set({ connectedWallet: wallet }),

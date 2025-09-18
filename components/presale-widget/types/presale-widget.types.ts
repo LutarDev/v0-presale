@@ -156,23 +156,37 @@ export type BlockchainType =
 
 // Constants
 export const SUPPORTED_CURRENCIES: PaymentCurrency[] = [
-  // Existing currencies from Radom
+  // Native blockchain currencies
+  { symbol: 'BTC', name: 'Bitcoin', chain: 'bitcoin', icon: 'bitcoin', type: 'native', decimals: 8 },
+  { symbol: 'ETH', name: 'Ethereum', chain: 'ethereum', icon: 'eth-contrast', type: 'native', decimals: 18 },
+  { symbol: 'BNB', name: 'BNB', chain: 'bsc', icon: 'bnb', type: 'native', decimals: 18 },
   { symbol: 'SOL', name: 'Solana', chain: 'solana', icon: 'solana', type: 'native', decimals: 9 },
   { symbol: 'POL', name: 'Polygon', chain: 'polygon', icon: 'polygon', type: 'native', decimals: 18 },
-  { symbol: 'BNB', name: 'BNB', chain: 'bsc', icon: 'bnb', type: 'native', decimals: 18 },
-  { symbol: 'USDT', name: 'Tether on Ethereum', chain: 'ethereum', icon: 'usdt-eth', type: 'token', contractAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7', decimals: 6 },
-  { symbol: 'USDT', name: 'Tether on Polygon', chain: 'polygon', icon: 'usdt-polygon', type: 'token', contractAddress: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', decimals: 6 },
-  { symbol: 'USDC', name: 'USD Coin on Polygon', chain: 'polygon', icon: 'usdc-polygon', type: 'token', contractAddress: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', decimals: 6 },
-  
-  // Extended currencies with TON support
+  { symbol: 'TRX', name: 'TRON', chain: 'tron', icon: 'tron', type: 'native', decimals: 6 },
   { symbol: 'TON', name: 'TON', chain: 'ton', icon: 'ton', type: 'native', decimals: 9 },
+  
+  // USDT on all chains
+  //{ symbol: 'USDT', name: 'Tether on Bitcoin', chain: 'bitcoin', icon: 'usdt-btc', type: 'token', contractAddress: 'bc1qwftz8tm698pmmg5y0nrqffe5egtd05uaf0cflc', decimals: 8 },
+  { symbol: 'USDT', name: 'Tether on Ethereum', chain: 'ethereum', icon: 'usdt-erc20', type: 'token', contractAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7', decimals: 6 },
+  { symbol: 'USDT', name: 'Tether on BSC', chain: 'bsc', icon: 'usdt-bep20', type: 'token', contractAddress: '0x55d398326f99059fF775485246999027B3197955', decimals: 18 },
+  { symbol: 'USDT', name: 'Tether on Solana', chain: 'solana', icon: 'usdt-solana', type: 'token', contractAddress: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB', decimals: 6 },
+  { symbol: 'USDT', name: 'Tether on Polygon', chain: 'polygon', icon: 'usdt-polygon', type: 'token', contractAddress: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', decimals: 6 },
+  { symbol: 'USDT', name: 'Tether on TRON', chain: 'tron', icon: 'usdt-tron', type: 'token', contractAddress: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t', decimals: 6 },
   { symbol: 'USDT', name: 'Tether on TON', chain: 'ton', icon: 'usdt-ton', type: 'token', contractAddress: 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs', decimals: 6 },
+  
+  // USDC on all chains
+  //{ symbol: 'USDC', name: 'USD Coin on Bitcoin', chain: 'bitcoin', icon: 'usdc-btc', type: 'token', contractAddress: 'bc1qwftz8tm698pmmg5y0nrqffe5egtd05uaf0cflc', decimals: 8 },
+  { symbol: 'USDC', name: 'USD Coin on Ethereum', chain: 'ethereum', icon: 'usdc-erc20', type: 'token', contractAddress: '0xA0b86a33E6441b8c4C8C0C4e8b8b8b8b8b8b8b8b8', decimals: 6 },
+  { symbol: 'USDC', name: 'USD Coin on BSC', chain: 'bsc', icon: 'usdc-bep20', type: 'token', contractAddress: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', decimals: 18 },
+  { symbol: 'USDC', name: 'USD Coin on Solana', chain: 'solana', icon: 'usdc-solana', type: 'token', contractAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', decimals: 6 },
+  { symbol: 'USDC', name: 'USD Coin on Polygon', chain: 'polygon', icon: 'usdc-polygon', type: 'token', contractAddress: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', decimals: 6 },
+  { symbol: 'USDC', name: 'USD Coin on TRON', chain: 'tron', icon: 'usdc-tron', type: 'token', contractAddress: 'TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8', decimals: 6 },
   { symbol: 'USDC', name: 'USD Coin on TON', chain: 'ton', icon: 'usdc-ton', type: 'token', contractAddress: 'EQCxE6mUtQJKFnGfaROTKOt1lZbDiiX1kCixRv7Nw2Id_sDs', decimals: 6 }
 ]
 
 export const DEFAULT_CONFIG: PresaleWidgetConfig = {
   lutarPrice: 0.004,
-  supportedCurrencies: ['SOL', 'POL', 'BNB', 'USDT', 'USDC', 'TON'],
+  supportedCurrencies: ['BTC', 'ETH', 'SOL', 'POL', 'BNB', 'TRX', 'USDT', 'USDC', 'TON'],
   paymentTimeout: 1800000, // 30 minutes
   minPurchaseAmount: 10,
   maxPurchaseAmount: 10000,

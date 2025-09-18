@@ -1,9 +1,81 @@
-<svg width="51" height="50" viewBox="0 0 51 50" fill="none" xmlns="http://www.w3.org/2000/svg">
-<ellipse cx="25.6819" cy="24.9999" rx="25" ry="24.9999" fill="#627EEA"/>
-<path d="M26.1868 9V21.0508L36.3722 25.6021L26.1868 9Z" fill="white" fill-opacity="0.602"/>
-<path d="M26.1868 9L16 25.6021L26.1868 21.0508V9Z" fill="white"/>
-<path d="M26.1868 33.4113V41.5996L36.379 27.4987L26.1868 33.4113Z" fill="white" fill-opacity="0.602"/>
-<path d="M26.1868 41.5996V33.41L16 27.4987L26.1868 41.5996Z" fill="white"/>
-<path d="M26.1868 31.5161L36.3722 25.6021L26.1868 21.0535V31.5161Z" fill="white" fill-opacity="0.2"/>
-<path d="M16 25.6021L26.1868 31.5161V21.0535L16 25.6021Z" fill="white" fill-opacity="0.602"/>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="60"
+   height="60.000004"
+   viewBox="0 0 60 60.000004"
+   fill="none"
+   version="1.1"
+   id="svg16"
+   sodipodi:docname="eth-contrast.svg"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs20" />
+  <sodipodi:namedview
+     id="namedview18"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:showpageshadow="false"
+     showborder="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="14.38"
+     inkscape:cx="24.826147"
+     inkscape:cy="25"
+     inkscape:window-width="1920"
+     inkscape:window-height="1066"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg16" />
+  <g
+     id="g844"
+     inkscape:label="eth"
+     transform="matrix(1.2,0,0,1.2000048,-0.81828003,0)">
+    <ellipse
+       cx="25.6819"
+       cy="24.999901"
+       rx="25"
+       ry="24.999901"
+       fill="#627eea"
+       id="ellipse2" />
+    <path
+       d="m 26.1868,9 v 12.0508 l 10.1854,4.5513 z"
+       fill="#ffffff"
+       fill-opacity="0.602"
+       id="path4" />
+    <path
+       d="M 26.1868,9 16,25.6021 26.1868,21.0508 Z"
+       fill="#ffffff"
+       id="path6" />
+    <path
+       d="m 26.1868,33.4113 v 8.1883 L 36.379,27.4987 Z"
+       fill="#ffffff"
+       fill-opacity="0.602"
+       id="path8" />
+    <path
+       d="M 26.1868,41.5996 V 33.41 L 16,27.4987 Z"
+       fill="#ffffff"
+       id="path10" />
+    <path
+       d="M 26.1868,31.5161 36.3722,25.6021 26.1868,21.0535 Z"
+       fill="#ffffff"
+       fill-opacity="0.2"
+       id="path12" />
+    <path
+       d="m 16,25.6021 10.1868,5.914 V 21.0535 Z"
+       fill="#ffffff"
+       fill-opacity="0.602"
+       id="path14" />
+  </g>
 </svg>

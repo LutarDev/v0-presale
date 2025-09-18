@@ -25,9 +25,9 @@ export type CoinIcon =
   // Major cryptocurrencies (available icons)
   | 'bitcoin' | 'eth-contrast' | 'bnb' | 'solana' | 'tron' | 'ton' | 'polygon'
   // Stablecoins (using chain icons as fallbacks)
-  | 'usdc' | 'usdt' | 'dai' | 'busd'
+  | 'usdc' | 'usdt' | 'dai' | 'busd' | 'usdc-ton' | 'usdt-ton' | 'usdc-tron' | 'usdt-tron' | 'usdc-solana' | 'usdt-solana' | 'usdc-polygon' | 'usdt-polygon' | 'usdc-erc20' | 'usdt-erc20' | 'usdc-bep20' | 'usdt-bep20'
   // LUTAR tokens
-  | 'lutar' | 'lutar-white'
+  | 'lutar'
   // Other popular tokens
   | 'chainlink' | 'uniswap' | 'aave' | 'compound' | 'maker' | 'yearn'
   | 'sushi' | 'curve' | 'balancer' | '1inch' | 'pancakeswap'
@@ -252,3 +252,4 @@ export const ICON_COLORS = {
 
 export type IconSize = keyof typeof ICON_SIZES
 export type IconColor = keyof typeof ICON_COLORS
+export type IconName = CoinIcon | WalletIcon | ArrowIcon | CheckmarkIcon | BlockchainFilterIcon

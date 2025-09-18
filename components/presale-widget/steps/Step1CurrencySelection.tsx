@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { CurrencySelectionProps, SUPPORTED_CURRENCIES } from '../types/presale-widget.types'
-import { ChainIcon } from '@/components/ui/icon'
+import { CurrencyIcon, ChainIcon } from '@/components/ui/icon'
 import { cn } from '@/lib/utils'
 
 export const Step1CurrencySelection: React.FC<CurrencySelectionProps> = ({
@@ -13,6 +13,10 @@ export const Step1CurrencySelection: React.FC<CurrencySelectionProps> = ({
 }) => {
   const handleCurrencySelect = (currency: typeof SUPPORTED_CURRENCIES[0]) => {
     onCurrencySelect(currency)
+    // Auto-continue after selection to go back to step 0
+    setTimeout(() => {
+      onNext()
+    }, 500)
   }
 
   const handleContinue = () => {
@@ -45,8 +49,8 @@ export const Step1CurrencySelection: React.FC<CurrencySelectionProps> = ({
               ]
             )}
           >
-            <ChainIcon 
-              chain={currency.chain as any} 
+            <CurrencyIcon 
+              currency={currency}
               size={32}
               className="w-8 h-8"
             />
@@ -66,8 +70,8 @@ export const Step1CurrencySelection: React.FC<CurrencySelectionProps> = ({
       {selectedCurrency && (
         <div className="p-4 bg-[rgba(255,199,0,0.1)] border border-[rgba(255,199,0,0.3)] rounded-lg">
           <div className="flex items-center gap-3">
-            <ChainIcon 
-              chain={selectedCurrency.chain as any} 
+            <CurrencyIcon 
+              currency={selectedCurrency}
               size={24}
               className="w-6 h-6"
             />
