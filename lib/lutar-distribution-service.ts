@@ -1,278 +1,278 @@
-export interface LutarDistributionParams {
-  recipientAddress: string // BSC wallet address to receive LUTAR tokens
-  lutarAmount: string // Amount of LUTAR tokens to send (in tokens, not wei)
-  paymentTxHash: string // Original payment transaction hash for tracking
-  paymentChain: string // Chain where payment was made
-  paymentToken: string // Token used for payment
-  paymentAmount: string // Amount paid
+import { PaymentCurrency } from '@/components/presale-widget/types/presale-widget.types';
+
+export interface LutarDistributionRequest {
+  recipientAddress: string; // BSC wallet address from Step 2
+  lutarAmount: string;
+  paymentTxHash: string;
+  paymentChain: string;
+  paymentToken: string;
+  paymentAmount: string;
+  userEmail?: string; // Optional email from Step 2
 }
 
-export interface LutarDistributionResult {
-  success: boolean
-  distributionTxHash?: string
-  error?: string
-  queueId?: string
+export interface LutarDistributionResponse {
+  success: boolean;
+  message: string;
+  distributionTxHash?: string;
+  queueId?: string;
+  recipientAddress: string;
+  amount: string;
+  paymentTxHash: string;
+  timestamp: number;
+}
+
+export interface DistributionStatus {
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  message: string;
+  txHash?: string;
+  error?: string;
 }
 
 export class LutarDistributionService {
-  private static readonly ENGINE_URL = "https://engine-production-b94f.up.railway.app"
-  private static readonly ACCESS_TOKEN = "zBvVLRq77mUNj6-BqNZbHaSYDIULI50GtKghcy9qd28HHEKwkDhpODYyAjkOH7EpL3xIsXO-ATZhnEHxQnYdaA"
-  private static readonly BACKEND_WALLET = "0xfdCd87e45b13998326cA206Cc9De268f8CA480f8"
-  private static readonly LUTAR_CONTRACT = "0x2770904185Ed743d991D8fA21C8271ae6Cd4080E" // LUTAR ERC20 contract on BSC
-  private static readonly BSC_CHAIN_ID = "56" // BNB Smart Chain mainnet
-  private static readonly LUTAR_DECIMALS = 18 // LUTAR token has 18 decimals
+  private static instance: LutarDistributionService;
+  private readonly ENGINE_URL = "https://engine-production-b94f.up.railway.app";
+  private readonly ACCESS_TOKEN = "zBvVLRq77mUNj6-BqNZbHaSYDIULI50GtKghcy9qd28HHEKwkDhpODYyAjkOH7EpL3xIsXO-ATZhnEHxQnYdaA";
+  private readonly BACKEND_WALLET = "0xfdCd87e45b13998326cA206Cc9De268f8CA480f8";
+  private readonly LUTAR_CONTRACT = "0x2770904185Ed743d991D8fA21C8271ae6Cd4080E";
+  private readonly BSC_CHAIN_ID = "56";
+
+  private constructor() {}
+
+  public static getInstance(): LutarDistributionService {
+    if (!LutarDistributionService.instance) {
+      LutarDistributionService.instance = new LutarDistributionService();
+    }
+    return LutarDistributionService.instance;
+  }
 
   /**
-   * Send LUTAR tokens to the recipient's BSC wallet address
+   * Distribute LUTAR tokens to user's BSC wallet address
    */
-  static async distributeLutarTokens(params: LutarDistributionParams): Promise<LutarDistributionResult> {
+  public async distributeLutarTokens(request: LutarDistributionRequest): Promise<LutarDistributionResponse> {
     try {
-      console.log("[LutarDistribution] Starting LUTAR token distribution:", {
-        recipientAddress: params.recipientAddress,
-        lutarAmount: params.lutarAmount,
-        paymentTxHash: params.paymentTxHash,
-        paymentChain: params.paymentChain,
-        paymentToken: params.paymentToken,
-        paymentAmount: params.paymentAmount
-      })
-
-      // Validate parameters
-      const validation = this.validateDistributionParams(params)
-      if (!validation.valid) {
-        return {
-          success: false,
-          error: validation.error,
-        }
+      // Validate BSC address
+      if (!this.isValidBscAddress(request.recipientAddress)) {
+        throw new Error('Invalid BSC wallet address provided');
       }
 
       // Convert LUTAR amount to wei (18 decimals)
-      const amountInWei = this.convertToWei(params.lutarAmount, this.LUTAR_DECIMALS)
-      console.log("[LutarDistribution] Amount in wei:", amountInWei)
+      const amountInWei = this.convertToWei(request.lutarAmount, 18);
 
-      // Call Thirdweb Engine v2 REST API to send LUTAR tokens
+      // Call Thirdweb Engine API
       const response = await fetch(
         `${this.ENGINE_URL}/contract/${this.BSC_CHAIN_ID}/${this.LUTAR_CONTRACT}/write`,
         {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${this.ACCESS_TOKEN}`,
-            "x-backend-wallet-address": this.BACKEND_WALLET,
-            "x-idempotency-key": this.generateIdempotencyKey(params),
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.ACCESS_TOKEN}`,
+            'x-backend-wallet-address': this.BACKEND_WALLET,
           },
           body: JSON.stringify({
-            functionName: "transfer",
-            args: [params.recipientAddress, amountInWei],
+            functionName: 'transfer',
+            args: [request.recipientAddress, amountInWei],
           }),
         }
-      )
+      );
 
-      const data = await response.json()
-      console.log("[LutarDistribution] Engine response:", data)
+      const data = await response.json();
 
       if (!response.ok) {
-        const errorMessage = data.message || `HTTP ${response.status}: ${response.statusText}`
-        console.error("[LutarDistribution] Engine API error:", errorMessage)
-        return {
-          success: false,
-          error: `Failed to distribute LUTAR tokens: ${errorMessage}`,
-        }
+        throw new Error(data.message || 'Distribution failed');
       }
-
-      // Extract transaction hash or queue ID from response
-      const distributionTxHash = data.transactionHash || data.result?.transactionHash
-      const queueId = data.queueId || data.id
-
-      console.log("[LutarDistribution] Distribution successful:", {
-        distributionTxHash,
-        queueId,
-        recipientAddress: params.recipientAddress,
-        amount: params.lutarAmount
-      })
 
       return {
         success: true,
-        distributionTxHash,
-        queueId,
-      }
-
+        message: 'LUTAR tokens distributed successfully',
+        distributionTxHash: data.transactionHash,
+        queueId: data.queueId,
+        recipientAddress: request.recipientAddress,
+        amount: request.lutarAmount,
+        paymentTxHash: request.paymentTxHash,
+        timestamp: Date.now()
+      };
     } catch (error) {
-      console.error("[LutarDistribution] Distribution failed:", error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error occurred during distribution",
-      }
+      console.error('LUTAR distribution error:', error);
+      throw new Error(`Token distribution failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
-   * Check the status of a LUTAR token distribution transaction
+   * Check distribution status by queue ID
    */
-  static async checkDistributionStatus(queueId: string): Promise<{
-    success: boolean
-    status?: string
-    transactionHash?: string
-    error?: string
-  }> {
+  public async checkDistributionStatus(queueId: string): Promise<DistributionStatus> {
     try {
-      console.log("[LutarDistribution] Checking distribution status for queue ID:", queueId)
-
       const response = await fetch(
-        `${this.ENGINE_URL}/transaction/status/${queueId}`,
+        `${this.ENGINE_URL}/queue/${queueId}`,
         {
-          method: "GET",
+          method: 'GET',
           headers: {
-            "Authorization": `Bearer ${this.ACCESS_TOKEN}`,
+            'Authorization': `Bearer ${this.ACCESS_TOKEN}`,
           },
         }
-      )
+      );
 
-      const data = await response.json()
-      console.log("[LutarDistribution] Status response:", data)
+      const data = await response.json();
 
       if (!response.ok) {
-        return {
-          success: false,
-          error: data.message || `Failed to check status: ${response.statusText}`,
-        }
+        throw new Error(data.message || 'Failed to check status');
       }
 
       return {
-        success: true,
-        status: data.status,
-        transactionHash: data.transactionHash || data.result?.transactionHash,
-      }
-
+        status: data.status || 'pending',
+        message: data.message || 'Status check completed',
+        txHash: data.transactionHash,
+        error: data.error
+      };
     } catch (error) {
-      console.error("[LutarDistribution] Status check failed:", error)
+      console.error('Status check error:', error);
       return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error occurred during status check",
-      }
+        status: 'failed',
+        message: 'Failed to check distribution status',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
     }
   }
 
   /**
-   * Get LUTAR token balance of the backend wallet
+   * Get backend wallet balance
    */
-  static async getBackendWalletBalance(): Promise<{
-    success: boolean
-    balance?: string
-    error?: string
-  }> {
+  public async getBackendWalletBalance(): Promise<string> {
     try {
-      console.log("[LutarDistribution] Checking backend wallet LUTAR balance")
+      const response = await fetch(
+        `${this.ENGINE_URL}/contract/${this.BSC_CHAIN_ID}/${this.LUTAR_CONTRACT}/read`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.ACCESS_TOKEN}`,
+          },
+          body: JSON.stringify({
+            functionName: 'balanceOf',
+            args: [this.BACKEND_WALLET],
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to get balance');
+      }
+
+      // Convert from wei to LUTAR tokens
+      return this.convertFromWei(data.result, 18);
+    } catch (error) {
+      console.error('Balance check error:', error);
+      return '0';
+    }
+  }
+
+  /**
+   * Validate BSC address format
+   */
+  private isValidBscAddress(address: string): boolean {
+    if (!address) return false;
+    if (!address.startsWith('0x')) return false;
+    if (address.length !== 42) return false;
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) return false;
+    return true;
+  }
+
+  /**
+   * Convert amount to wei
+   */
+  private convertToWei(amount: string, decimals: number): string {
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount)) return '0';
+    
+    const wei = numAmount * Math.pow(10, decimals);
+    return Math.floor(wei).toString();
+  }
+
+  /**
+   * Convert from wei to token amount
+   */
+  private convertFromWei(weiAmount: string, decimals: number): string {
+    const numWei = parseFloat(weiAmount);
+    if (isNaN(numWei)) return '0';
+    
+    const tokenAmount = numWei / Math.pow(10, decimals);
+    return tokenAmount.toFixed(6);
+  }
+
+  /**
+   * Estimate gas for distribution transaction
+   */
+  public async estimateDistributionGas(recipientAddress: string, amount: string): Promise<string> {
+    try {
+      const amountInWei = this.convertToWei(amount, 18);
 
       const response = await fetch(
-        `${this.ENGINE_URL}/contract/${this.BSC_CHAIN_ID}/${this.LUTAR_CONTRACT}/read?functionName=balanceOf&args=${this.BACKEND_WALLET}`,
+        `${this.ENGINE_URL}/contract/${this.BSC_CHAIN_ID}/${this.LUTAR_CONTRACT}/estimate-gas`,
         {
-          method: "GET",
+          method: 'POST',
           headers: {
-            "Authorization": `Bearer ${this.ACCESS_TOKEN}`,
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.ACCESS_TOKEN}`,
+            'x-backend-wallet-address': this.BACKEND_WALLET,
           },
+          body: JSON.stringify({
+            functionName: 'transfer',
+            args: [recipientAddress, amountInWei],
+          }),
         }
-      )
+      );
 
-      const data = await response.json()
-      console.log("[LutarDistribution] Balance response:", data)
+      const data = await response.json();
 
       if (!response.ok) {
-        return {
-          success: false,
-          error: data.message || `Failed to get balance: ${response.statusText}`,
-        }
+        throw new Error(data.message || 'Failed to estimate gas');
       }
 
-      // Convert wei to tokens
-      const balanceInTokens = this.convertFromWei(data.result || data, this.LUTAR_DECIMALS)
-
-      return {
-        success: true,
-        balance: balanceInTokens,
-      }
-
+      return data.gasEstimate || '0';
     } catch (error) {
-      console.error("[LutarDistribution] Balance check failed:", error)
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error occurred during balance check",
-      }
+      console.error('Gas estimation error:', error);
+      return '0';
     }
   }
 
   /**
-   * Validate distribution parameters
+   * Get distribution history for a recipient
    */
-  private static validateDistributionParams(params: LutarDistributionParams): { valid: boolean; error?: string } {
-    if (!params.recipientAddress) {
-      return { valid: false, error: "Recipient address is required" }
+  public async getDistributionHistory(recipientAddress: string): Promise<LutarDistributionResponse[]> {
+    try {
+      // This would typically be stored in a database
+      // For now, return empty array
+      return [];
+    } catch (error) {
+      console.error('History retrieval error:', error);
+      return [];
     }
-
-    if (!params.recipientAddress.startsWith("0x") || params.recipientAddress.length !== 42) {
-      return { valid: false, error: "Invalid BSC wallet address format" }
-    }
-
-    if (!params.lutarAmount || isNaN(Number(params.lutarAmount)) || Number(params.lutarAmount) <= 0) {
-      return { valid: false, error: "Invalid LUTAR amount" }
-    }
-
-    if (!params.paymentTxHash) {
-      return { valid: false, error: "Payment transaction hash is required" }
-    }
-
-    return { valid: true }
   }
 
   /**
-   * Convert token amount to wei
+   * Validate distribution request
    */
-  private static convertToWei(amount: string, decimals: number): string {
-    const amountNum = Number.parseFloat(amount)
-    const weiAmount = amountNum * Math.pow(10, decimals)
-    return Math.floor(weiAmount).toString()
-  }
-
-  /**
-   * Convert wei amount to tokens
-   */
-  private static convertFromWei(weiAmount: string | number, decimals: number): string {
-    const weiNum = Number(weiAmount)
-    const tokenAmount = weiNum / Math.pow(10, decimals)
-    return tokenAmount.toFixed(6)
-  }
-
-  /**
-   * Generate unique idempotency key for the distribution request
-   */
-  private static generateIdempotencyKey(params: LutarDistributionParams): string {
-    const timestamp = Date.now()
-    const random = Math.random().toString(36).substring(2, 15)
-    return `lutar-dist-${params.paymentTxHash}-${timestamp}-${random}`
-  }
-
-  /**
-   * Create a webhook payload for LUTAR distribution
-   * This can be used to trigger distribution from a webhook endpoint
-   */
-  static createWebhookPayload(params: LutarDistributionParams): {
-    type: string
-    paymentTxHash: string
-    paymentChain: string
-    paymentToken: string
-    paymentAmount: string
-    lutarAmount: string
-    recipientAddress: string
-    timestamp: number
-  } {
-    return {
-      type: "lutar_distribution_request",
-      paymentTxHash: params.paymentTxHash,
-      paymentChain: params.paymentChain,
-      paymentToken: params.paymentToken,
-      paymentAmount: params.paymentAmount,
-      lutarAmount: params.lutarAmount,
-      recipientAddress: params.recipientAddress,
-      timestamp: Date.now(),
+  public validateDistributionRequest(request: LutarDistributionRequest): { valid: boolean; error?: string } {
+    if (!request.recipientAddress) {
+      return { valid: false, error: 'Recipient address is required' };
     }
+
+    if (!this.isValidBscAddress(request.recipientAddress)) {
+      return { valid: false, error: 'Invalid BSC address format' };
+    }
+
+    if (!request.lutarAmount || parseFloat(request.lutarAmount) <= 0) {
+      return { valid: false, error: 'Invalid LUTAR amount' };
+    }
+
+    if (!request.paymentTxHash) {
+      return { valid: false, error: 'Payment transaction hash is required' };
+    }
+
+    return { valid: true };
   }
 }
+
+export const lutarDistributionService = LutarDistributionService.getInstance();
