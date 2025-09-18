@@ -14,15 +14,23 @@ export const Step3_1WalletSelection: React.FC<WalletSelectionProps> = ({
   const [availableWallets, setAvailableWallets] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [connecting, setConnecting] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const loadWallets = async () => {
       setLoading(true)
+      setError(null)
       try {
         const wallets = walletService.getAvailableWallets(selectedCurrency.chain)
-        setAvailableWallets(wallets)
+        // Pre-check installation status to ensure consistency
+        const walletsWithStatus = wallets.map(wallet => ({
+          ...wallet,
+          _isInstalled: wallet.isInstalled() // Cache the installation status
+        }))
+        setAvailableWallets(walletsWithStatus)
       } catch (error) {
         console.error('Error loading wallets:', error)
+        setError('Failed to load wallets')
       } finally {
         setLoading(false)
       }
@@ -33,16 +41,19 @@ export const Step3_1WalletSelection: React.FC<WalletSelectionProps> = ({
 
   const handleWalletSelect = async (walletName: string) => {
     setConnecting(walletName)
+    setError(null)
     try {
       const result = await walletService.connectWallet(selectedCurrency.chain, walletName)
       if (result.success) {
         onWalletSelect(walletName)
         onClose()
       } else {
+        setError(result.error || 'Failed to connect wallet')
         console.error('Wallet connection failed:', result.error)
-        // You could show an error message here
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      setError(errorMessage)
       console.error('Error connecting wallet:', error)
     } finally {
       setConnecting(null)
@@ -83,17 +94,24 @@ export const Step3_1WalletSelection: React.FC<WalletSelectionProps> = ({
           </p>
         </div>
 
+        {/* Error Display */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+
         {/* Wallet List */}
         <div className="space-y-3">
           {availableWallets.map((wallet) => (
             <button
               key={wallet.name}
               onClick={() => handleWalletSelect(wallet.name)}
-              disabled={!wallet.isInstalled() || connecting === wallet.name}
+              disabled={!wallet._isInstalled || connecting === wallet.name}
               className={cn(
                 "w-full p-4 rounded-lg border transition-all duration-200",
                 "flex items-center gap-4",
-                wallet.isInstalled() && connecting !== wallet.name
+                wallet._isInstalled && connecting !== wallet.name
                   ? "border-[rgba(255,255,255,0.1)] bg-[rgba(255,255,255,0.05)] hover:bg-[rgba(255,255,255,0.1)] text-white"
                   : "border-[rgba(255,255,255,0.05)] bg-[rgba(255,255,255,0.02)] text-gray-500 cursor-not-allowed"
               )}
@@ -105,14 +123,14 @@ export const Step3_1WalletSelection: React.FC<WalletSelectionProps> = ({
               />
               <div className="flex-1 text-left">
                 <p className="font-medium">{wallet.name}</p>
-                {!wallet.isInstalled() && (
+                {!wallet._isInstalled && (
                   <p className="text-xs text-gray-500">Not installed</p>
                 )}
                 {connecting === wallet.name && (
                   <p className="text-xs text-yellow-400">Connecting...</p>
                 )}
               </div>
-              {wallet.isInstalled() && connecting !== wallet.name && (
+              {wallet._isInstalled && connecting !== wallet.name && (
                 <div className="w-2 h-2 bg-green-400 rounded-full"></div>
               )}
               {connecting === wallet.name && (

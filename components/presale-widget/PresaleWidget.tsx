@@ -10,7 +10,8 @@ import { walletService } from '@/lib/wallet-service'
 // Step components
 import { Step0StartView } from './steps/Step0StartView'
 import { Step1CurrencySelection } from './steps/Step1CurrencySelection'
-import { Step2AmountInput } from './steps/Step2AmountInput'
+import { Step1_5PaymentDetails } from './steps/Step1_5PaymentDetails'
+import { Step2PaymentConfirmation } from './steps/Step2PaymentConfirmation'
 import { Step3PaymentDetails } from './steps/Step3PaymentDetails'
 import { Step3_1WalletSelection } from './steps/Step3_1WalletSelection'
 import { Step4WalletConnected } from './steps/Step4WalletConnected'
@@ -145,9 +146,13 @@ export const PresaleWidget: React.FC<PresaleWidgetProps> = ({
             <Step0StartView 
               {...commonProps}
               onNext={() => {
-                // Main continue flow - validate and proceed to amount input
+                // Main continue flow - validate and proceed to email input
                 if (!selectedCurrency) {
                   handleError('Please select a payment currency first')
+                  return
+                }
+                if (!paymentAmount || parseFloat(paymentAmount) <= 0) {
+                  handleError('Please enter a valid amount')
                   return
                 }
                 usePresaleWidgetStore.getState().setCurrentStep(2)
@@ -166,10 +171,12 @@ export const PresaleWidget: React.FC<PresaleWidgetProps> = ({
               selectedCurrency={selectedCurrency}
               onCurrencySelect={(currency) => {
                 usePresaleWidgetStore.getState().setSelectedCurrency(currency)
+                // Go to payment details step after currency selection
+                usePresaleWidgetStore.getState().setCurrentStep(1.5)
               }}
               onNext={() => {
-                // After selecting currency, go back to step 0 to show the updated UI
-                usePresaleWidgetStore.getState().setCurrentStep(0)
+                // This shouldn't be called in the new flow
+                usePresaleWidgetStore.getState().setCurrentStep(1.5)
               }}
               onBack={() => {
                 // Go back to step 0
@@ -177,42 +184,13 @@ export const PresaleWidget: React.FC<PresaleWidgetProps> = ({
               }}
             />
           )
-
-        case 2:
-          if (!selectedCurrency) {
-            // Don't call handleError during render - just show a fallback
-            return (
-              <div className="flex flex-col items-center justify-center py-8">
-                <p className="text-red-400 text-sm mb-4">Please select a payment currency first</p>
-                <button
-                  onClick={() => usePresaleWidgetStore.getState().setCurrentStep(1)}
-                  className="px-4 py-2 bg-yellow-400 text-black rounded-lg font-semibold"
-                >
-                  Select Currency
-                </button>
-              </div>
-            )
-          }
+        case 1.5:
           return (
-            <Step2AmountInput
+            <Step1_5PaymentDetails
               {...commonProps}
-              selectedCurrency={selectedCurrency}
-              paymentAmount={paymentAmount}
-              tokenAmount={tokenAmount}
-              email={email}
-              bscWalletAddress={bscWalletAddress}
-              onAmountChange={(amount: string) => {
-                usePresaleWidgetStore.getState().setPaymentAmount(amount)
-              }}
-              onEmailChange={(email: string) => {
-                usePresaleWidgetStore.getState().setEmail(email)
-              }}
-              onBscWalletChange={(address: string) => {
-                usePresaleWidgetStore.getState().setBscWalletAddress(address)
-              }}
               onNext={async () => {
-                // Generate payment details before proceeding to step 3
-                if (selectedCurrency && paymentAmount) {
+                // After payment details input, generate payment details and go to step 2
+                if (selectedCurrency && paymentAmount && bscWalletAddress) {
                   try {
                     const paymentDetails = await paymentService.generatePaymentDetails(
                       selectedCurrency,
@@ -220,16 +198,62 @@ export const PresaleWidget: React.FC<PresaleWidgetProps> = ({
                       'LUTAR Presale Payment'
                     )
                     usePresaleWidgetStore.getState().setPaymentDetails(paymentDetails)
-                    proceedToNextStep()
+                    usePresaleWidgetStore.getState().setCurrentStep(2)
                   } catch (error) {
                     handleError('Failed to generate payment details')
                   }
                 } else {
-                  proceedToNextStep()
+                  handleError('Missing payment information')
                 }
+              }}
+              onBack={() => {
+                // Go back to currency selection
+                usePresaleWidgetStore.getState().setCurrentStep(1)
               }}
             />
           )
+
+                case 2:
+                  if (!selectedCurrency) {
+                    // Don't call handleError during render - just show a fallback
+                    return (
+                      <div className="flex flex-col items-center justify-center py-8">
+                        <p className="text-red-400 text-sm mb-4">Please select a payment currency first</p>
+                        <button
+                          onClick={() => usePresaleWidgetStore.getState().setCurrentStep(1)}
+                          className="px-4 py-2 bg-yellow-400 text-black rounded-lg font-semibold"
+                        >
+                          Select Currency
+                        </button>
+                      </div>
+                    )
+                  }
+                  if (!paymentDetails) {
+                    // Don't call handleError during render - show fallback
+                    return (
+                      <div className="flex flex-col items-center justify-center py-8">
+                        <p className="text-red-400 text-sm mb-4">Payment details not available</p>
+                        <button
+                          onClick={() => usePresaleWidgetStore.getState().setCurrentStep(1)}
+                          className="px-4 py-2 bg-yellow-400 text-black rounded-lg font-semibold"
+                        >
+                          Go Back
+                        </button>
+                      </div>
+                    )
+                  }
+                  return (
+                    <Step2PaymentConfirmation
+                      {...commonProps}
+                      paymentDetails={paymentDetails}
+                      connectedWallet={connectedWallet}
+                      onWalletConnect={handleWalletConnect}
+                      onWalletDisconnect={handleWalletDisconnect}
+                      onNext={() => {
+                        usePresaleWidgetStore.getState().setCurrentStep(3)
+                      }}
+                    />
+                  )
 
         case 3:
           if (!paymentDetails) {
@@ -285,7 +309,7 @@ export const PresaleWidget: React.FC<PresaleWidgetProps> = ({
               connectedWallet={connectedWallet}
               paymentDetails={paymentDetails}
               onOpenWallet={() => {
-                // Open wallet for transaction approval
+                // This will trigger the transaction process in Step4WalletConnected
                 console.log('Opening wallet for transaction approval')
               }}
               onDisconnect={handleWalletDisconnect}
@@ -299,7 +323,7 @@ export const PresaleWidget: React.FC<PresaleWidgetProps> = ({
                   timestamp: Date.now()
                 }
                 usePresaleWidgetStore.getState().setTransactionInfo(transactionInfo)
-                proceedToNextStep()
+                usePresaleWidgetStore.getState().setCurrentStep(5)
               }}
             />
           )

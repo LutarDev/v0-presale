@@ -5,27 +5,28 @@ import { cn } from '@/lib/utils'
 import { ChainIcon, CurrencyIcon } from '@/components/ui/icon'
 import { usePresaleWidgetStore } from '@/stores/presale-widget-store'
 import { DEFAULT_CONFIG } from '../types/presale-widget.types'
+import { CurrencySelectionModal } from '../shared/CurrencySelectionModal'
 
 interface Step0StartViewProps {
   onNext: () => void
   onError: (error: string) => void
-  onCurrencySelect: () => void
 }
 
 export const Step0StartView: React.FC<Step0StartViewProps> = ({
   onNext,
-  onError,
-  onCurrencySelect
+  onError
 }) => {
   const { 
     paymentAmount, 
     tokenAmount,
     selectedCurrency,
     setPaymentAmount,
+    setSelectedCurrency,
     calculateTokenAmount
   } = usePresaleWidgetStore()
   
   const [localAmount, setLocalAmount] = useState(paymentAmount || '')
+  const [isCurrencyModalOpen, setIsCurrencyModalOpen] = useState(false)
 
   // Calculate token amount when local amount changes
   useEffect(() => {
@@ -47,6 +48,14 @@ export const Step0StartView: React.FC<Step0StartViewProps> = ({
         setLocalAmount(value)
       }
     }
+  }
+
+  const handleCurrencySelect = () => {
+    setIsCurrencyModalOpen(true)
+  }
+
+  const handleCurrencyModalClose = () => {
+    setIsCurrencyModalOpen(false)
   }
 
   const handleBuyClick = () => {
@@ -96,7 +105,7 @@ export const Step0StartView: React.FC<Step0StartViewProps> = ({
             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
               <span className="text-[rgba(255,255,255,0.45)] text-sm"></span>
               <button
-                onClick={onCurrencySelect}
+                onClick={handleCurrencySelect}
                 className={cn(
                   "flex items-center gap-2 px-3 py-1.5",
                   "bg-[rgba(255,255,255,0.05)] rounded-[15px]",
@@ -160,6 +169,17 @@ export const Step0StartView: React.FC<Step0StartViewProps> = ({
           By purchasing LUTAR tokens, you agree to our Terms of Service
         </p>
       </div>
+
+      {/* Currency Selection Modal */}
+      <CurrencySelectionModal
+        isOpen={isCurrencyModalOpen}
+        onClose={handleCurrencyModalClose}
+        selectedCurrency={selectedCurrency}
+        onCurrencySelect={(currency) => {
+          setSelectedCurrency(currency)
+          setIsCurrencyModalOpen(false)
+        }}
+      />
     </div>
   )
 }

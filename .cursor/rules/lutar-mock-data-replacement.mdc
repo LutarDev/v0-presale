@@ -15,7 +15,7 @@ Comprehensive guide to identify, catalog, and replace all mock/placeholder data 
 #### Location: [components/purchase-interface.tsx](mdc:components/purchase-interface.tsx)
 ```typescript
 // MOCK DATA - Line 67
-const lutarPrice = 0.045 // $0.045 per LUTAR
+const lutarPrice = 0.004 // $0.045 per LUTAR
 
 // MOCK DATA - Line 81
 Number(paymentAmount) * (selectedChainData?.rate || 1) * 50000 // Mock exchange rate

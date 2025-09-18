@@ -33,50 +33,82 @@ export interface WalletInfo {
   balance?: string;
 }
 
+// Cache for wallet installation status to prevent blinking
+const walletInstallationCache = new Map<string, boolean>();
+
+// Initialize consistent wallet installation status
+const initializeWalletInstallation = (name: string, chain: string): boolean => {
+  const key = `${chain}-${name}`;
+  if (!walletInstallationCache.has(key)) {
+    // Set consistent installation status based on wallet name
+    // In production, this would check for actual wallet extensions
+    const commonWallets = ['MetaMask', 'Trust Wallet', 'Phantom', 'Coinbase Wallet'];
+    const isInstalled = commonWallets.includes(name) || Math.random() > 0.4;
+    walletInstallationCache.set(key, isInstalled);
+  }
+  return walletInstallationCache.get(key)!;
+};
+
 // Mock wallet adapters - these will be replaced with real implementations
-export const createMockWalletAdapter = (name: string, chain: string, icon: string): WalletAdapter => ({
-  name,
-  icon,
-  chain,
-  connect: async (): Promise<WalletConnectionResult> => {
-    // Simulate connection delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock successful connection
-    return {
-      address: `0x${Math.random().toString(16).substr(2, 40)}`,
-      chain,
-      walletName: name,
-      success: true,
-    };
-  },
-  disconnect: async () => {
-    // Mock disconnection
-    await new Promise(resolve => setTimeout(resolve, 500));
-  },
-  sendTransaction: async (to: string, amount: string, currency: PaymentCurrency): Promise<TransactionResult> => {
-    // Simulate transaction delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Mock successful transaction
-    return {
-      hash: `0x${Math.random().toString(16).substr(2, 64)}`,
-      success: true,
-    };
-  },
-  getBalance: async (currency: PaymentCurrency): Promise<string> => {
-    // Mock balance
-    return (Math.random() * 10).toFixed(6);
-  },
-  isInstalled: () => {
-    // Mock installation check - in real implementation, check if wallet extension is available
-    return Math.random() > 0.3; // 70% chance of being "installed"
-  },
-  isConnected: () => {
-    // Mock connection status
-    return false;
-  },
-});
+export const createMockWalletAdapter = (name: string, chain: string, icon: string): WalletAdapter => {
+  // Initialize consistent installation status
+  const isWalletInstalled = initializeWalletInstallation(name, chain);
+  
+  return {
+    name,
+    icon,
+    chain,
+    connect: async (): Promise<WalletConnectionResult> => {
+      // Check if wallet is installed before connecting
+      if (!isWalletInstalled) {
+        return {
+          address: '',
+          chain,
+          walletName: name,
+          success: false,
+          error: `${name} is not installed`,
+        };
+      }
+
+      // Simulate connection delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock successful connection
+      return {
+        address: `0x${Math.random().toString(16).substr(2, 40)}`,
+        chain,
+        walletName: name,
+        success: true,
+      };
+    },
+    disconnect: async () => {
+      // Mock disconnection
+      await new Promise(resolve => setTimeout(resolve, 500));
+    },
+    sendTransaction: async (to: string, amount: string, currency: PaymentCurrency): Promise<TransactionResult> => {
+      // Simulate transaction delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Mock successful transaction
+      return {
+        hash: `0x${Math.random().toString(16).substr(2, 64)}`,
+        success: true,
+      };
+    },
+    getBalance: async (currency: PaymentCurrency): Promise<string> => {
+      // Mock balance
+      return (Math.random() * 10).toFixed(6);
+    },
+    isInstalled: () => {
+      // Return cached installation status to prevent blinking
+      return isWalletInstalled;
+    },
+    isConnected: () => {
+      // Mock connection status
+      return false;
+    },
+  };
+};
 
 // Wallet adapters for different chains
 export const WALLET_ADAPTERS: Record<string, WalletAdapter[]> = {

@@ -45,34 +45,6 @@ export const Step4WalletConnected: React.FC<WalletConnectedProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Connected Wallet Info */}
-      <div className="p-4 bg-green-900/20 border border-green-500/30 rounded-lg">
-        <div className="flex items-center gap-3 mb-3">
-          <WalletIcon 
-            wallet={connectedWallet.adapter as any} 
-            size={24}
-            className="w-6 h-6"
-          />
-          <div>
-            <p className="text-green-400 font-medium">Wallet Connected</p>
-            <p className="text-gray-400 text-sm font-mono">
-              {connectedWallet.address.slice(0, 6)}...{connectedWallet.address.slice(-4)}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center justify-between">
-          <p className="text-white text-sm">
-            Balance: {connectedWallet.balance} {connectedWallet.chain.toUpperCase()}
-          </p>
-          <button
-            onClick={onDisconnect}
-            className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
-          >
-            Disconnect
-          </button>
-        </div>
-      </div>
-
       {/* Payment Details */}
       <div className="space-y-4">
         <h3 className="text-white text-lg font-semibold">Payment Information</h3>
@@ -105,6 +77,29 @@ export const Step4WalletConnected: React.FC<WalletConnectedProps> = ({
         </div>
       </div>
 
+      {/* Connected Wallet Address Display */}
+      <div className="p-4 bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.1)] rounded-lg">
+        <div className="flex items-center gap-3">
+          <WalletIcon 
+            wallet={connectedWallet.adapter as any} 
+            size={20}
+            className="w-5 h-5"
+          />
+          <div className="flex-1">
+            <p className="text-white font-medium text-sm">Connected Wallet</p>
+            <p className="text-gray-400 text-sm font-mono">
+              {connectedWallet.address.slice(0, 6)}...{connectedWallet.address.slice(-4)}
+            </p>
+          </div>
+          <button
+            onClick={onDisconnect}
+            className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+          >
+            Disconnect
+          </button>
+        </div>
+      </div>
+
       {/* Action Button */}
       <button
         onClick={handleSendTransaction}
@@ -122,7 +117,7 @@ export const Step4WalletConnected: React.FC<WalletConnectedProps> = ({
             Processing...
           </div>
         ) : (
-          'Send Transaction'
+          'Open Wallet'
         )}
       </button>
 
@@ -131,7 +126,7 @@ export const Step4WalletConnected: React.FC<WalletConnectedProps> = ({
         <p className="text-gray-400 text-sm">
           {isProcessing 
             ? 'Please approve the transaction in your wallet' 
-            : 'Click "Send Transaction" to initiate the payment'
+            : 'Click "Open Wallet" to proceed with the transaction'
           }
         </p>
       </div>
