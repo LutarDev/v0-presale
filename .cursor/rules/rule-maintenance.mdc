@@ -1,0 +1,324 @@
+---
+description: Rule maintenance, updates, and governance for LUTAR project
+globs: .cursor/rules/*.mdc,**/*.md,**/*.ts,**/*.tsx
+---
+
+# LUTAR Rule Maintenance & Governance
+
+## Rule System Overview
+
+The LUTAR project uses a comprehensive Cursor rules system to maintain code quality, consistency, and development efficiency. This document outlines how to maintain, update, and govern these rules.
+
+### Current Rule Structure
+```
+.cursor/rules/
+├── rule-maintenance.mdc          # This file - governance and maintenance
+├── project-navigation.mdc        # Project structure and navigation
+├── technical-documentation.mdc   # Technical docs and API reference
+├── design-implementation.mdc     # UI/UX and design system rules
+├── design-system.mdc            # Icon system and visual consistency
+├── lutar-payment-processing.mdc # Payment flow and transaction handling
+├── lutar-distribution.mdc       # LUTAR token distribution system
+├── lutar-dynamic-data-handling.mdc # Real-time data and state management
+├── lutar-mock-data-replacement.mdc # Data mocking and testing
+├── lutar-ui-ux-enhancements.mdc   # UI/UX improvements
+├── lutar-wallet-connection.mdc    # Multi-chain wallet integration
+└── contract-interaction.mdc       # Smart contract interaction patterns
+```
+
+## Rule Categories & Responsibilities
+
+### 1. Core Architecture Rules
+**Files**: `project-navigation.mdc`, `technical-documentation.mdc`
+**Scope**: Project structure, navigation, and technical standards
+**Update Frequency**: Monthly or when major architectural changes occur
+**Maintainer**: Lead Developer/Architect
+
+**Maintenance Tasks:**
+- Update directory structure documentation
+- Refresh API documentation
+- Verify code examples and patterns
+- Update dependency documentation
+
+### 2. Feature-Specific Rules
+**Files**: `lutar-*.mdc` files
+**Scope**: Specific platform features and implementations
+**Update Frequency**: After each feature release or significant changes
+**Maintainer**: Feature owners and development team
+
+**Maintenance Tasks:**
+- Update implementation patterns
+- Refresh configuration examples
+- Verify integration points
+- Update testing strategies
+
+### 3. Design System Rules
+**Files**: `design-system.mdc`, `design-implementation.mdc`
+**Scope**: UI components, icons, styling, and user experience
+**Update Frequency**: After design system updates or new component additions
+**Maintainer**: UI/UX team and frontend developers
+
+**Maintenance Tasks:**
+- Update component documentation
+- Refresh icon registry
+- Verify design tokens
+- Update accessibility guidelines
+
+### 4. Integration Rules
+**Files**: `contract-interaction.mdc`, `lutar-wallet-connection.mdc`
+**Scope**: External integrations and blockchain interactions
+**Update Frequency**: When integration patterns change or new blockchains are added
+**Maintainer**: Blockchain integration team
+
+**Maintenance Tasks:**
+- Update wallet adapter patterns
+- Refresh contract interaction examples
+- Verify blockchain configurations
+- Update security practices
+
+## Rule Maintenance Schedule
+
+### Weekly Tasks
+- [ ] Review and update code examples that may be outdated
+- [ ] Check for broken links in documentation
+- [ ] Verify that new features are properly documented
+- [ ] Update any changed configuration patterns
+
+### Monthly Tasks
+- [ ] Comprehensive review of all rule files
+- [ ] Update project statistics and metrics
+- [ ] Refresh architecture diagrams and flow charts
+- [ ] Review and update testing strategies
+- [ ] Validate all external API documentation
+
+### Quarterly Tasks
+- [ ] Complete rule system audit
+- [ ] Update governance processes
+- [ ] Review rule effectiveness metrics
+- [ ] Plan rule system improvements
+- [ ] Update maintenance documentation
+
+### Release-Based Tasks
+- [ ] Update all relevant rules after major releases
+- [ ] Document new features and patterns
+- [ ] Update configuration examples
+- [ ] Refresh integration documentation
+- [ ] Update testing and deployment guides
+
+## Rule Update Process
+
+### 1. Identification Phase
+**Triggers for Rule Updates:**
+- New feature development
+- Architecture changes
+- External dependency updates
+- Bug fixes that affect patterns
+- Performance optimizations
+- Security improvements
+
+**Who Can Identify:**
+- Any team member
+- Automated tools
+- Code reviews
+- User feedback
+- Performance monitoring
+
+### 2. Assessment Phase
+**Questions to Ask:**
+- Which rules are affected?
+- What specific changes are needed?
+- Are there breaking changes?
+- Do examples need updates?
+- Are new patterns introduced?
+
+**Assessment Criteria:**
+- Impact on development workflow
+- Consistency with existing patterns
+- Clarity and completeness
+- Alignment with project goals
+
+### 3. Update Phase
+**Update Process:**
+1. Create a branch for rule updates
+2. Update affected rule files
+3. Verify all examples and code snippets
+4. Test updated patterns in development
+5. Review changes with team
+6. Merge and communicate changes
+
+**Quality Checklist:**
+- [ ] All code examples are tested and working
+- [ ] Documentation is clear and comprehensive
+- [ ] Links and references are valid
+- [ ] Formatting and structure are consistent
+- [ ] Changes are backwards compatible where possible
+
+### 4. Communication Phase
+**Communication Methods:**
+- Team notifications for rule updates
+- Documentation changelog
+- Code review comments referencing updates
+- Training sessions for major changes
+
+**Communication Timeline:**
+- Immediate: Critical security or breaking changes
+- Weekly: Regular updates and improvements
+- Monthly: Comprehensive rule reviews
+- Quarterly: Major architectural changes
+
+## Rule Effectiveness Monitoring
+
+### Metrics to Track
+- **Rule Adherence**: How often patterns are followed correctly
+- **Development Speed**: Impact on development velocity
+- **Code Quality**: Reduction in bugs and inconsistencies
+- **Onboarding Time**: New developer ramp-up speed
+- **Documentation Usage**: Which rules are most referenced
+
+### Monitoring Tools
+- Code review feedback
+- Automated linting and pattern detection
+- Developer surveys and feedback
+- Performance metrics
+- Bug tracking and categorization
+
+### Improvement Indicators
+- Reduced code review time
+- Fewer pattern-related bugs
+- Faster feature development
+- Improved code consistency
+- Better developer satisfaction
+
+## Rule Governance
+
+### Decision Making Process
+1. **Proposal**: Anyone can propose rule changes
+2. **Discussion**: Team reviews and discusses proposals
+3. **Decision**: Lead developer or team consensus decides
+4. **Implementation**: Changes are implemented and tested
+5. **Adoption**: Team adopts new or updated rules
+
+### Conflict Resolution
+- **Technical Conflicts**: Resolved by technical lead
+- **Design Conflicts**: Resolved by design team lead
+- **Process Conflicts**: Resolved by project manager
+- **Escalation**: Unresolved conflicts escalated to project owner
+
+### Change Approval Authority
+- **Minor Updates**: Any team member can propose and implement
+- **Major Changes**: Require team lead approval
+- **Breaking Changes**: Require project owner approval
+- **Emergency Changes**: Can be implemented immediately with post-hoc approval
+
+## Rule Quality Standards
+
+### Documentation Standards
+- **Clarity**: Rules should be clear and unambiguous
+- **Completeness**: All necessary information included
+- **Examples**: Working code examples for complex patterns
+- **Context**: Explanation of why rules exist
+- **Updates**: Regular maintenance and updates
+
+### Code Example Standards
+- **Accuracy**: All examples must be tested and working
+- **Relevance**: Examples should reflect current codebase
+- **Completeness**: Include necessary imports and context
+- **Simplicity**: Examples should be as simple as possible
+- **Comments**: Include explanatory comments where helpful
+
+### Formatting Standards
+- **Consistency**: Use consistent formatting across all rules
+- **Structure**: Follow established document structure
+- **Headings**: Use clear and descriptive headings
+- **Lists**: Use appropriate list types (ordered/unordered)
+- **Code Blocks**: Use proper syntax highlighting
+
+## Automation and Tools
+
+### Automated Rule Checking
+```typescript
+// Example: Automated pattern detection
+interface RuleChecker {
+  checkFilePatterns(filePath: string): RuleViolation[]
+  checkCodePatterns(content: string): RuleViolation[]
+  generateReport(): RuleReport
+}
+```
+
+### Rule Update Automation
+- Automated detection of outdated examples
+- Link checking for external references
+- Code example validation
+- Rule coverage analysis
+
+### Integration with Development Tools
+- IDE integration for rule suggestions
+- Git hooks for rule compliance
+- CI/CD integration for rule validation
+- Documentation generation from rules
+
+## Best Practices for Rule Maintenance
+
+### Writing Effective Rules
+1. **Be Specific**: Provide concrete examples and patterns
+2. **Explain Why**: Include rationale for rules
+3. **Keep Current**: Regular updates and maintenance
+4. **Test Examples**: All code examples should be tested
+5. **Consider Impact**: Think about developer experience
+
+### Managing Rule Complexity
+- Break complex rules into smaller, focused rules
+- Use cross-references between related rules
+- Maintain a clear hierarchy of rule importance
+- Regular cleanup of outdated or redundant rules
+
+### Ensuring Rule Adoption
+- Make rules easily discoverable
+- Integrate rules into development workflow
+- Provide tooling to support rule compliance
+- Regular training and communication
+- Lead by example in code reviews
+
+## Emergency Procedures
+
+### Critical Rule Updates
+**Scenarios Requiring Emergency Updates:**
+- Security vulnerabilities in documented patterns
+- Breaking changes in external dependencies
+- Critical bugs in recommended approaches
+- Compliance or legal requirement changes
+
+**Emergency Process:**
+1. Immediate notification to all team members
+2. Rapid assessment of impact and required changes
+3. Emergency rule update with clear change markers
+4. Follow-up communication with detailed explanation
+5. Post-emergency review and process improvement
+
+### Rollback Procedures
+- Maintain version history of all rule files
+- Document rollback procedures for major changes
+- Test rollback scenarios during major updates
+- Communication plan for rollback situations
+
+## Future Improvements
+
+### Planned Enhancements
+- Automated rule compliance checking
+- Interactive rule documentation
+- Rule effectiveness analytics
+- Integration with development metrics
+- AI-assisted rule maintenance
+
+### Long-term Vision
+- Self-maintaining rule system
+- Predictive rule updates
+- Personalized rule recommendations
+- Community-driven rule improvements
+- Cross-project rule sharing
+
+## Conclusion
+
+This rule maintenance system ensures that the LUTAR project's Cursor rules remain accurate, useful, and aligned with project goals. Regular maintenance, clear governance, and continuous improvement are key to maintaining an effective rule system that supports high-quality development practices.
+
+The success of this system depends on active participation from all team members and commitment to maintaining high standards for documentation and code quality.

@@ -1,0 +1,322 @@
+---
+description: Project navigation, context awareness, and codebase understanding
+globs: **/*
+---
+
+# LUTAR Project Navigation & Context Rules
+
+## Project Overview & Context
+
+### Project Identity
+**LUTAR Presale Platform** - A multi-chain token presale platform enabling users to purchase LUTAR tokens using various cryptocurrencies across 7 blockchain networks.
+
+**Core Value Proposition:**
+- Multi-chain payment support (BTC, ETH, BNB, SOL, POL, TRX, TON)
+- Automatic LUTAR token distribution to BSC wallets
+- Real-time pricing and balance updates
+- Comprehensive wallet integration
+- Cyberpunk minimalist design aesthetic
+
+### Architecture Philosophy
+- **Type-Safe Development**: Comprehensive TypeScript coverage
+- **Component Composition**: Reusable, composable React components
+- **Service Layer Pattern**: Centralized business logic in services
+- **Real-time First**: Live data updates via WebSocket/polling
+- **Multi-chain Native**: Built from ground up for blockchain diversity
+
+## Directory Structure & Navigation
+
+### Core Application Structure
+```
+v0-presale/
+├── app/                          # Next.js App Router pages
+│   ├── api/                      # Backend API routes
+│   │   ├── distribute-lutar/     # LUTAR token distribution
+│   │   └── prices/               # Cryptocurrency pricing
+│   ├── buy/                      # Purchase interface page
+│   ├── dashboard/                # User dashboard
+│   ├── presale/                  # Presale information
+│   ├── security/                 # Security center
+│   └── icon-showcase/            # Design system showcase
+├── components/                   # React components
+│   ├── ui/                       # Base UI components (shadcn/ui)
+│   ├── blockchain/               # Blockchain-specific components
+│   ├── branding/                 # Brand elements
+│   └── wallet/                   # Wallet-related components
+├── lib/                          # Business logic & utilities
+├── hooks/                        # Custom React hooks
+├── public/images/icons/          # Static icon assets
+└── styles/                       # Global styles
+```
+
+### Key File Categories
+
+#### 🔧 Core Services (`lib/`)
+- `transaction-handler.ts` - Multi-chain transaction execution
+- `wallet-adapters.ts` - Wallet connection abstractions
+- `lutar-distribution-service.ts` - Token distribution via Thirdweb
+- `balance-fetcher.ts` - Multi-chain balance queries
+- `price-service.ts` - Cryptocurrency pricing with caching
+- `realtime-service.ts` - WebSocket/polling for live updates
+
+#### 🎨 UI System (`components/ui/`)
+- `icon.tsx` - Centralized icon management system
+- Standard shadcn/ui components (button, card, input, etc.)
+- Custom components for specialized needs
+
+#### 🔗 Integration Hooks (`hooks/`)
+- `use-wallet.ts` - Wallet connection state management
+- `use-realtime.ts` - Real-time data subscriptions
+- `use-mobile.ts` - Mobile detection utilities
+
+#### 📊 Configuration (`lib/`)
+- `blockchain-config.ts` - Multi-chain configuration
+- `payment-config.ts` - Payment wallet addresses
+- `icon-registry.ts` - Icon metadata and paths
+- `asset-types.ts` - TypeScript type definitions
+
+## Component Hierarchy & Relationships
+
+### Main Purchase Flow
+```
+PurchaseInterface (main component)
+├── PaymentMethodSelector (blockchain/token selection)
+├── UnifiedWalletModal (wallet connection)
+├── TransactionModal (transaction processing)
+│   ├── TransactionSecurityCheck
+│   └── LUTAR distribution trigger
+└── PurchaseSummary (order summary)
+```
+
+### Wallet System Architecture
+```
+useWallet Hook
+├── WalletAdapter Interface
+│   ├── UnisatAdapter (Bitcoin)
+│   ├── MetaMaskAdapter (EVM chains)
+│   ├── PhantomAdapter (Solana)
+│   ├── TronLinkAdapter (TRON)
+│   └── TonkeeperAdapter (TON)
+└── Persistent connection state
+```
+
+### Icon System Hierarchy
+```
+Icon (base component)
+├── ChainIcon (blockchain icons)
+├── WalletIcon (wallet provider icons)
+├── CoinIcon (cryptocurrency icons)
+└── FallbackIcon (missing icon fallback)
+```
+
+## Navigation Patterns
+
+### Finding Components by Feature
+- **Purchase Flow**: Start with `components/purchase-interface.tsx`
+- **Wallet Connection**: `components/unified-wallet-modal.tsx`
+- **Transaction Processing**: `components/transaction-modal.tsx`
+- **Real-time Updates**: `hooks/use-realtime.ts`
+- **Multi-chain Logic**: `lib/transaction-handler.ts`
+
+### Finding Services by Capability
+- **Blockchain Interaction**: `lib/wallet-adapters.ts`
+- **Token Distribution**: `lib/lutar-distribution-service.ts`
+- **Price Data**: `lib/price-service.ts`
+- **Balance Queries**: `lib/balance-fetcher.ts`
+- **Configuration**: `lib/blockchain-config.ts`, `lib/payment-config.ts`
+
+### Finding Types & Interfaces
+- **Asset Types**: `lib/asset-types.ts`
+- **Service Interfaces**: Check individual service files
+- **Component Props**: Defined within component files
+- **API Types**: In respective API route files
+
+## Data Flow Patterns
+
+### Purchase Transaction Flow
+```
+User Input → Amount Calculation → Wallet Connection → 
+Transaction Preparation → Blockchain Execution → 
+Payment Confirmation → LUTAR Distribution → Success Display
+```
+
+### Real-time Data Flow
+```
+External APIs → Service Layer → Cache Layer → 
+Hook Layer → Component State → UI Updates
+```
+
+### Wallet Connection Flow
+```
+Chain Selection → Wallet Detection → Adapter Connection → 
+Balance Fetching → State Persistence → UI Updates
+```
+
+## Context-Aware Development Guidelines
+
+### When Working on Wallet Features
+1. **Start with**: `hooks/use-wallet.ts` for state management
+2. **Adapter logic**: `lib/wallet-adapters.ts` for connection implementations
+3. **UI components**: `components/unified-wallet-modal.tsx` for interface
+4. **Balance updates**: `lib/balance-fetcher.ts` for data fetching
+
+### When Working on Transaction Features
+1. **Main handler**: `lib/transaction-handler.ts` for execution logic
+2. **UI flow**: `components/transaction-modal.tsx` for user experience
+3. **Configuration**: `lib/payment-config.ts` for wallet addresses
+4. **Distribution**: `lib/lutar-distribution-service.ts` for token delivery
+
+### When Working on UI/Design
+1. **Icon system**: `components/ui/icon.tsx` and `lib/icon-*` files
+2. **Base components**: `components/ui/` directory
+3. **Asset management**: `lib/asset-types.ts` for type definitions
+4. **Styling**: Tailwind classes with `lib/utils.ts` for class merging
+
+### When Working on API Integration
+1. **Internal APIs**: `app/api/` directory for Next.js routes
+2. **External services**: Service files in `lib/` directory
+3. **Error handling**: Check service implementations for patterns
+4. **Caching**: Look for cache implementations in service files
+
+## Code Organization Principles
+
+### File Naming Conventions
+- **Components**: `kebab-case.tsx` (e.g., `purchase-interface.tsx`)
+- **Services**: `kebab-case.ts` (e.g., `transaction-handler.ts`)
+- **Hooks**: `use-feature.ts` (e.g., `use-wallet.ts`)
+- **Types**: `kebab-case.ts` (e.g., `asset-types.ts`)
+- **API Routes**: `route.ts` in feature directories
+
+### Import Patterns
+```typescript
+// External libraries first
+import React from 'react'
+import { NextRequest } from 'next/server'
+
+// Internal components
+import { Button } from '@/components/ui/button'
+import { UnifiedWalletModal } from '@/components/unified-wallet-modal'
+
+// Hooks and utilities
+import { useWallet } from '@/hooks/use-wallet'
+import { cn } from '@/lib/utils'
+
+// Services and configuration
+import { priceService } from '@/lib/price-service'
+import { getBlockchainConfig } from '@/lib/blockchain-config'
+```
+
+### State Management Patterns
+- **Global State**: Custom hooks with localStorage persistence
+- **Component State**: useState for local component data
+- **Server State**: React Query patterns (planned)
+- **Real-time State**: Custom hooks with service subscriptions
+
+## Development Workflow Navigation
+
+### Starting New Features
+1. **Define types** in `lib/asset-types.ts` or create new type file
+2. **Create service** in `lib/` if backend logic needed
+3. **Build components** in `components/` following existing patterns
+4. **Add hooks** in `hooks/` for state management if needed
+5. **Update configurations** in relevant config files
+
+### Debugging Common Issues
+- **Wallet connection problems**: Check `lib/wallet-adapters.ts`
+- **Transaction failures**: Debug `lib/transaction-handler.ts`
+- **Icon not displaying**: Verify `lib/icon-registry.ts` and `lib/icon-mapping.ts`
+- **Price data issues**: Check `lib/price-service.ts` and `/api/prices`
+- **Real-time updates failing**: Debug `lib/realtime-service.ts`
+
+### Testing Approach
+- **Component tests**: Co-located with components
+- **Service tests**: In `__tests__` directories
+- **Integration tests**: For complete user flows
+- **Manual testing**: Use icon showcase and purchase flow
+
+## Integration Points
+
+### External Service Dependencies
+- **Thirdweb Engine**: LUTAR token distribution
+- **CoinGecko API**: Cryptocurrency pricing
+- **Blockchain RPCs**: Direct blockchain interaction
+- **Wallet Extensions**: Browser wallet integrations
+
+### Internal Service Dependencies
+```
+Components → Hooks → Services → External APIs
+     ↓         ↓        ↓
+   UI State → App State → Data Layer
+```
+
+### Configuration Dependencies
+- **Environment variables**: Required for API keys and URLs
+- **Payment wallets**: Must be configured for each chain
+- **Blockchain configs**: Define supported networks
+- **Icon registry**: Asset availability and paths
+
+## Performance Considerations
+
+### Lazy Loading Points
+- Wallet adapters loaded on demand
+- Heavy components using dynamic imports
+- Icon assets loaded as needed
+- Service workers for background tasks
+
+### Caching Strategies
+- Price data cached with TTL
+- Balance data cached per address/chain
+- Icon metadata cached in registry
+- API responses cached with request deduplication
+
+### Optimization Targets
+- Initial bundle size < 500KB
+- First Contentful Paint < 2s
+- Wallet connection < 3s
+- Transaction confirmation < 30s
+
+## Common Development Patterns
+
+### Error Handling
+```typescript
+try {
+  const result = await service.performAction()
+  return { success: true, data: result }
+} catch (error) {
+  console.error('[Service] Action failed:', error)
+  return { success: false, error: error.message }
+}
+```
+
+### Loading States
+```typescript
+const [loading, setLoading] = useState(false)
+const [error, setError] = useState<string | null>(null)
+
+const handleAction = async () => {
+  setLoading(true)
+  setError(null)
+  try {
+    await performAction()
+  } catch (err) {
+    setError(err.message)
+  } finally {
+    setLoading(false)
+  }
+}
+```
+
+### Type-Safe Configuration
+```typescript
+interface Config {
+  readonly apiUrl: string
+  readonly timeout: number
+}
+
+const config: Config = {
+  apiUrl: process.env.API_URL!,
+  timeout: 30000
+} as const
+```
+
+This navigation guide provides comprehensive context for understanding and working with the LUTAR Presale Platform codebase efficiently.

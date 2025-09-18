@@ -1,0 +1,451 @@
+---
+description: Technical documentation standards and code reference guide
+globs: **/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.mdc,**/*.md
+---
+
+# LUTAR Technical Documentation & Code Reference
+
+## Architecture Overview
+
+### Technology Stack
+- **Framework**: Next.js 14 with App Router
+- **Language**: TypeScript with strict type checking
+- **Styling**: Tailwind CSS v4 with custom cyberpunk theme
+- **UI Library**: Radix UI primitives with shadcn/ui components
+- **State Management**: React hooks with localStorage persistence
+- **Charts**: Recharts for data visualization
+- **Icons**: Lucide React + custom blockchain/wallet icons
+
+### Design Philosophy
+- **Dark-first Design**: Cyberpunk minimalism with deep space backgrounds
+- **Type Safety**: Comprehensive TypeScript coverage
+- **Component Composition**: Reusable, composable UI components
+- **Performance First**: Lazy loading, caching, and optimization
+- **Accessibility**: WCAG 2.1 compliance target
+
+## Core Systems Documentation
+
+### 1. Multi-Chain Wallet System
+
+#### Wallet Adapter Pattern
+```typescript
+interface WalletAdapter {
+  name: string
+  icon: string
+  description: string
+  isInstalled(): boolean
+  connect(): Promise<{address: string, balance: string}>
+  disconnect(): Promise<void>
+  getBalance(address: string): Promise<string>
+  signTransaction?(transaction: any): Promise<string>
+}
+```
+
+**Implementation Files:**
+- `lib/wallet-adapters.ts` - Adapter implementations
+- `hooks/use-wallet.ts` - State management hook
+- `components/unified-wallet-modal.tsx` - Connection UI
+
+**Supported Wallets:**
+- **Bitcoin**: Unisat, Xverse
+- **Ethereum/EVM**: MetaMask (supports ETH, BNB, POL)
+- **Solana**: Phantom, Solflare, Backpack
+- **TRON**: TronLink
+- **TON**: Tonkeeper
+
+### 2. Transaction Processing System
+
+#### Transaction Handler Architecture
+```typescript
+interface TransactionParams {
+  currency: PaymentCurrency
+  amount: string
+  userAddress: string
+  walletAdapter: WalletAdapter
+}
+
+interface TransactionResult {
+  success: boolean
+  txHash?: string
+  error?: string
+}
+```
+
+**Implementation Files:**
+- `lib/transaction-handler.ts` - Multi-chain transaction execution
+- `lib/payment-config.ts` - Payment wallet configurations
+- `components/transaction-modal.tsx` - Transaction UI flow
+
+**Chain-Specific Logic:**
+- **EVM Chains**: Native transfers + ERC-20/BEP-20 tokens
+- **Bitcoin**: UTXO-based transfers with fee calculation
+- **Solana**: SPL token transfers with account creation
+- **TRON**: TRC-20 transfers with energy/bandwidth management
+- **TON**: Jetton transfers with message handling
+
+### 3. LUTAR Token Distribution
+
+#### Thirdweb Engine Integration
+```typescript
+interface LutarDistributionParams {
+  recipientAddress: string
+  lutarAmount: string
+  paymentTxHash: string
+  paymentChain: string
+  paymentToken: string
+  paymentAmount: string
+}
+```
+
+**Implementation Files:**
+- `lib/lutar-distribution-service.ts` - Distribution service
+- `app/api/distribute-lutar/route.ts` - API endpoint
+- Integration in `components/transaction-modal.tsx`
+
+**Process Flow:**
+1. User completes payment transaction
+2. Payment confirmed on blockchain
+3. API call to distribute LUTAR tokens
+4. Thirdweb Engine executes BSC transfer
+5. User receives LUTAR tokens automatically
+
+### 4. Real-time Data System
+
+#### Data Service Architecture
+```typescript
+interface RealtimeService {
+  subscribeToBalanceUpdates(address: string, chain: string): Subscription
+  subscribeToPresaleMetrics(): Subscription
+  subscribeToTransactionUpdates(txHash: string): Subscription
+  subscribeToPriceUpdates(symbols: string[]): Subscription
+}
+```
+
+**Implementation Files:**
+- `lib/realtime-service.ts` - WebSocket/polling service
+- `lib/price-service.ts` - Price data management
+- `lib/balance-fetcher.ts` - Multi-chain balance fetching
+- `hooks/use-realtime.ts` - React hooks for data consumption
+
+**Data Sources:**
+- **Price Data**: CoinGecko API via internal route
+- **Balance Data**: Direct RPC calls to blockchain nodes
+- **Transaction Data**: Blockchain explorers and RPC endpoints
+- **Presale Data**: Smart contract reads (planned)
+
+### 5. Icon & Asset System
+
+#### Centralized Icon Management
+```typescript
+interface IconProps {
+  category: IconCategory
+  name: string
+  size?: IconSize
+  className?: string
+  fallback?: React.ReactNode
+}
+```
+
+**Implementation Files:**
+- `components/ui/icon.tsx` - Core icon components
+- `lib/icon-registry.ts` - Icon metadata registry
+- `lib/icon-mapping.ts` - Symbol-to-icon mapping
+- `lib/asset-types.ts` - Type definitions
+
+**Icon Categories:**
+- **Coins**: Blockchain and cryptocurrency icons
+- **Wallets**: Wallet provider icons
+- **Arrows**: Directional indicators
+- **Checkmarks**: Status indicators
+- **Blockchain Filters**: Category filters
+
+## API Documentation
+
+### Internal APIs
+
+#### `/api/distribute-lutar`
+**POST**: Distribute LUTAR tokens to user's BSC address
+```typescript
+// Request
+{
+  recipientAddress: string    // BSC wallet address
+  lutarAmount: string        // Amount of LUTAR tokens
+  paymentTxHash: string     // Original payment transaction hash
+  paymentChain: string      // Payment blockchain
+  paymentToken: string      // Payment token symbol
+  paymentAmount: string     // Payment amount
+}
+
+// Response
+{
+  success: boolean
+  distributionTxHash?: string
+  queueId?: string
+  error?: string
+}
+```
+
+**GET**: Check distribution status or backend wallet balance
+```typescript
+// Check balance: ?action=balance
+// Check status: ?queueId=<queue_id>
+```
+
+#### `/api/prices`
+**GET**: Fetch cryptocurrency prices
+```typescript
+// Single token: ?symbol=BTC
+// Multiple tokens: ?symbols=BTC,ETH,SOL
+
+// Response
+{
+  [symbol: string]: {
+    price: number
+    lastUpdated: number
+  }
+}
+```
+
+### External API Integrations
+
+#### Thirdweb Engine v2 REST API
+- **Base URL**: `https://engine-production-b94f.up.railway.app`
+- **Authentication**: Bearer token
+- **Endpoint**: `/contract/{chain}/{contract}/write`
+- **Function**: `transfer` for ERC-20 token distribution
+
+#### Blockchain RPC Endpoints
+```typescript
+const BLOCKCHAIN_RPCS = {
+  ETH: "https://mainnet.infura.io/v3/",
+  BNB: "https://bsc-dataseed.binance.org/",
+  SOL: "https://api.mainnet-beta.solana.com",
+  POL: "https://polygon-rpc.com/",
+  TRX: "https://api.trongrid.io",
+  TON: "https://toncenter.com/api/v2/",
+  BTC: "https://blockstream.info/api/"
+}
+```
+
+## Component Documentation
+
+### Core Components
+
+#### `<PurchaseInterface />`
+**Purpose**: Main purchase flow component
+**Location**: `components/purchase-interface.tsx`
+
+**Key Features:**
+- Blockchain selection with visual indicators
+- Payment token selection (native + stablecoins)
+- Real-time amount calculations
+- Wallet connection integration
+- BSC address input for LUTAR delivery
+
+**State Management:**
+- Selected blockchain and payment token
+- Payment amounts and LUTAR calculations
+- Wallet connection status
+- Exchange rates and pricing
+
+#### `<UnifiedWalletModal />`
+**Purpose**: Multi-chain wallet connection interface
+**Location**: `components/unified-wallet-modal.tsx`
+
+**Flow Steps:**
+1. Chain selection
+2. Wallet selection for chosen chain
+3. Connection and balance display
+4. Address management
+
+#### `<TransactionModal />`
+**Purpose**: Transaction processing and confirmation
+**Location**: `components/transaction-modal.tsx`
+
+**Process States:**
+- Security check and verification
+- Transaction confirmation
+- Processing and blockchain submission
+- Success/failure handling
+- LUTAR token distribution trigger
+
+### UI Components
+
+#### Icon System
+```typescript
+// Blockchain icons
+<ChainIcon chain="BTC" size={32} />
+
+// Wallet icons
+<WalletIcon wallet="metamask" size={24} />
+
+// Fallback icons
+<FallbackIcon symbol="BTC" size={32} backgroundColor="#f7931a" />
+```
+
+#### Card Components
+```typescript
+// Standard card
+<Card>
+  <CardHeader>
+    <CardTitle>Title</CardTitle>
+    <CardDescription>Description</CardDescription>
+  </CardHeader>
+  <CardContent>Content</CardContent>
+</Card>
+```
+
+## Data Flow Documentation
+
+### Purchase Flow
+```
+User Input → Amount Calculation → Wallet Connection → Transaction Preparation → 
+Blockchain Execution → Confirmation → LUTAR Distribution → Success Display
+```
+
+### Wallet Connection Flow
+```
+Chain Selection → Wallet Selection → Adapter Connection → Balance Fetching → 
+State Update → UI Refresh → Persistent Storage
+```
+
+### Real-time Updates Flow
+```
+Data Source → Service Layer → Cache Layer → Hook Layer → Component Update → 
+UI Refresh → User Feedback
+```
+
+## Configuration Documentation
+
+### Environment Variables
+```typescript
+// Required for production
+THIRDWEB_ENGINE_URL=https://engine-production-b94f.up.railway.app
+THIRDWEB_ACCESS_TOKEN=<access_token>
+BACKEND_WALLET_ADDRESS=0xfdCd87e45b13998326cA206Cc9De268f8CA480f8
+LUTAR_CONTRACT_ADDRESS=0x2770904185Ed743d991D8fA21C8271ae6Cd4080E
+
+// Optional for enhanced features
+COINGECKO_API_KEY=<api_key>
+INFURA_PROJECT_ID=<project_id>
+```
+
+### Payment Wallet Addresses
+```typescript
+// Native currencies
+const PAYMENT_WALLETS = {
+  BTC: "bc1qwftz8tm698pmmg5y0nrqffe5egtd05uaf0cflc",
+  ETH: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
+  BNB: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
+  SOL: "2qyJAaBoeNBnXb2zmnYBzLAGRKGhmHqgb2ZejqMpuoue",
+  POL: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
+  TRX: "TPmj9q2R53ytGGu8gL7CFLwCqGxprEUe9r",
+  TON: "UQAKRgdm0BN7Bgfojsj-bJMrwvFUw0sY5BPGeGgF8mtckTQI"
+}
+```
+
+### Blockchain Configurations
+```typescript
+interface BlockchainConfig {
+  symbol: string
+  name: string
+  chainId?: number
+  rpcUrl?: string
+  explorerUrl: string
+  nativeCurrency: {
+    symbol: string
+    name: string
+    decimals: number
+  }
+  color: string
+  textColor: string
+  iconTextColor: string
+  supportedTokens: string[]
+  walletAdapters: string[]
+}
+```
+
+## Testing Documentation
+
+### Unit Testing Strategy
+- **Components**: React Testing Library for UI components
+- **Hooks**: React Hooks Testing Library for custom hooks
+- **Services**: Jest for service layer testing
+- **Utilities**: Jest for utility function testing
+
+### Integration Testing
+- **Wallet Connections**: Test all wallet adapter implementations
+- **Transaction Flow**: End-to-end transaction testing
+- **API Endpoints**: API route testing with mocked external services
+- **Real-time Updates**: WebSocket and polling mechanism testing
+
+### Manual Testing Checklist
+- [ ] Wallet connection for each supported chain
+- [ ] Transaction execution on each blockchain
+- [ ] LUTAR token distribution verification
+- [ ] Mobile responsiveness across devices
+- [ ] Error handling and recovery flows
+
+## Performance Optimization
+
+### Bundle Optimization
+- Dynamic imports for wallet adapters
+- Lazy loading for heavy components
+- Code splitting by route
+- Tree shaking for unused dependencies
+
+### Runtime Optimization
+- Memoization of expensive calculations
+- Debounced API calls
+- Cached data with TTL
+- Optimistic UI updates
+
+### Monitoring
+- Error tracking with boundaries
+- Performance monitoring
+- API response time tracking
+- User interaction analytics
+
+## Security Considerations
+
+### Transaction Security
+- Multi-step verification process
+- Address validation and verification
+- Amount confirmation and limits
+- Network validation
+
+### Data Security
+- No private key storage
+- Secure API communication
+- Input validation and sanitization
+- XSS and CSRF protection
+
+### User Security
+- Phishing protection warnings
+- Secure connection requirements
+- Transaction confirmation flows
+- Error message sanitization
+
+## Deployment Documentation
+
+### Build Process
+```bash
+npm run build          # Production build
+npm run type-check     # TypeScript validation
+npm run lint          # ESLint validation
+npm run test          # Run test suite
+```
+
+### Environment Setup
+1. Configure environment variables
+2. Set up Thirdweb Engine instance
+3. Configure blockchain RPC endpoints
+4. Set up monitoring and analytics
+
+### Production Checklist
+- [ ] All environment variables configured
+- [ ] Thirdweb Engine operational
+- [ ] Payment wallet addresses verified
+- [ ] SSL certificates installed
+- [ ] Monitoring systems active
+- [ ] Error tracking configured

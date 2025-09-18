@@ -1,0 +1,236 @@
+---
+description: Project navigation and context rules for LUTAR Presale Platform
+globs: **/*.ts,**/*.tsx,**/*.js,**/*.jsx,**/*.mdc,**/*.md
+---
+
+# LUTAR Presale Platform - Project Navigation & Context
+
+## Project Overview
+
+The LUTAR Presale Platform is a **multi-chain token presale platform** built with Next.js 14, TypeScript, and Tailwind CSS. It supports 7 blockchains (BTC, ETH, BSC, SOL, Polygon, TRON, TON) with comprehensive wallet integration and real-time transaction processing.
+
+### Key Features
+- **Multi-chain Support**: Native and stablecoin payments across 7 blockchains
+- **Wallet Integration**: 15+ wallet adapters with seamless connection management
+- **Real-time Updates**: Live balance fetching, price updates, and transaction monitoring
+- **Automatic Token Distribution**: Thirdweb Engine v2 integration for LUTAR token delivery
+- **Security-First Design**: Multi-step transaction verification and security checks
+- **Responsive UI**: Cyberpunk-minimalist design with mobile-first approach
+
+## Project Structure
+
+### Core Application (`app/`)
+```
+app/
+├── api/                    # Backend API routes
+│   ├── distribute-lutar/   # LUTAR token distribution endpoint
+│   └── prices/            # Cryptocurrency price API
+├── buy/                   # Purchase interface page
+├── dashboard/             # User dashboard
+├── presale/              # Presale information page
+├── security/             # Security center
+└── icon-showcase/        # Design system showcase
+```
+
+### Component Architecture (`components/`)
+```
+components/
+├── ui/                   # Base UI components (shadcn/ui)
+│   ├── icon.tsx         # Centralized icon system
+│   ├── card.tsx         # Card components
+│   ├── button.tsx       # Button variants
+│   └── [other-ui]/      # Additional UI primitives
+├── purchase-interface.tsx    # Main purchase flow
+├── unified-wallet-modal.tsx  # Wallet connection modal
+├── transaction-modal.tsx     # Transaction processing
+├── payment-method-selector.tsx # Payment token selection
+├── dashboard-overview.tsx    # Dashboard main view
+└── [other-components]/       # Feature-specific components
+```
+
+### Core Libraries (`lib/`)
+```
+lib/
+├── transaction-handler.ts    # Multi-chain transaction execution
+├── wallet-adapters.ts       # Wallet connection adapters
+├── balance-fetcher.ts       # Multi-chain balance fetching
+├── payment-config.ts        # Payment wallet configurations
+├── price-service.ts         # Cryptocurrency price service
+├── lutar-distribution-service.ts # LUTAR token distribution
+├── blockchain-config.ts     # Blockchain configurations
+├── icon-mapping.ts          # Icon system mapping
+├── icon-registry.ts         # Icon metadata registry
+├── realtime-service.ts      # Real-time data updates
+└── utils.ts                 # Utility functions
+```
+
+### Custom Hooks (`hooks/`)
+```
+hooks/
+├── use-wallet.ts           # Wallet connection state management
+├── use-realtime.ts         # Real-time data subscriptions
+├── use-mobile.ts           # Mobile detection
+└── use-toast.ts            # Toast notifications
+```
+
+## Navigation Patterns
+
+### File Organization Principles
+1. **Feature-based Grouping**: Components grouped by functionality
+2. **Separation of Concerns**: Clear separation between UI, logic, and data
+3. **Reusability**: Shared components in `ui/` directory
+4. **Type Safety**: Comprehensive TypeScript coverage
+
+### Key File Relationships
+
+#### Transaction Flow
+```
+purchase-interface.tsx
+├── uses: payment-method-selector.tsx
+├── uses: unified-wallet-modal.tsx
+├── uses: transaction-modal.tsx
+├── integrates: transaction-handler.ts
+├── integrates: payment-config.ts
+└── integrates: lutar-distribution-service.ts
+```
+
+#### Wallet System
+```
+use-wallet.ts (hook)
+├── uses: wallet-adapters.ts
+├── uses: balance-fetcher.ts
+├── integrates: blockchain-config.ts
+└── consumed by: unified-wallet-modal.tsx
+```
+
+#### Icon System
+```
+icon.tsx (component)
+├── uses: icon-registry.ts
+├── uses: icon-mapping.ts
+├── uses: asset-types.ts
+└── consumed by: [all UI components]
+```
+
+## Context-Aware Development
+
+### When Working on Wallet Features
+**Primary Files:**
+- `hooks/use-wallet.ts` - Central wallet state
+- `lib/wallet-adapters.ts` - Wallet implementations
+- `components/unified-wallet-modal.tsx` - Connection UI
+- `lib/balance-fetcher.ts` - Balance management
+
+**Related Files:**
+- `lib/blockchain-config.ts` - Chain configurations
+- `components/wallet/` - Wallet-specific components
+
+### When Working on Payments
+**Primary Files:**
+- `components/purchase-interface.tsx` - Main purchase flow
+- `components/transaction-modal.tsx` - Transaction processing
+- `lib/transaction-handler.ts` - Transaction execution
+- `lib/payment-config.ts` - Payment configurations
+
+**Related Files:**
+- `app/api/distribute-lutar/` - Token distribution API
+- `lib/lutar-distribution-service.ts` - Distribution service
+
+### When Working on UI/Design
+**Primary Files:**
+- `components/ui/` - Base UI components
+- `app/globals.css` - Global styles
+- `components/ui/icon.tsx` - Icon system
+- `lib/icon-registry.ts` - Icon metadata
+
+**Related Files:**
+- `lib/blockchain-config.ts` - Brand colors
+- `components/icon-showcase.tsx` - Design system demo
+
+### When Working on Data/APIs
+**Primary Files:**
+- `lib/price-service.ts` - Price data
+- `lib/balance-fetcher.ts` - Balance data
+- `lib/realtime-service.ts` - Real-time updates
+- `app/api/` - Backend APIs
+
+**Related Files:**
+- `hooks/use-realtime.ts` - Data consumption hooks
+
+## Development Guidelines
+
+### Code Organization
+1. **Import Order**: External libraries → Internal libraries → Components → Types
+2. **File Naming**: kebab-case for files, PascalCase for components
+3. **Type Definitions**: Co-located with implementation or in `lib/asset-types.ts`
+4. **Constants**: Centralized in respective configuration files
+
+### Common Patterns
+1. **Hook Pattern**: Custom hooks for reusable logic
+2. **Service Pattern**: Singleton services for data management
+3. **Adapter Pattern**: Wallet and blockchain abstractions
+4. **Provider Pattern**: Context providers for global state
+
+### Integration Points
+1. **Thirdweb Engine**: Token distribution integration
+2. **Blockchain RPCs**: Direct blockchain interactions
+3. **Price APIs**: CoinGecko integration via internal API
+4. **WebSocket**: Real-time data streaming
+
+## Quick Reference
+
+### Environment Configuration
+- **Development**: Mock data enabled, full debugging
+- **Staging**: Real APIs with fallback to mock data
+- **Production**: Real APIs only, error tracking enabled
+
+### Key Constants
+- **LUTAR Contract**: `0x2770904185Ed743d991D8fA21C8271ae6Cd4080E` (BSC)
+- **Supported Chains**: BTC, ETH, BNB, SOL, POL, TRX, TON
+- **Engine URL**: `https://engine-production-b94f.up.railway.app`
+- **Backend Wallet**: `0xfdCd87e45b13998326cA206Cc9De268f8CA480f8`
+
+### Common Commands
+- `npm run dev` - Start development server
+- `npm run build` - Production build
+- `npm run type-check` - TypeScript validation
+- `npm run lint` - ESLint validation
+
+## Troubleshooting Guide
+
+### Wallet Connection Issues
+1. Check `wallet-adapters.ts` for wallet implementations
+2. Verify `blockchain-config.ts` for chain configurations
+3. Review `use-wallet.ts` for connection state management
+
+### Transaction Issues
+1. Check `transaction-handler.ts` for chain-specific logic
+2. Verify `payment-config.ts` for wallet addresses
+3. Review `lutar-distribution-service.ts` for token distribution
+
+### UI/Icon Issues
+1. Check `icon-registry.ts` for available icons
+2. Verify `icon-mapping.ts` for symbol mappings
+3. Review `blockchain-config.ts` for brand colors
+
+### Data/API Issues
+1. Check `price-service.ts` for price data
+2. Verify `balance-fetcher.ts` for balance fetching
+3. Review `app/api/` routes for backend logic
+
+## Performance Considerations
+
+### Bundle Optimization
+- Dynamic imports for wallet adapters
+- Lazy loading for heavy components
+- Code splitting by route
+
+### Data Management
+- Caching with TTL for price data
+- Balance caching to reduce RPC calls
+- Real-time subscriptions for live updates
+
+### Error Handling
+- Graceful degradation for API failures
+- Fallback to cached data when possible
+- User-friendly error messages with recovery actions
