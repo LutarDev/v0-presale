@@ -16,18 +16,18 @@ Multi-chain payment processing system supporting native cryptocurrencies and sta
 #### Payment Wallets (Pre-configured addresses):
 ```typescript
 // Native currencies
-BTC: "bc1qarvyg3f4ymcwrp0naftqm6zq05j233s82cpaq2"
-ETH: "0x047693b22f3f9F246A563872E58056f0C766337b"
-BNB: "0xb23DdB2b79d9af4e4DCE7C457e48F7912e242e9a"
-SOL: "EgJbUJKNn8eUpKLEqXPbogEUiUsYE7J5MWLXcEBWHA29"
-POL: "0xC8a68Cf65CBf292A0Bc3677af6C932926f2aBAd3"
-TRX: "TLyKLx3w3hJGJgzhSjvdRJbYt85RLdBX7M"
+BTC: "bc1qwftz8tm698pmmg5y0nrqffe5egtd05uaf0cflc"
+ETH: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736"
+BNB: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736"
+SOL: "2qyJAaBoeNBnXb2zmnYBzLAGRKGhmHqgb2ZejqMpuoue"
+POL: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736"
+TRX: "TPmj9q2R53ytGGu8gL7CFLwCqGxprEUe9r"
 TON: "EQBNY7a1Gsy1O7TX0OhGBnM8YhpHQ6mAWIjq2glCTuJ1SlxF"
 
 // Stablecoins
-USDC-ERC20: "0x931EecD3bf8f4ed5359C52016fb8F06D29C6202a"
-USDC-BEP20: "0x5d882e17B8aeeB0f0e82701DB436C42dE2990a83"
-USDT-TRC20: "TY8JjNbWDVA6wbTFot8vEL8vMNXFYdsibg"
+USDC-ERC20: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736"
+USDC-BEP20: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736"
+USDT-TRC20: "TPmj9q2R53ytGGu8gL7CFLwCqGxprEUe9r"
 // ... additional stablecoin addresses
 ```
 
@@ -210,7 +210,7 @@ According to project requirements:
 1. **Exchange Rates**: Currently using mock rates (50000 multiplier)
 2. **Balance Fetching**: Some chains return mock balance data
 3. **Gas Estimation**: Basic gas estimation, needs real-time data
-4. **Price Data**: LUTAR price is hardcoded ($0.045)
+4. **Price Data**: LUTAR price is hardcoded ($0.004)
 
 ### Required Improvements
 1. **Real Exchange APIs**: Integrate real cryptocurrency exchange APIs

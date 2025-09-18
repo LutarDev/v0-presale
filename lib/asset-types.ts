@@ -22,9 +22,9 @@ export type IconCategory =
 // ============================================================================
 
 export type CoinIcon = 
-  // Major cryptocurrencies
-  | 'bitcoin' | 'ethereum' | 'bnb' | 'solana' | 'tron' | 'ton' | 'polygon'
-  // Stablecoins
+  // Major cryptocurrencies (available icons)
+  | 'bitcoin' | 'eth-contrast' | 'bnb' | 'solana' | 'tron' | 'ton' | 'polygon'
+  // Stablecoins (using chain icons as fallbacks)
   | 'usdc' | 'usdt' | 'dai' | 'busd'
   // LUTAR tokens
   | 'lutar' | 'lutar-white'
@@ -47,8 +47,10 @@ export interface CoinIconData {
 // ============================================================================
 
 export type WalletIcon = 
-  | 'metamask' | 'phantom' | 'tronlink' | 'tonconnect' | 'walletconnect'
-  | 'trust-wallet' | 'coinbase-wallet' | 'rainbow' | 'argent' | 'imtoken'
+  // Available wallet icons
+  | 'metamask' | 'phantom' | 'walletconnect' | 'trust' | 'backpack' | 'argent'
+  // Fallback icons (using available ones)
+  | 'tronlink' | 'tonconnect' | 'trust-wallet' | 'coinbase-wallet' | 'rainbow' | 'imtoken'
   | 'tokenpocket' | 'safepal' | 'math-wallet' | 'bitget-wallet' | 'okx-wallet'
   | 'exodus' | 'atomic-wallet' | 'ledger' | 'trezor' | 'keystone'
 

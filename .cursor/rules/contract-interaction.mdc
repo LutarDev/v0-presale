@@ -1,0 +1,1088 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+
+import { prepareEvent, prepareContractCall, readContract, type
+BaseTransactionOptions, type AbiParameterToPrimitiveType, } from
+"thirdweb";
+
+/\*\* \* Contract events \*/
+
+/\*\* \* Represents the filters for the "Approval" event. \*/ export
+type ApprovalEventFilters = Partial\<{ owner:
+AbiParameterToPrimitiveType\<{"indexed":true,"internalType":"address","name":"owner","type":"address"}\>
+spender:
+AbiParameterToPrimitiveType\<{"indexed":true,"internalType":"address","name":"spender","type":"address"}\>
+}\>;
+
+/\*\* \* Creates an event object for the Approval event. \* @param
+filters - Optional filters to apply to the event. \* @returns The
+prepared event object. \* @example \*
+`* import { getContractEvents } from "thirdweb";  * import { approvalEvent } from "TODO";  *  * const events = await getContractEvents({  * contract,  * events: [  *  approvalEvent({  *  owner: ...,  *  spender: ...,  * })  * ],  * });  *`
+\*/ export function approvalEvent(filters: ApprovalEventFilters = {}) {
+return prepareEvent({ signature: "event Approval(address indexed owner,
+address indexed spender, uint256 amount)", filters, }); };
+
+/\*\* \* Creates an event object for the ContractURIUpdated event. \*
+@returns The prepared event object. \* @example \*
+`* import { getContractEvents } from "thirdweb";  * import { contractURIUpdatedEvent } from "TODO";  *  * const events = await getContractEvents({  * contract,  * events: [  *  contractURIUpdatedEvent()  * ],  * });  *`
+\*/ export function contractURIUpdatedEvent() { return prepareEvent({
+signature: "event ContractURIUpdated()", }); };
+
+/\*\* \* Creates an event object for the Initialized event. \* @returns
+The prepared event object. \* @example \*
+`* import { getContractEvents } from "thirdweb";  * import { initializedEvent } from "TODO";  *  * const events = await getContractEvents({  * contract,  * events: [  *  initializedEvent()  * ],  * });  *`
+\*/ export function initializedEvent() { return prepareEvent({
+signature: "event Initialized(uint64 version)", }); };
+
+/\*\* \* Creates an event object for the ModuleInstalled event. \*
+@returns The prepared event object. \* @example \*
+`* import { getContractEvents } from "thirdweb";  * import { moduleInstalledEvent } from "TODO";  *  * const events = await getContractEvents({  * contract,  * events: [  *  moduleInstalledEvent()  * ],  * });  *`
+\*/ export function moduleInstalledEvent() { return prepareEvent({
+signature: "event ModuleInstalled(address caller, address
+implementation, address installedModule)", }); };
+
+/\*\* \* Creates an event object for the ModuleUninstalled event. \*
+@returns The prepared event object. \* @example \*
+`* import { getContractEvents } from "thirdweb";  * import { moduleUninstalledEvent } from "TODO";  *  * const events = await getContractEvents({  * contract,  * events: [  *  moduleUninstalledEvent()  * ],  * });  *`
+\*/ export function moduleUninstalledEvent() { return prepareEvent({
+signature: "event ModuleUninstalled(address caller, address
+implementation, address installedModule)", }); };
+
+/\*\* \* Represents the filters for the "OwnershipHandoverCanceled"
+event. \*/ export type OwnershipHandoverCanceledEventFilters =
+Partial\<{ pendingOwner:
+AbiParameterToPrimitiveType\<{"indexed":true,"internalType":"address","name":"pendingOwner","type":"address"}\>
+}\>;
+
+/\*\* \* Creates an event object for the OwnershipHandoverCanceled
+event. \* @param filters - Optional filters to apply to the event. \*
+@returns The prepared event object. \* @example \*
+`* import { getContractEvents } from "thirdweb";  * import { ownershipHandoverCanceledEvent } from "TODO";  *  * const events = await getContractEvents({  * contract,  * events: [  *  ownershipHandoverCanceledEvent({  *  pendingOwner: ...,  * })  * ],  * });  *`
+\*/ export function ownershipHandoverCanceledEvent(filters:
+OwnershipHandoverCanceledEventFilters = {}) { return prepareEvent({
+signature: "event OwnershipHandoverCanceled(address indexed
+pendingOwner)", filters, }); };
+
+/\*\* \* Represents the filters for the "OwnershipHandoverRequested"
+event. \*/ export type OwnershipHandoverRequestedEventFilters =
+Partial\<{ pendingOwner:
+AbiParameterToPrimitiveType\<{"indexed":true,"internalType":"address","name":"pendingOwner","type":"address"}\>
+}\>;
+
+/\*\* \* Creates an event object for the OwnershipHandoverRequested
+event. \* @param filters - Optional filters to apply to the event. \*
+@returns The prepared event object. \* @example \*
+`* import { getContractEvents } from "thirdweb";  * import { ownershipHandoverRequestedEvent } from "TODO";  *  * const events = await getContractEvents({  * contract,  * events: [  *  ownershipHandoverRequestedEvent({  *  pendingOwner: ...,  * })  * ],  * });  *`
+\*/ export function ownershipHandoverRequestedEvent(filters:
+OwnershipHandoverRequestedEventFilters = {}) { return prepareEvent({
+signature: "event OwnershipHandoverRequested(address indexed
+pendingOwner)", filters, }); };
+
+/\*\* \* Represents the filters for the "OwnershipTransferred" event.
+\*/ export type OwnershipTransferredEventFilters = Partial\<{ oldOwner:
+AbiParameterToPrimitiveType\<{"indexed":true,"internalType":"address","name":"oldOwner","type":"address"}\>
+newOwner:
+AbiParameterToPrimitiveType\<{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}\>
+}\>;
+
+/\*\* \* Creates an event object for the OwnershipTransferred event. \*
+@param filters - Optional filters to apply to the event. \* @returns The
+prepared event object. \* @example \*
+`* import { getContractEvents } from "thirdweb";  * import { ownershipTransferredEvent } from "TODO";  *  * const events = await getContractEvents({  * contract,  * events: [  *  ownershipTransferredEvent({  *  oldOwner: ...,  *  newOwner: ...,  * })  * ],  * });  *`
+\*/ export function ownershipTransferredEvent(filters:
+OwnershipTransferredEventFilters = {}) { return prepareEvent({
+signature: "event OwnershipTransferred(address indexed oldOwner, address
+indexed newOwner)", filters, }); };
+
+/\*\* \* Represents the filters for the "RolesUpdated" event. \*/ export
+type RolesUpdatedEventFilters = Partial\<{ user:
+AbiParameterToPrimitiveType\<{"indexed":true,"internalType":"address","name":"user","type":"address"}\>
+roles:
+AbiParameterToPrimitiveType\<{"indexed":true,"internalType":"uint256","name":"roles","type":"uint256"}\>
+}\>;
+
+/\*\* \* Creates an event object for the RolesUpdated event. \* @param
+filters - Optional filters to apply to the event. \* @returns The
+prepared event object. \* @example \*
+`* import { getContractEvents } from "thirdweb";  * import { rolesUpdatedEvent } from "TODO";  *  * const events = await getContractEvents({  * contract,  * events: [  *  rolesUpdatedEvent({  *  user: ...,  *  roles: ...,  * })  * ],  * });  *`
+\*/ export function rolesUpdatedEvent(filters: RolesUpdatedEventFilters
+= {}) { return prepareEvent({ signature: "event RolesUpdated(address
+indexed user, uint256 indexed roles)", filters, }); };
+
+/\*\* \* Represents the filters for the "Transfer" event. \*/ export
+type TransferEventFilters = Partial\<{ from:
+AbiParameterToPrimitiveType\<{"indexed":true,"internalType":"address","name":"from","type":"address"}\>
+to:
+AbiParameterToPrimitiveType\<{"indexed":true,"internalType":"address","name":"to","type":"address"}\>
+}\>;
+
+/\*\* \* Creates an event object for the Transfer event. \* @param
+filters - Optional filters to apply to the event. \* @returns The
+prepared event object. \* @example \*
+`* import { getContractEvents } from "thirdweb";  * import { transferEvent } from "TODO";  *  * const events = await getContractEvents({  * contract,  * events: [  *  transferEvent({  *  from: ...,  *  to: ...,  * })  * ],  * });  *`
+\*/ export function transferEvent(filters: TransferEventFilters = {}) {
+return prepareEvent({ signature: "event Transfer(address indexed from,
+address indexed to, uint256 amount)", filters, }); };
+
+/\*\* \* Contract read functions \*/
+
+/\*\* \* Calls the "DOMAIN_SEPARATOR" function on the contract. \*
+@param options - The options for the DOMAIN_SEPARATOR function. \*
+@returns The parsed result of the function call. \* @example \*
+`* import { DOMAIN_SEPARATOR } from "TODO";  *  * const result = await DOMAIN_SEPARATOR();  *  *`
+\*/ export async function DOMAIN_SEPARATOR( options:
+BaseTransactionOptions ) { return readContract({ contract:
+options.contract, method: \[ "0x3644e515", \[\], \[ { "internalType":
+"bytes32", "name": "result", "type": "bytes32" } \]\], params: \[\] });
+};
+
+/\*\* \* Represents the parameters for the "allowance" function. \*/
+export type AllowanceParams = { owner:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"owner","type":"address"}\>
+spender:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"spender","type":"address"}\>
+};
+
+/\*\* \* Calls the "allowance" function on the contract. \* @param
+options - The options for the allowance function. \* @returns The parsed
+result of the function call. \* @example \*
+`* import { allowance } from "TODO";  *  * const result = await allowance({  *  owner: ...,  *  spender: ...,  * });  *  *`
+\*/ export async function allowance( options:
+BaseTransactionOptions`<AllowanceParams>`{=html} ) { return
+readContract({ contract: options.contract, method: \[ "0xdd62ed3e", \[ {
+"internalType": "address", "name": "owner", "type": "address" }, {
+"internalType": "address", "name": "spender", "type": "address" } \], \[
+{ "internalType": "uint256", "name": "result", "type": "uint256" } \]\],
+params: \[options.owner, options.spender\] }); };
+
+/\*\* \* Represents the parameters for the "balanceOf" function. \*/
+export type BalanceOfParams = { owner:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"owner","type":"address"}\>
+};
+
+/\*\* \* Calls the "balanceOf" function on the contract. \* @param
+options - The options for the balanceOf function. \* @returns The parsed
+result of the function call. \* @example \*
+`* import { balanceOf } from "TODO";  *  * const result = await balanceOf({  *  owner: ...,  * });  *  *`
+\*/ export async function balanceOf( options:
+BaseTransactionOptions`<BalanceOfParams>`{=html} ) { return
+readContract({ contract: options.contract, method: \[ "0x70a08231", \[ {
+"internalType": "address", "name": "owner", "type": "address" } \], \[ {
+"internalType": "uint256", "name": "result", "type": "uint256" } \]\],
+params: \[options.owner\] }); };
+
+/\*\* \* Calls the "contractURI" function on the contract. \* @param
+options - The options for the contractURI function. \* @returns The
+parsed result of the function call. \* @example \*
+`* import { contractURI } from "TODO";  *  * const result = await contractURI();  *  *`
+\*/ export async function contractURI( options: BaseTransactionOptions )
+{ return readContract({ contract: options.contract, method: \[
+"0xe8a3d485", \[\], \[ { "internalType": "string", "name": "","type":
+"string" } \]\], params: \[\] }); };
+
+/\*\* \* Calls the "decimals" function on the contract. \* @param
+options - The options for the decimals function. \* @returns The parsed
+result of the function call. \* @example \*
+`* import { decimals } from "TODO";  *  * const result = await decimals();  *  *`
+\*/ export async function decimals( options: BaseTransactionOptions ) {
+return readContract({ contract: options.contract, method: \[
+"0x313ce567", \[\], \[ { "internalType": "uint8", "name": "","type":
+"uint8" } \]\], params: \[\] }); };
+
+/\*\* \* Calls the "eip712Domain" function on the contract. \* @param
+options - The options for the eip712Domain function. \* @returns The
+parsed result of the function call. \* @example \*
+`* import { eip712Domain } from "TODO";  *  * const result = await eip712Domain();  *  *`
+\*/ export async function eip712Domain( options: BaseTransactionOptions
+) { return readContract({ contract: options.contract, method: \[
+"0x84b0196e", \[\], \[ { "internalType": "bytes1", "name": "fields",
+"type": "bytes1" }, { "internalType": "string", "name": "name", "type":
+"string" }, { "internalType": "string", "name": "version", "type":
+"string" }, { "internalType": "uint256", "name": "chainId", "type":
+"uint256" }, { "internalType": "address", "name": "verifyingContract",
+"type": "address" }, { "internalType": "bytes32", "name": "salt",
+"type": "bytes32" }, { "internalType": "uint256\[\]", "name":
+"extensions", "type": "uint256\[\]" } \]\], params: \[\] }); };
+
+/\*\* \* Calls the "getInstalledModules" function on the contract. \*
+@param options - The options for the getInstalledModules function. \*
+@returns The parsed result of the function call. \* @example \*
+`* import { getInstalledModules } from "TODO";  *  * const result = await getInstalledModules();  *  *`
+\*/ export async function getInstalledModules( options:
+BaseTransactionOptions ) { return readContract({ contract:
+options.contract, method: \[ "0x3e429396", \[\], \[ { "components": \[ {
+"internalType": "address", "name": "implementation", "type": "address"
+}, { "components": \[ { "internalType": "bool", "name":
+"registerInstallationCallback", "type": "bool" }, { "internalType":
+"bytes4\[\]", "name": "requiredInterfaces", "type": "bytes4\[\]" }, {
+"internalType": "bytes4\[\]", "name": "supportedInterfaces", "type":
+"bytes4\[\]" }, { "components": \[ { "internalType": "bytes4", "name":
+"selector", "type": "bytes4" } \], "internalType": "struct
+IModuleConfig.CallbackFunction\[\]", "name": "callbackFunctions",
+"type": "tuple\[\]" }, { "components": \[ { "internalType": "bytes4",
+"name": "selector", "type": "bytes4" }, { "internalType": "uint256",
+"name": "permissionBits", "type": "uint256" } \], "internalType":
+"struct IModuleConfig.FallbackFunction\[\]", "name":
+"fallbackFunctions", "type": "tuple\[\]" } \], "internalType": "struct
+IModuleConfig.ModuleConfig", "name": "config", "type": "tuple" } \],
+"internalType": "struct ICore.InstalledModule\[\]", "name":
+"\_installedModules", "type": "tuple\[\]" } \]\], params: \[\] }); };
+
+/\*\* \* Calls the "getSupportedCallbackFunctions" function on the
+contract. \* @param options - The options for the
+getSupportedCallbackFunctions function. \* @returns The parsed result of
+the function call. \* @example \*
+`* import { getSupportedCallbackFunctions } from "TODO";  *  * const result = await getSupportedCallbackFunctions();  *  *`
+\*/ export async function getSupportedCallbackFunctions( options:
+BaseTransactionOptions ) { return readContract({ contract:
+options.contract, method: \[ "0xf147db8a", \[\], \[ { "components": \[ {
+"internalType": "bytes4", "name": "selector", "type": "bytes4" }, {
+"internalType": "enum ICore.CallbackMode", "name": "mode", "type":
+"uint8" } \], "internalType": "struct
+ICore.SupportedCallbackFunction\[\]", "name":
+"supportedCallbackFunctions", "type": "tuple\[\]" } \]\], params: \[\]
+}); };
+
+/\*\* \* Represents the parameters for the "hasAllRoles" function. \*/
+export type HasAllRolesParams = { user:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"user","type":"address"}\>
+roles:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"roles","type":"uint256"}\>
+};
+
+/\*\* \* Calls the "hasAllRoles" function on the contract. \* @param
+options - The options for the hasAllRoles function. \* @returns The
+parsed result of the function call. \* @example \*
+`* import { hasAllRoles } from "TODO";  *  * const result = await hasAllRoles({  *  user: ...,  *  roles: ...,  * });  *  *`
+\*/ export async function hasAllRoles( options:
+BaseTransactionOptions`<HasAllRolesParams>`{=html} ) { return
+readContract({ contract: options.contract, method: \[ "0x1cd64df4", \[ {
+"internalType": "address", "name": "user", "type": "address" }, {
+"internalType": "uint256", "name": "roles", "type": "uint256" } \], \[ {
+"internalType": "bool", "name": "","type": "bool" } \]\], params:
+\[options.user, options.roles\] }); };
+
+/\*\* \* Represents the parameters for the "hasAnyRole" function. \*/
+export type HasAnyRoleParams = { user:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"user","type":"address"}\>
+roles:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"roles","type":"uint256"}\>
+};
+
+/\*\* \* Calls the "hasAnyRole" function on the contract. \* @param
+options - The options for the hasAnyRole function. \* @returns The
+parsed result of the function call. \* @example \*
+`* import { hasAnyRole } from "TODO";  *  * const result = await hasAnyRole({  *  user: ...,  *  roles: ...,  * });  *  *`
+\*/ export async function hasAnyRole( options:
+BaseTransactionOptions`<HasAnyRoleParams>`{=html} ) { return
+readContract({ contract: options.contract, method: \[ "0x514e62fc", \[ {
+"internalType": "address", "name": "user", "type": "address" }, {
+"internalType": "uint256", "name": "roles", "type": "uint256" } \], \[ {
+"internalType": "bool", "name": "","type": "bool" } \]\], params:
+\[options.user, options.roles\] }); };
+
+/\*\* \* Calls the "name" function on the contract. \* @param options -
+The options for the name function. \* @returns The parsed result of the
+function call. \* @example \*
+`* import { name } from "TODO";  *  * const result = await name();  *  *`
+\*/ export async function name( options: BaseTransactionOptions ) {
+return readContract({ contract: options.contract, method: \[
+"0x06fdde03", \[\], \[ { "internalType": "string", "name": "","type":
+"string" } \]\], params: \[\] }); };
+
+/\*\* \* Represents the parameters for the "nonces" function. \*/ export
+type NoncesParams = { owner:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"owner","type":"address"}\>
+};
+
+/\*\* \* Calls the "nonces" function on the contract. \* @param
+options - The options for the nonces function. \* @returns The parsed
+result of the function call. \* @example \*
+`* import { nonces } from "TODO";  *  * const result = await nonces({  *  owner: ...,  * });  *  *`
+\*/ export async function nonces( options:
+BaseTransactionOptions`<NoncesParams>`{=html} ) { return readContract({
+contract: options.contract, method: \[ "0x7ecebe00", \[ {
+"internalType": "address", "name": "owner", "type": "address" } \], \[ {
+"internalType": "uint256", "name": "result", "type": "uint256" } \]\],
+params: \[options.owner\] }); };
+
+/\*\* \* Calls the "owner" function on the contract. \* @param options -
+The options for the owner function. \* @returns The parsed result of the
+function call. \* @example \*
+`* import { owner } from "TODO";  *  * const result = await owner();  *  *`
+\*/ export async function owner( options: BaseTransactionOptions ) {
+return readContract({ contract: options.contract, method: \[
+"0x8da5cb5b", \[\], \[ { "internalType": "address", "name": "result",
+"type": "address" } \]\], params: \[\] }); };
+
+/\*\* \* Represents the parameters for the "ownershipHandoverExpiresAt"
+function. \*/ export type OwnershipHandoverExpiresAtParams = {
+pendingOwner:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"pendingOwner","type":"address"}\>
+};
+
+/\*\* \* Calls the "ownershipHandoverExpiresAt" function on the
+contract. \* @param options - The options for the
+ownershipHandoverExpiresAt function. \* @returns The parsed result of
+the function call. \* @example \*
+`* import { ownershipHandoverExpiresAt } from "TODO";  *  * const result = await ownershipHandoverExpiresAt({  *  pendingOwner: ...,  * });  *  *`
+\*/ export async function ownershipHandoverExpiresAt( options:
+BaseTransactionOptions`<OwnershipHandoverExpiresAtParams>`{=html} ) {
+return readContract({ contract: options.contract, method: \[
+"0xfee81cf4", \[ { "internalType": "address", "name": "pendingOwner",
+"type": "address" } \], \[ { "internalType": "uint256", "name":
+"result", "type": "uint256" } \]\], params: \[options.pendingOwner\] });
+};
+
+/\*\* \* Represents the parameters for the "rolesOf" function. \*/
+export type RolesOfParams = { user:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"user","type":"address"}\>
+};
+
+/\*\* \* Calls the "rolesOf" function on the contract. \* @param
+options - The options for the rolesOf function. \* @returns The parsed
+result of the function call. \* @example \*
+`* import { rolesOf } from "TODO";  *  * const result = await rolesOf({  *  user: ...,  * });  *  *`
+\*/ export async function rolesOf( options:
+BaseTransactionOptions`<RolesOfParams>`{=html} ) { return readContract({
+contract: options.contract, method: \[ "0x2de94807", \[ {
+"internalType": "address", "name": "user", "type": "address" } \], \[ {
+"internalType": "uint256", "name": "roles", "type": "uint256" } \]\],
+params: \[options.user\] }); };
+
+/\*\* \* Represents the parameters for the "supportsInterface" function.
+\*/ export type SupportsInterfaceParams = { interfaceId:
+AbiParameterToPrimitiveType\<{"internalType":"bytes4","name":"interfaceId","type":"bytes4"}\>
+};
+
+/\*\* \* Calls the "supportsInterface" function on the contract. \*
+@param options - The options for the supportsInterface function. \*
+@returns The parsed result of the function call. \* @example \*
+`* import { supportsInterface } from "TODO";  *  * const result = await supportsInterface({  *  interfaceId: ...,  * });  *  *`
+\*/ export async function supportsInterface( options:
+BaseTransactionOptions`<SupportsInterfaceParams>`{=html} ) { return
+readContract({ contract: options.contract, method: \[ "0x01ffc9a7", \[ {
+"internalType": "bytes4", "name": "interfaceId", "type": "bytes4" } \],
+\[ { "internalType": "bool", "name": "","type": "bool" } \]\], params:
+\[options.interfaceId\] }); };
+
+/\*\* \* Calls the "symbol" function on the contract. \* @param
+options - The options for the symbol function. \* @returns The parsed
+result of the function call. \* @example \*
+`* import { symbol } from "TODO";  *  * const result = await symbol();  *  *`
+\*/ export async function symbol( options: BaseTransactionOptions ) {
+return readContract({ contract: options.contract, method: \[
+"0x95d89b41", \[\], \[ { "internalType": "string", "name": "","type":
+"string" } \]\], params: \[\] }); };
+
+/\*\* \* Calls the "totalSupply" function on the contract. \* @param
+options - The options for the totalSupply function. \* @returns The
+parsed result of the function call. \* @example \*
+`* import { totalSupply } from "TODO";  *  * const result = await totalSupply();  *  *`
+\*/ export async function totalSupply( options: BaseTransactionOptions )
+{ return readContract({ contract: options.contract, method: \[
+"0x18160ddd", \[\], \[ { "internalType": "uint256", "name": "result",
+"type": "uint256" } \]\], params: \[\] }); };
+
+/\*\* \* Represents the parameters for the "encodeBytesBeforeMintERC20"
+function. \*/ export type EncodeBytesBeforeMintERC20Params = { params:
+AbiParameterToPrimitiveType\<{"components":\[{"internalType":"address","name":"currency","type":"address"},{"internalType":"uint256","name":"pricePerUnit","type":"uint256"},{"internalType":"bytes32\[\]","name":"recipientAllowlistProof","type":"bytes32\[\]"}\],"internalType":"struct
+ClaimableERC20.ClaimParamsERC20","name":"params","type":"tuple"}\> };
+
+/\*\* \* Calls the "encodeBytesBeforeMintERC20" function on the
+contract. \* @param options - The options for the
+encodeBytesBeforeMintERC20 function. \* @returns The parsed result of
+the function call. \* @example \*
+`* import { encodeBytesBeforeMintERC20 } from "TODO";  *  * const result = await encodeBytesBeforeMintERC20({  *  params: ...,  * });  *  *`
+\*/ export async function encodeBytesBeforeMintERC20( options:
+BaseTransactionOptions`<EncodeBytesBeforeMintERC20Params>`{=html} ) {
+return readContract({ contract: options.contract, method: \[
+"0x4e6030da", \[ { "components": \[ { "internalType": "address", "name":
+"currency", "type": "address" }, { "internalType": "uint256", "name":
+"pricePerUnit", "type": "uint256" }, { "internalType": "bytes32\[\]",
+"name": "recipientAllowlistProof", "type": "bytes32\[\]" } \],
+"internalType": "struct ClaimableERC20.ClaimParamsERC20", "name":
+"params", "type": "tuple" } \], \[ { "internalType": "bytes", "name":
+"","type": "bytes" } \]\], params: \[options.params\] }); };
+
+/\*\* \* Represents the parameters for the
+"encodeBytesBeforeMintWithSignatureERC20" function. \*/ export type
+EncodeBytesBeforeMintWithSignatureERC20Params = { params:
+AbiParameterToPrimitiveType\<{"components":\[{"internalType":"uint48","name":"startTimestamp","type":"uint48"},{"internalType":"uint48","name":"endTimestamp","type":"uint48"},{"internalType":"address","name":"currency","type":"address"},{"internalType":"uint256","name":"maxMintPerWallet","type":"uint256"},{"internalType":"uint256","name":"pricePerUnit","type":"uint256"},{"internalType":"bytes32","name":"uid","type":"bytes32"}\],"internalType":"struct
+ClaimableERC20.ClaimSignatureParamsERC20","name":"params","type":"tuple"}\>
+};
+
+/\*\* \* Calls the "encodeBytesBeforeMintWithSignatureERC20" function on
+the contract. \* @param options - The options for the
+encodeBytesBeforeMintWithSignatureERC20 function. \* @returns The parsed
+result of the function call. \* @example \*
+`* import { encodeBytesBeforeMintWithSignatureERC20 } from "TODO";  *  * const result = await encodeBytesBeforeMintWithSignatureERC20({  *  params: ...,  * });  *  *`
+\*/ export async function encodeBytesBeforeMintWithSignatureERC20(
+options:
+BaseTransactionOptions`<EncodeBytesBeforeMintWithSignatureERC20Params>`{=html}
+) { return readContract({ contract: options.contract, method: \[
+"0x3f4a1bb6", \[ { "components": \[ { "internalType": "uint48", "name":
+"startTimestamp", "type": "uint48" }, { "internalType": "uint48",
+"name": "endTimestamp", "type": "uint48" }, { "internalType": "address",
+"name": "currency", "type": "address" }, { "internalType": "uint256",
+"name": "maxMintPerWallet", "type": "uint256" }, { "internalType":
+"uint256", "name": "pricePerUnit", "type": "uint256" }, {
+"internalType": "bytes32", "name": "uid", "type": "bytes32" } \],
+"internalType": "struct ClaimableERC20.ClaimSignatureParamsERC20",
+"name": "params", "type": "tuple" } \], \[ { "internalType": "bytes",
+"name": "","type": "bytes" } \]\], params: \[options.params\] }); };
+
+/\*\* \* Represents the parameters for the "encodeBytesOnInstall"
+function. \*/ export type EncodeBytesOnInstallParams = {
+primarySaleRecipient:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"primarySaleRecipient","type":"address"}\>
+};
+
+/\*\* \* Calls the "encodeBytesOnInstall" function on the contract. \*
+@param options - The options for the encodeBytesOnInstall function. \*
+@returns The parsed result of the function call. \* @example \*
+`* import { encodeBytesOnInstall } from "TODO";  *  * const result = await encodeBytesOnInstall({  *  primarySaleRecipient: ...,  * });  *  *`
+\*/ export async function encodeBytesOnInstall( options:
+BaseTransactionOptions`<EncodeBytesOnInstallParams>`{=html} ) { return
+readContract({ contract: options.contract, method: \[ "0x5d4c0b89", \[ {
+"internalType": "address", "name": "primarySaleRecipient", "type":
+"address" } \], \[ { "internalType": "bytes", "name": "","type": "bytes"
+} \]\], params: \[options.primarySaleRecipient\] }); };
+
+/\*\* \* Calls the "encodeBytesOnUninstall" function on the contract. \*
+@param options - The options for the encodeBytesOnUninstall function. \*
+@returns The parsed result of the function call. \* @example \*
+`* import { encodeBytesOnUninstall } from "TODO";  *  * const result = await encodeBytesOnUninstall();  *  *`
+\*/ export async function encodeBytesOnUninstall( options:
+BaseTransactionOptions ) { return readContract({ contract:
+options.contract, method: \[ "0xf5b75d2a", \[\], \[ { "internalType":
+"bytes", "name": "","type": "bytes" } \]\], params: \[\] }); };
+
+/\*\* \* Calls the "getClaimCondition" function on the contract. \*
+@param options - The options for the getClaimCondition function. \*
+@returns The parsed result of the function call. \* @example \*
+`* import { getClaimCondition } from "TODO";  *  * const result = await getClaimCondition();  *  *`
+\*/ export async function getClaimCondition( options:
+BaseTransactionOptions ) { return readContract({ contract:
+options.contract, method: \[ "0x30a63e11", \[\], \[ { "components": \[ {
+"internalType": "uint256", "name": "availableSupply", "type": "uint256"
+}, { "internalType": "bytes32", "name": "allowlistMerkleRoot", "type":
+"bytes32" }, { "internalType": "uint256", "name": "pricePerUnit",
+"type": "uint256" }, { "internalType": "address", "name": "currency",
+"type": "address" }, { "internalType": "uint256", "name":
+"maxMintPerWallet", "type": "uint256" }, { "internalType": "uint48",
+"name": "startTimestamp", "type": "uint48" }, { "internalType":
+"uint48", "name": "endTimestamp", "type": "uint48" }, { "internalType":
+"string", "name": "auxData", "type": "string" } \], "internalType":
+"struct ClaimableERC20.ClaimCondition", "name": "claimCondition",
+"type": "tuple" } \]\], params: \[\] }); };
+
+/\*\* \* Calls the "getModuleConfig" function on the contract. \* @param
+options - The options for the getModuleConfig function. \* @returns The
+parsed result of the function call. \* @example \*
+`* import { getModuleConfig } from "TODO";  *  * const result = await getModuleConfig();  *  *`
+\*/ export async function getModuleConfig( options:
+BaseTransactionOptions ) { return readContract({ contract:
+options.contract, method: \[ "0x89e04e0e", \[\], \[ { "components": \[ {
+"internalType": "bool", "name": "registerInstallationCallback", "type":
+"bool" }, { "internalType": "bytes4\[\]", "name": "requiredInterfaces",
+"type": "bytes4\[\]" }, { "internalType": "bytes4\[\]", "name":
+"supportedInterfaces", "type": "bytes4\[\]" }, { "components": \[ {
+"internalType": "bytes4", "name": "selector", "type": "bytes4" } \],
+"internalType": "struct IModuleConfig.CallbackFunction\[\]", "name":
+"callbackFunctions", "type": "tuple\[\]" }, { "components": \[ {
+"internalType": "bytes4", "name": "selector", "type": "bytes4" }, {
+"internalType": "uint256", "name": "permissionBits", "type": "uint256" }
+\], "internalType": "struct IModuleConfig.FallbackFunction\[\]", "name":
+"fallbackFunctions", "type": "tuple\[\]" } \], "internalType": "struct
+IModuleConfig.ModuleConfig", "name": "config", "type": "tuple" } \]\],
+params: \[\] }); };
+
+/\*\* \* Calls the "getSaleConfig" function on the contract. \* @param
+options - The options for the getSaleConfig function. \* @returns The
+parsed result of the function call. \* @example \*
+`* import { getSaleConfig } from "TODO";  *  * const result = await getSaleConfig();  *  *`
+\*/ export async function getSaleConfig( options: BaseTransactionOptions
+) { return readContract({ contract: options.contract, method: \[
+"0xcea943ee", \[\], \[ { "internalType": "address", "name":
+"primarySaleRecipient", "type": "address" } \]\], params: \[\] }); };
+
+/\*\* \* Calls the "isTransferEnabled" function on the contract. \*
+@param options - The options for the isTransferEnabled function. \*
+@returns The parsed result of the function call. \* @example \*
+`* import { isTransferEnabled } from "TODO";  *  * const result = await isTransferEnabled();  *  *`
+\*/ export async function isTransferEnabled( options:
+BaseTransactionOptions ) { return readContract({ contract:
+options.contract, method: \[ "0xcca5dcb6", \[\], \[ { "internalType":
+"bool", "name": "","type": "bool" } \]\], params: \[\] }); };
+
+/\*\* \* Represents the parameters for the "isTransferEnabledFor"
+function. \*/ export type IsTransferEnabledForParams = { target:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"target","type":"address"}\>
+};
+
+/\*\* \* Calls the "isTransferEnabledFor" function on the contract. \*
+@param options - The options for the isTransferEnabledFor function. \*
+@returns The parsed result of the function call. \* @example \*
+`* import { isTransferEnabledFor } from "TODO";  *  * const result = await isTransferEnabledFor({  *  target: ...,  * });  *  *`
+\*/ export async function isTransferEnabledFor( options:
+BaseTransactionOptions`<IsTransferEnabledForParams>`{=html} ) { return
+readContract({ contract: options.contract, method: \[ "0x735d0538", \[ {
+"internalType": "address", "name": "target", "type": "address" } \], \[
+{ "internalType": "bool", "name": "","type": "bool" } \]\], params:
+\[options.target\] }); };
+
+/\*\* \* Contract write functions \*/
+
+/\*\* \* Represents the parameters for the "approve" function. \*/
+export type ApproveParams = { spender:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"spender","type":"address"}\>
+amount:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"amount","type":"uint256"}\>
+};
+
+/\*\* \* Calls the "approve" function on the contract. \* @param
+options - The options for the "approve" function. \* @returns A prepared
+transaction object. \* @example \*
+`* import { approve } from "TODO";  *  * const transaction = approve({  *  spender: ...,  *  amount: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function approve( options:
+BaseTransactionOptions`<ApproveParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x095ea7b3", \[ { "internalType": "address", "name": "spender", "type":
+"address" }, { "internalType": "uint256", "name": "amount", "type":
+"uint256" } \], \[ { "internalType": "bool", "name": "","type": "bool" }
+\]\], params: \[options.spender, options.amount\] }); };
+
+/\*\* \* Represents the parameters for the "burn" function. \*/ export
+type BurnParams = { from:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"from","type":"address"}\>
+amount:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"amount","type":"uint256"}\>
+data:
+AbiParameterToPrimitiveType\<{"internalType":"bytes","name":"data","type":"bytes"}\>
+};
+
+/\*\* \* Calls the "burn" function on the contract. \* @param options -
+The options for the "burn" function. \* @returns A prepared transaction
+object. \* @example \*
+`* import { burn } from "TODO";  *  * const transaction = burn({  *  from: ...,  *  amount: ...,  *  data: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function burn( options:
+BaseTransactionOptions`<BurnParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x44d17187", \[ { "internalType": "address", "name": "from", "type":
+"address" }, { "internalType": "uint256", "name": "amount", "type":
+"uint256" }, { "internalType": "bytes", "name": "data", "type": "bytes"
+} \], \[\]\], params: \[options.from, options.amount, options.data\] });
+};
+
+/\*\* \* Calls the "cancelOwnershipHandover" function on the contract.
+\* @param options - The options for the "cancelOwnershipHandover"
+function. \* @returns A prepared transaction object. \* @example \*
+`* import { cancelOwnershipHandover } from "TODO";  *  * const transaction = cancelOwnershipHandover();  *  * // Send the transaction  * ...  *  *`
+\*/ export function cancelOwnershipHandover( options:
+BaseTransactionOptions ) { return prepareContractCall({ contract:
+options.contract, method: \[ "0x54d1f13d", \[\], \[\]\], params: \[\]
+}); };
+
+/\*\* \* Represents the parameters for the "completeOwnershipHandover"
+function. \*/ export type CompleteOwnershipHandoverParams = {
+pendingOwner:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"pendingOwner","type":"address"}\>
+};
+
+/\*\* \* Calls the "completeOwnershipHandover" function on the contract.
+\* @param options - The options for the "completeOwnershipHandover"
+function. \* @returns A prepared transaction object. \* @example \*
+`* import { completeOwnershipHandover } from "TODO";  *  * const transaction = completeOwnershipHandover({  *  pendingOwner: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function completeOwnershipHandover( options:
+BaseTransactionOptions`<CompleteOwnershipHandoverParams>`{=html} ) {
+return prepareContractCall({ contract: options.contract, method: \[
+"0xf04e283e", \[ { "internalType": "address", "name": "pendingOwner",
+"type": "address" } \], \[\]\], params: \[options.pendingOwner\] }); };
+
+/\*\* \* Represents the parameters for the "grantRoles" function. \*/
+export type GrantRolesParams = { user:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"user","type":"address"}\>
+roles:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"roles","type":"uint256"}\>
+};
+
+/\*\* \* Calls the "grantRoles" function on the contract. \* @param
+options - The options for the "grantRoles" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { grantRoles } from "TODO";  *  * const transaction = grantRoles({  *  user: ...,  *  roles: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function grantRoles( options:
+BaseTransactionOptions`<GrantRolesParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x1c10893f", \[ { "internalType": "address", "name": "user", "type":
+"address" }, { "internalType": "uint256", "name": "roles", "type":
+"uint256" } \], \[\]\], params: \[options.user, options.roles\] }); };
+
+/\*\* \* Represents the parameters for the "initialize" function. \*/
+export type InitializeParams = { name:
+AbiParameterToPrimitiveType\<{"internalType":"string","name":"\_name","type":"string"}\>
+symbol:
+AbiParameterToPrimitiveType\<{"internalType":"string","name":"\_symbol","type":"string"}\>
+contractURI:
+AbiParameterToPrimitiveType\<{"internalType":"string","name":"\_contractURI","type":"string"}\>
+owner:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"\_owner","type":"address"}\>
+modules:
+AbiParameterToPrimitiveType\<{"internalType":"address\[\]","name":"\_modules","type":"address\[\]"}\>
+moduleInstallData:
+AbiParameterToPrimitiveType\<{"internalType":"bytes\[\]","name":"\_moduleInstallData","type":"bytes\[\]"}\>
+};
+
+/\*\* \* Calls the "initialize" function on the contract. \* @param
+options - The options for the "initialize" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { initialize } from "TODO";  *  * const transaction = initialize({  *  name: ...,  *  symbol: ...,  *  contractURI: ...,  *  owner: ...,  *  modules: ...,  *  moduleInstallData: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function initialize( options:
+BaseTransactionOptions`<InitializeParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x62835ade", \[ { "internalType": "string", "name": "\_name", "type":
+"string" }, { "internalType": "string", "name": "\_symbol", "type":
+"string" }, { "internalType": "string", "name": "\_contractURI", "type":
+"string" }, { "internalType": "address", "name": "\_owner", "type":
+"address" }, { "internalType": "address\[\]", "name": "\_modules",
+"type": "address\[\]" }, { "internalType": "bytes\[\]", "name":
+"\_moduleInstallData", "type": "bytes\[\]" } \], \[\]\], params:
+\[options.name, options.symbol, options.contractURI, options.owner,
+options.modules, options.moduleInstallData\] }); };
+
+/\*\* \* Represents the parameters for the "installModule" function. \*/
+export type InstallModuleParams = { module:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"\_module","type":"address"}\>
+data:
+AbiParameterToPrimitiveType\<{"internalType":"bytes","name":"\_data","type":"bytes"}\>
+};
+
+/\*\* \* Calls the "installModule" function on the contract. \* @param
+options - The options for the "installModule" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { installModule } from "TODO";  *  * const transaction = installModule({  *  module: ...,  *  data: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function installModule( options:
+BaseTransactionOptions`<InstallModuleParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x8da798da", \[ { "internalType": "address", "name": "\_module",
+"type": "address" }, { "internalType": "bytes", "name": "\_data",
+"type": "bytes" } \], \[\]\], params: \[options.module, options.data\]
+}); };
+
+/\*\* \* Represents the parameters for the "mint" function. \*/ export
+type MintParams = { to:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"to","type":"address"}\>
+amount:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"amount","type":"uint256"}\>
+data:
+AbiParameterToPrimitiveType\<{"internalType":"bytes","name":"data","type":"bytes"}\>
+};
+
+/\*\* \* Calls the "mint" function on the contract. \* @param options -
+The options for the "mint" function. \* @returns A prepared transaction
+object. \* @example \*
+`* import { mint } from "TODO";  *  * const transaction = mint({  *  to: ...,  *  amount: ...,  *  data: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function mint( options:
+BaseTransactionOptions`<MintParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x94d008ef", \[ { "internalType": "address", "name": "to", "type":
+"address" }, { "internalType": "uint256", "name": "amount", "type":
+"uint256" }, { "internalType": "bytes", "name": "data", "type": "bytes"
+} \], \[\]\], params: \[options.to, options.amount, options.data\] });
+};
+
+/\*\* \* Represents the parameters for the "mintWithSignature" function.
+\*/ export type MintWithSignatureParams = { to:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"to","type":"address"}\>
+amount:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"amount","type":"uint256"}\>
+data:
+AbiParameterToPrimitiveType\<{"internalType":"bytes","name":"data","type":"bytes"}\>
+signature:
+AbiParameterToPrimitiveType\<{"internalType":"bytes","name":"signature","type":"bytes"}\>
+};
+
+/\*\* \* Calls the "mintWithSignature" function on the contract. \*
+@param options - The options for the "mintWithSignature" function. \*
+@returns A prepared transaction object. \* @example \*
+`* import { mintWithSignature } from "TODO";  *  * const transaction = mintWithSignature({  *  to: ...,  *  amount: ...,  *  data: ...,  *  signature: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function mintWithSignature( options:
+BaseTransactionOptions`<MintWithSignatureParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x0f7d3652", \[ { "internalType": "address", "name": "to", "type":
+"address" }, { "internalType": "uint256", "name": "amount", "type":
+"uint256" }, { "internalType": "bytes", "name": "data", "type": "bytes"
+}, { "internalType": "bytes", "name": "signature", "type": "bytes" } \],
+\[\]\], params: \[options.to, options.amount, options.data,
+options.signature\] }); };
+
+/\*\* \* Represents the parameters for the "multicall" function. \*/
+export type MulticallParams = { data:
+AbiParameterToPrimitiveType\<{"internalType":"bytes\[\]","name":"data","type":"bytes\[\]"}\>
+};
+
+/\*\* \* Calls the "multicall" function on the contract. \* @param
+options - The options for the "multicall" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { multicall } from "TODO";  *  * const transaction = multicall({  *  data: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function multicall( options:
+BaseTransactionOptions`<MulticallParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0xac9650d8", \[ { "internalType": "bytes\[\]", "name": "data", "type":
+"bytes\[\]" } \], \[ { "internalType": "bytes\[\]", "name": "","type":
+"bytes\[\]" } \]\], params: \[options.data\] }); };
+
+/\*\* \* Represents the parameters for the "permit" function. \*/ export
+type PermitParams = { owner:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"owner","type":"address"}\>
+spender:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"spender","type":"address"}\>
+amount:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"amount","type":"uint256"}\>
+deadline:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"deadline","type":"uint256"}\>
+v:
+AbiParameterToPrimitiveType\<{"internalType":"uint8","name":"v","type":"uint8"}\>
+r:
+AbiParameterToPrimitiveType\<{"internalType":"bytes32","name":"r","type":"bytes32"}\>
+s:
+AbiParameterToPrimitiveType\<{"internalType":"bytes32","name":"s","type":"bytes32"}\>
+};
+
+/\*\* \* Calls the "permit" function on the contract. \* @param
+options - The options for the "permit" function. \* @returns A prepared
+transaction object. \* @example \*
+`* import { permit } from "TODO";  *  * const transaction = permit({  *  owner: ...,  *  spender: ...,  *  amount: ...,  *  deadline: ...,  *  v: ...,  *  r: ...,  *  s: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function permit( options:
+BaseTransactionOptions`<PermitParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0xd505accf", \[ { "internalType": "address", "name": "owner", "type":
+"address" }, { "internalType": "address", "name": "spender", "type":
+"address" }, { "internalType": "uint256", "name": "amount", "type":
+"uint256" }, { "internalType": "uint256", "name": "deadline", "type":
+"uint256" }, { "internalType": "uint8", "name": "v", "type": "uint8" },
+{ "internalType": "bytes32", "name": "r", "type": "bytes32" }, {
+"internalType": "bytes32", "name": "s", "type": "bytes32" } \], \[\]\],
+params: \[options.owner, options.spender, options.amount,
+options.deadline, options.v, options.r, options.s\] }); };
+
+/\*\* \* Calls the "renounceOwnership" function on the contract. \*
+@param options - The options for the "renounceOwnership" function. \*
+@returns A prepared transaction object. \* @example \*
+`* import { renounceOwnership } from "TODO";  *  * const transaction = renounceOwnership();  *  * // Send the transaction  * ...  *  *`
+\*/ export function renounceOwnership( options: BaseTransactionOptions )
+{ return prepareContractCall({ contract: options.contract, method: \[
+"0x715018a6", \[\], \[\]\], params: \[\] }); };
+
+/\*\* \* Represents the parameters for the "renounceRoles" function. \*/
+export type RenounceRolesParams = { roles:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"roles","type":"uint256"}\>
+};
+
+/\*\* \* Calls the "renounceRoles" function on the contract. \* @param
+options - The options for the "renounceRoles" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { renounceRoles } from "TODO";  *  * const transaction = renounceRoles({  *  roles: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function renounceRoles( options:
+BaseTransactionOptions`<RenounceRolesParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x183a4f6e", \[ { "internalType": "uint256", "name": "roles", "type":
+"uint256" } \], \[\]\], params: \[options.roles\] }); };
+
+/\*\* \* Calls the "requestOwnershipHandover" function on the contract.
+\* @param options - The options for the "requestOwnershipHandover"
+function. \* @returns A prepared transaction object. \* @example \*
+`* import { requestOwnershipHandover } from "TODO";  *  * const transaction = requestOwnershipHandover();  *  * // Send the transaction  * ...  *  *`
+\*/ export function requestOwnershipHandover( options:
+BaseTransactionOptions ) { return prepareContractCall({ contract:
+options.contract, method: \[ "0x25692962", \[\], \[\]\], params: \[\]
+}); };
+
+/\*\* \* Represents the parameters for the "revokeRoles" function. \*/
+export type RevokeRolesParams = { user:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"user","type":"address"}\>
+roles:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"roles","type":"uint256"}\>
+};
+
+/\*\* \* Calls the "revokeRoles" function on the contract. \* @param
+options - The options for the "revokeRoles" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { revokeRoles } from "TODO";  *  * const transaction = revokeRoles({  *  user: ...,  *  roles: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function revokeRoles( options:
+BaseTransactionOptions`<RevokeRolesParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x4a4ee7b1", \[ { "internalType": "address", "name": "user", "type":
+"address" }, { "internalType": "uint256", "name": "roles", "type":
+"uint256" } \], \[\]\], params: \[options.user, options.roles\] }); };
+
+/\*\* \* Represents the parameters for the "setContractURI" function.
+\*/ export type SetContractURIParams = { contractURI:
+AbiParameterToPrimitiveType\<{"internalType":"string","name":"contractURI","type":"string"}\>
+};
+
+/\*\* \* Calls the "setContractURI" function on the contract. \* @param
+options - The options for the "setContractURI" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { setContractURI } from "TODO";  *  * const transaction = setContractURI({  *  contractURI: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function setContractURI( options:
+BaseTransactionOptions`<SetContractURIParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x938e3d7b", \[ { "internalType": "string", "name": "contractURI",
+"type": "string" } \], \[\]\], params: \[options.contractURI\] }); };
+
+/\*\* \* Represents the parameters for the "transfer" function. \*/
+export type TransferParams = { to:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"to","type":"address"}\>
+amount:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"amount","type":"uint256"}\>
+};
+
+/\*\* \* Calls the "transfer" function on the contract. \* @param
+options - The options for the "transfer" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { transfer } from "TODO";  *  * const transaction = transfer({  *  to: ...,  *  amount: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function transfer( options:
+BaseTransactionOptions`<TransferParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0xa9059cbb", \[ { "internalType": "address", "name": "to", "type":
+"address" }, { "internalType": "uint256", "name": "amount", "type":
+"uint256" } \], \[ { "internalType": "bool", "name": "","type": "bool" }
+\]\], params: \[options.to, options.amount\] }); };
+
+/\*\* \* Represents the parameters for the "transferFrom" function. \*/
+export type TransferFromParams = { from:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"from","type":"address"}\>
+to:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"to","type":"address"}\>
+amount:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"amount","type":"uint256"}\>
+};
+
+/\*\* \* Calls the "transferFrom" function on the contract. \* @param
+options - The options for the "transferFrom" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { transferFrom } from "TODO";  *  * const transaction = transferFrom({  *  from: ...,  *  to: ...,  *  amount: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function transferFrom( options:
+BaseTransactionOptions`<TransferFromParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x23b872dd", \[ { "internalType": "address", "name": "from", "type":
+"address" }, { "internalType": "address", "name": "to", "type":
+"address" }, { "internalType": "uint256", "name": "amount", "type":
+"uint256" } \], \[ { "internalType": "bool", "name": "","type": "bool" }
+\]\], params: \[options.from, options.to, options.amount\] }); };
+
+/\*\* \* Represents the parameters for the "transferOwnership" function.
+\*/ export type TransferOwnershipParams = { newOwner:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"newOwner","type":"address"}\>
+};
+
+/\*\* \* Calls the "transferOwnership" function on the contract. \*
+@param options - The options for the "transferOwnership" function. \*
+@returns A prepared transaction object. \* @example \*
+`* import { transferOwnership } from "TODO";  *  * const transaction = transferOwnership({  *  newOwner: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function transferOwnership( options:
+BaseTransactionOptions`<TransferOwnershipParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0xf2fde38b", \[ { "internalType": "address", "name": "newOwner",
+"type": "address" } \], \[\]\], params: \[options.newOwner\] }); };
+
+/\*\* \* Represents the parameters for the "uninstallModule" function.
+\*/ export type UninstallModuleParams = { module:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"\_module","type":"address"}\>
+data:
+AbiParameterToPrimitiveType\<{"internalType":"bytes","name":"\_data","type":"bytes"}\>
+};
+
+/\*\* \* Calls the "uninstallModule" function on the contract. \* @param
+options - The options for the "uninstallModule" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { uninstallModule } from "TODO";  *  * const transaction = uninstallModule({  *  module: ...,  *  data: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function uninstallModule( options:
+BaseTransactionOptions`<UninstallModuleParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x70c109cd", \[ { "internalType": "address", "name": "\_module",
+"type": "address" }, { "internalType": "bytes", "name": "\_data",
+"type": "bytes" } \], \[\]\], params: \[options.module, options.data\]
+}); };
+
+/\*\* \* Represents the parameters for the "beforeMintERC20" function.
+\*/ export type BeforeMintERC20Params = { to:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"\_to","type":"address"}\>
+amount:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"\_amount","type":"uint256"}\>
+data:
+AbiParameterToPrimitiveType\<{"internalType":"bytes","name":"\_data","type":"bytes"}\>
+};
+
+/\*\* \* Calls the "beforeMintERC20" function on the contract. \* @param
+options - The options for the "beforeMintERC20" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { beforeMintERC20 } from "TODO";  *  * const transaction = beforeMintERC20({  *  to: ...,  *  amount: ...,  *  data: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function beforeMintERC20( options:
+BaseTransactionOptions`<BeforeMintERC20Params>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x7ce7cf07", \[ { "internalType": "address", "name": "\_to", "type":
+"address" }, { "internalType": "uint256", "name": "\_amount", "type":
+"uint256" }, { "internalType": "bytes", "name": "\_data", "type":
+"bytes" } \], \[ { "internalType": "bytes", "name": "","type": "bytes" }
+\]\], params: \[options.to, options.amount, options.data\] }); };
+
+/\*\* \* Represents the parameters for the
+"beforeMintWithSignatureERC20" function. \*/ export type
+BeforeMintWithSignatureERC20Params = { to:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"\_to","type":"address"}\>
+amount:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"\_amount","type":"uint256"}\>
+data:
+AbiParameterToPrimitiveType\<{"internalType":"bytes","name":"\_data","type":"bytes"}\>
+signer:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"\_signer","type":"address"}\>
+};
+
+/\*\* \* Calls the "beforeMintWithSignatureERC20" function on the
+contract. \* @param options - The options for the
+"beforeMintWithSignatureERC20" function. \* @returns A prepared
+transaction object. \* @example \*
+`* import { beforeMintWithSignatureERC20 } from "TODO";  *  * const transaction = beforeMintWithSignatureERC20({  *  to: ...,  *  amount: ...,  *  data: ...,  *  signer: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function beforeMintWithSignatureERC20( options:
+BaseTransactionOptions`<BeforeMintWithSignatureERC20Params>`{=html} ) {
+return prepareContractCall({ contract: options.contract, method: \[
+"0x89c154b5", \[ { "internalType": "address", "name": "\_to", "type":
+"address" }, { "internalType": "uint256", "name": "\_amount", "type":
+"uint256" }, { "internalType": "bytes", "name": "\_data", "type":
+"bytes" }, { "internalType": "address", "name": "\_signer", "type":
+"address" } \], \[ { "internalType": "bytes", "name": "","type": "bytes"
+} \]\], params: \[options.to, options.amount, options.data,
+options.signer\] }); };
+
+/\*\* \* Represents the parameters for the "onInstall" function. \*/
+export type OnInstallParams = { data:
+AbiParameterToPrimitiveType\<{"internalType":"bytes","name":"data","type":"bytes"}\>
+};
+
+/\*\* \* Calls the "onInstall" function on the contract. \* @param
+options - The options for the "onInstall" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { onInstall } from "TODO";  *  * const transaction = onInstall({  *  data: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function onInstall( options:
+BaseTransactionOptions`<OnInstallParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x6d61fe70", \[ { "internalType": "bytes", "name": "data", "type":
+"bytes" } \], \[\]\], params: \[options.data\] }); };
+
+/\*\* \* Represents the parameters for the "onUninstall" function. \*/
+export type OnUninstallParams = { data:
+AbiParameterToPrimitiveType\<{"internalType":"bytes","name":"data","type":"bytes"}\>
+};
+
+/\*\* \* Calls the "onUninstall" function on the contract. \* @param
+options - The options for the "onUninstall" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { onUninstall } from "TODO";  *  * const transaction = onUninstall({  *  data: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function onUninstall( options:
+BaseTransactionOptions`<OnUninstallParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x8a91b0e3", \[ { "internalType": "bytes", "name": "data", "type":
+"bytes" } \], \[\]\], params: \[options.data\] }); };
+
+/\*\* \* Represents the parameters for the "setClaimCondition" function.
+\*/ export type SetClaimConditionParams = { claimCondition:
+AbiParameterToPrimitiveType\<{"components":\[{"internalType":"uint256","name":"availableSupply","type":"uint256"},{"internalType":"bytes32","name":"allowlistMerkleRoot","type":"bytes32"},{"internalType":"uint256","name":"pricePerUnit","type":"uint256"},{"internalType":"address","name":"currency","type":"address"},{"internalType":"uint256","name":"maxMintPerWallet","type":"uint256"},{"internalType":"uint48","name":"startTimestamp","type":"uint48"},{"internalType":"uint48","name":"endTimestamp","type":"uint48"},{"internalType":"string","name":"auxData","type":"string"}\],"internalType":"struct
+ClaimableERC20.ClaimCondition","name":"\_claimCondition","type":"tuple"}\>
+};
+
+/\*\* \* Calls the "setClaimCondition" function on the contract. \*
+@param options - The options for the "setClaimCondition" function. \*
+@returns A prepared transaction object. \* @example \*
+`* import { setClaimCondition } from "TODO";  *  * const transaction = setClaimCondition({  *  claimCondition: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function setClaimCondition( options:
+BaseTransactionOptions`<SetClaimConditionParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0xac0c12f4", \[ { "components": \[ { "internalType": "uint256", "name":
+"availableSupply", "type": "uint256" }, { "internalType": "bytes32",
+"name": "allowlistMerkleRoot", "type": "bytes32" }, { "internalType":
+"uint256", "name": "pricePerUnit", "type": "uint256" }, {
+"internalType": "address", "name": "currency", "type": "address" }, {
+"internalType": "uint256", "name": "maxMintPerWallet", "type": "uint256"
+}, { "internalType": "uint48", "name": "startTimestamp", "type":
+"uint48" }, { "internalType": "uint48", "name": "endTimestamp", "type":
+"uint48" }, { "internalType": "string", "name": "auxData", "type":
+"string" } \], "internalType": "struct ClaimableERC20.ClaimCondition",
+"name": "\_claimCondition", "type": "tuple" } \], \[\]\], params:
+\[options.claimCondition\] }); };
+
+/\*\* \* Represents the parameters for the "setSaleConfig" function. \*/
+export type SetSaleConfigParams = { primarySaleRecipient:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"\_primarySaleRecipient","type":"address"}\>
+};
+
+/\*\* \* Calls the "setSaleConfig" function on the contract. \* @param
+options - The options for the "setSaleConfig" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { setSaleConfig } from "TODO";  *  * const transaction = setSaleConfig({  *  primarySaleRecipient: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function setSaleConfig( options:
+BaseTransactionOptions`<SetSaleConfigParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0xd29a3628", \[ { "internalType": "address", "name":
+"\_primarySaleRecipient", "type": "address" } \], \[\]\], params:
+\[options.primarySaleRecipient\] }); };
+
+/\*\* \* Represents the parameters for the "beforeTransferERC20"
+function. \*/ export type BeforeTransferERC20Params = { from:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"from","type":"address"}\>
+to:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"to","type":"address"}\>
+arg_2:
+AbiParameterToPrimitiveType\<{"internalType":"uint256","name":"","type":"uint256"}\>
+};
+
+/\*\* \* Calls the "beforeTransferERC20" function on the contract. \*
+@param options - The options for the "beforeTransferERC20" function. \*
+@returns A prepared transaction object. \* @example \*
+`* import { beforeTransferERC20 } from "TODO";  *  * const transaction = beforeTransferERC20({  *  from: ...,  *  to: ...,  *  arg_2: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function beforeTransferERC20( options:
+BaseTransactionOptions`<BeforeTransferERC20Params>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x98074eed", \[ { "internalType": "address", "name": "from", "type":
+"address" }, { "internalType": "address", "name": "to", "type":
+"address" }, { "internalType": "uint256", "name": "","type": "uint256" }
+\], \[ { "internalType": "bytes", "name": "","type": "bytes" } \]\],
+params: \[options.from, options.to, options.arg_2\] }); };
+
+/\*\* \* Represents the parameters for the "setTransferable" function.
+\*/ export type SetTransferableParams = { enableTransfer:
+AbiParameterToPrimitiveType\<{"internalType":"bool","name":"enableTransfer","type":"bool"}\>
+};
+
+/\*\* \* Calls the "setTransferable" function on the contract. \* @param
+options - The options for the "setTransferable" function. \* @returns A
+prepared transaction object. \* @example \*
+`* import { setTransferable } from "TODO";  *  * const transaction = setTransferable({  *  enableTransfer: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function setTransferable( options:
+BaseTransactionOptions`<SetTransferableParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x9cd23707", \[ { "internalType": "bool", "name": "enableTransfer",
+"type": "bool" } \], \[\]\], params: \[options.enableTransfer\] }); };
+
+/\*\* \* Represents the parameters for the "setTransferableFor"
+function. \*/ export type SetTransferableForParams = { target:
+AbiParameterToPrimitiveType\<{"internalType":"address","name":"target","type":"address"}\>
+enableTransfer:
+AbiParameterToPrimitiveType\<{"internalType":"bool","name":"enableTransfer","type":"bool"}\>
+};
+
+/\*\* \* Calls the "setTransferableFor" function on the contract. \*
+@param options - The options for the "setTransferableFor" function. \*
+@returns A prepared transaction object. \* @example \*
+`* import { setTransferableFor } from "TODO";  *  * const transaction = setTransferableFor({  *  target: ...,  *  enableTransfer: ...,  * });  *  * // Send the transaction  * ...  *  *`
+\*/ export function setTransferableFor( options:
+BaseTransactionOptions`<SetTransferableForParams>`{=html} ) { return
+prepareContractCall({ contract: options.contract, method: \[
+"0x4c297cbd", \[ { "internalType": "address", "name": "target", "type":
+"address" }, { "internalType": "bool", "name": "enableTransfer", "type":
+"bool" } \], \[\]\], params: \[options.target, options.enableTransfer\]
+}); };

@@ -1,133 +1,68 @@
-/**
- * LUTAR Presale Platform - Icon Component System
- * Unified icon component with TypeScript support and theme handling
- */
+"use client"
 
-'use client'
-
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import Image from 'next/image'
 import { 
-  IconProps, 
-  CoinIconProps, 
-  WalletIconProps, 
-  ArrowIconProps, 
-  CheckmarkIconProps,
-  ThemedIconProps,
-  IconError,
+  IconMetadata, 
+  IconCategory, 
+  CoinIcon, 
+  WalletIcon, 
+  ArrowIcon, 
+  CheckmarkIcon, 
+  BlockchainFilterIcon,
   ICON_SIZES,
-  ICON_COLORS,
-  IconSize,
-  IconColor,
-  Theme
+  ICON_COLORS 
 } from '@/lib/asset-types'
 import { getIconMetadata, getIconPath } from '@/lib/icon-registry'
+import { getBlockchainIcon, getWalletIcon, getTokenIcon } from '@/lib/icon-mapping'
 
 // ============================================================================
 // BASE ICON COMPONENT
 // ============================================================================
 
-interface BaseIconProps extends Omit<IconProps, 'name'> {
-  category: string
-  iconName: string
-  fallbackIcon?: string
-  showFallback?: boolean
+interface BaseIconProps {
+  size?: number | keyof typeof ICON_SIZES
+  className?: string
+  alt?: string
+  fallback?: React.ReactNode
+  onError?: () => void
 }
 
-export function BaseIcon({
-  category,
-  iconName,
-  size = 'md',
-  className = '',
-  color,
-  strokeWidth,
-  fill,
-  stroke,
-  onClick,
-  style,
-  fallbackIcon = '/images/icons/coins/lutar.svg',
-  showFallback = true
-}: BaseIconProps) {
-  const [imageError, setImageError] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
+interface IconComponentProps extends BaseIconProps {
+  category: IconCategory
+  name: string
+}
 
-  // Get icon metadata
-  const metadata = getIconMetadata(category as any, iconName)
-  const iconPath = metadata?.path || fallbackIcon
-
-  // Handle size conversion
-  const iconSize = typeof size === 'string' ? ICON_SIZES[size as IconSize] || 24 : size
-
-  // Handle color application
-  const iconStyle: React.CSSProperties = {
-    width: iconSize,
-    height: iconSize,
-    ...(color && { color: ICON_COLORS[color as IconColor] || color }),
-    ...(fill && { fill }),
-    ...(stroke && { stroke }),
-    ...(strokeWidth && { strokeWidth }),
-    ...style
+export function Icon({ 
+  category, 
+  name, 
+  size = 'md', 
+  className = '', 
+  alt,
+  fallback,
+  onError 
+}: IconComponentProps) {
+  const iconPath = getIconPath(category, name)
+  const iconMetadata = getIconMetadata(category, name)
+  
+  if (!iconPath || !iconMetadata) {
+    console.warn(`Icon not found: ${category}/${name}`)
+    return fallback || <div className={`bg-muted rounded ${className}`} />
   }
 
-  const handleImageError = () => {
-    setImageError(true)
-    setIsLoading(false)
-  }
+  const iconSize = typeof size === 'number' ? size : ICON_SIZES[size]
+  const altText = alt || `${name} icon`
 
-  const handleImageLoad = () => {
-    setIsLoading(false)
-    setImageError(false)
-  }
-
-  // If it's an SVG and we have custom styling, render as img with style
-  if (metadata?.format === 'svg' && (color || fill || stroke || strokeWidth)) {
-    return (
-      <img
-        src={iconPath}
-        alt={iconName}
-        width={iconSize}
-        height={iconSize}
-        className={`inline-block ${className}`}
-        style={iconStyle}
-        onClick={onClick}
-        onError={handleImageError}
-        onLoad={handleImageLoad}
-      />
-    )
-  }
-
-  // Use Next.js Image for better optimization
   return (
-    <div 
-      className={`inline-block ${className}`}
-      style={{ width: iconSize, height: iconSize }}
-      onClick={onClick}
-    >
-      <Image
-        src={iconPath}
-        alt={iconName}
-        width={iconSize}
-        height={iconSize}
-        className="object-contain"
-        onError={handleImageError}
-        onLoad={handleImageLoad}
-        style={iconStyle}
-      />
-      {isLoading && (
-        <div 
-          className="absolute inset-0 bg-gray-200 animate-pulse rounded"
-          style={{ width: iconSize, height: iconSize }}
-        />
-      )}
-      {imageError && showFallback && (
-        <div 
-          className="flex items-center justify-center bg-gray-100 rounded"
-          style={{ width: iconSize, height: iconSize }}
-        >
-          <span className="text-xs text-gray-500">?</span>
-        </div>
-      )}
-    </div>
+    <Image
+      src={iconPath}
+      alt={altText}
+      width={iconSize}
+      height={iconSize}
+      className={className}
+      onError={onError}
+      unoptimized={iconMetadata.format === 'svg'}
+    />
   )
 }
 
@@ -135,288 +70,157 @@ export function BaseIcon({
 // SPECIALIZED ICON COMPONENTS
 // ============================================================================
 
-export function CoinIcon({ 
-  coin, 
-  size = 'md', 
-  className = '', 
-  color,
-  onClick,
-  style 
-}: CoinIconProps) {
+interface CoinIconProps extends BaseIconProps {
+  coin: CoinIcon
+}
+
+export function CoinIcon({ coin, size = 'md', className = '', ...props }: CoinIconProps) {
+  const iconName = getBlockchainIcon(coin)
   return (
-    <BaseIcon
+    <Icon
       category="coins"
-      iconName={coin}
+      name={iconName}
       size={size}
       className={className}
-      color={color}
-      onClick={onClick}
-      style={style}
+      {...props}
     />
   )
 }
 
-export function WalletIcon({ 
-  wallet, 
-  size = 'md', 
-  className = '', 
-  color,
-  onClick,
-  style 
-}: WalletIconProps) {
+interface WalletIconProps extends BaseIconProps {
+  wallet: WalletIcon
+}
+
+export function WalletIcon({ wallet, size = 'md', className = '', ...props }: WalletIconProps) {
+  const iconName = getWalletIcon(wallet)
   return (
-    <BaseIcon
+    <Icon
       category="wallets"
-      iconName={wallet}
+      name={iconName}
       size={size}
       className={className}
-      color={color}
-      onClick={onClick}
-      style={style}
+      {...props}
     />
   )
 }
 
-export function ArrowIcon({ 
-  direction, 
-  color, 
-  style = 'short',
-  size = 'md', 
-  className = '', 
-  onClick,
-  ...props 
-}: ArrowIconProps) {
-  const iconName = style === 'long' 
-    ? `long-arrow-${direction}-${color}`
-    : `arrow-${direction}-${color}`
+// ============================================================================
+// CHAIN ICON COMPONENT (Alias for CoinIcon with string input)
+// ============================================================================
 
+interface ChainIconProps extends BaseIconProps {
+  chain: string
+}
+
+export function ChainIcon({ chain, size = 'md', className = '', ...props }: ChainIconProps) {
+  const iconName = getBlockchainIcon(chain)
   return (
-    <BaseIcon
+    <Icon
+      category="coins"
+      name={iconName}
+      size={size}
+      className={className}
+      {...props}
+    />
+  )
+}
+
+interface ArrowIconProps extends BaseIconProps {
+  arrow: ArrowIcon
+}
+
+export function ArrowIcon({ arrow, size = 'md', className = '', ...props }: ArrowIconProps) {
+  return (
+    <Icon
       category="arrows"
-      iconName={iconName}
+      name={arrow}
       size={size}
       className={className}
-      onClick={onClick}
       {...props}
     />
   )
 }
 
-export function CheckmarkIcon({ 
-  state, 
-  style = 'thin',
-  size = 'md', 
-  className = '', 
-  color,
-  onClick,
-  ...props 
-}: CheckmarkIconProps) {
-  const iconName = state === 'success' 
-    ? `checkmark-${style}-${color || 'black'}`
-    : 'failed-checkmark'
+interface CheckmarkIconProps extends BaseIconProps {
+  checkmark: CheckmarkIcon
+}
 
+export function CheckmarkIcon({ checkmark, size = 'md', className = '', ...props }: CheckmarkIconProps) {
   return (
-    <BaseIcon
+    <Icon
       category="checkmarks"
-      iconName={iconName}
+      name={checkmark}
       size={size}
       className={className}
-      onClick={onClick}
       {...props}
     />
   )
 }
 
-export function BlockchainFilterIcon({ 
-  filter, 
-  size = 'md', 
-  className = '', 
-  color,
-  onClick,
-  style 
-}: { 
-  filter: string
-  size?: number | string
-  className?: string
-  color?: string
-  onClick?: () => void
-  style?: React.CSSProperties 
-}) {
+interface BlockchainFilterIconProps extends BaseIconProps {
+  filter: BlockchainFilterIcon
+}
+
+export function BlockchainFilterIcon({ filter, size = 'md', className = '', ...props }: BlockchainFilterIconProps) {
   return (
-    <BaseIcon
+    <Icon
       category="blockchain-filters"
-      iconName={filter}
+      name={filter}
       size={size}
       className={className}
-      color={color}
-      onClick={onClick}
-      style={style}
+      {...props}
     />
   )
 }
 
 // ============================================================================
-// THEMED ICON COMPONENT
+// FALLBACK ICON COMPONENT
 // ============================================================================
 
-export function ThemedIcon({ 
-  name,
-  category,
-  theme = 'dark',
-  lightIcon,
-  darkIcon,
+interface FallbackIconProps extends BaseIconProps {
+  symbol?: string
+  color?: string
+  backgroundColor?: string
+}
+
+export function FallbackIcon({ 
+  symbol = '?', 
   size = 'md', 
   className = '', 
-  color,
-  onClick,
-  style 
-}: ThemedIconProps & { category: string }) {
-  const [currentTheme, setCurrentTheme] = useState<Theme>(theme)
-
-  // Auto-detect theme from system preference
-  useEffect(() => {
-    if (theme === 'auto') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      setCurrentTheme(mediaQuery.matches ? 'dark' : 'light')
-      
-      const handler = (e: MediaQueryListEvent) => {
-        setCurrentTheme(e.matches ? 'dark' : 'light')
-      }
-      
-      mediaQuery.addEventListener('change', handler)
-      return () => mediaQuery.removeEventListener('change', handler)
-    }
-  }, [theme])
-
-  // Determine which icon to use
-  const iconToUse = currentTheme === 'light' 
-    ? (lightIcon || `${name}-light`)
-    : (darkIcon || `${name}-dark` || name)
-
+  color = 'white',
+  backgroundColor = '#6c757d'
+}: FallbackIconProps) {
+  const iconSize = typeof size === 'number' ? size : ICON_SIZES[size]
+  
   return (
-    <BaseIcon
-      category={category}
-      iconName={iconToUse}
-      size={size}
-      className={className}
-      color={color}
-      onClick={onClick}
-      style={style}
-    />
-  )
-}
-
-// ============================================================================
-// ICON LOADER COMPONENT
-// ============================================================================
-
-interface IconLoaderProps {
-  category: string
-  iconName: string
-  size?: number | string
-  className?: string
-  fallback?: React.ReactNode
-  loading?: React.ReactNode
-}
-
-export function IconLoader({ 
-  category, 
-  iconName, 
-  size = 'md', 
-  className = '',
-  fallback,
-  loading 
-}: IconLoaderProps) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [hasError, setHasError] = useState(false)
-
-  const handleLoad = () => setIsLoading(false)
-  const handleError = () => {
-    setHasError(true)
-    setIsLoading(false)
-  }
-
-  if (hasError && fallback) {
-    return <>{fallback}</>
-  }
-
-  if (isLoading && loading) {
-    return <>{loading}</>
-  }
-
-  return (
-    <BaseIcon
-      category={category}
-      iconName={iconName}
-      size={size}
-      className={className}
-      onLoad={handleLoad}
-      onError={handleError}
-    />
-  )
-}
-
-// ============================================================================
-// ICON GRID COMPONENT
-// ============================================================================
-
-interface IconGridProps {
-  category: string
-  icons: string[]
-  size?: number | string
-  className?: string
-  onIconClick?: (iconName: string) => void
-  columns?: number
-}
-
-export function IconGrid({ 
-  category, 
-  icons, 
-  size = 'md', 
-  className = '',
-  onIconClick,
-  columns = 4
-}: IconGridProps) {
-  return (
-    <div 
-      className={`grid gap-4 ${className}`}
-      style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}
+    <div
+      className={`rounded-full flex items-center justify-center font-bold text-xs ${className}`}
+      style={{
+        width: iconSize,
+        height: iconSize,
+        backgroundColor,
+        color
+      }}
     >
-      {icons.map((iconName) => (
-        <div
-          key={iconName}
-          className="flex flex-col items-center p-2 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
-          onClick={() => onIconClick?.(iconName)}
-        >
-          <BaseIcon
-            category={category}
-            iconName={iconName}
-            size={size}
-            className="mb-2"
-          />
-          <span className="text-xs text-gray-600 capitalize">
-            {iconName.replace(/-/g, ' ')}
-          </span>
-        </div>
-      ))}
+      {symbol}
     </div>
   )
 }
 
 // ============================================================================
-// EXPORT ALL COMPONENTS
+// UTILITY FUNCTIONS
 // ============================================================================
 
-export {
-  BaseIcon,
-  CoinIcon,
-  WalletIcon,
-  ArrowIcon,
-  CheckmarkIcon,
-  BlockchainFilterIcon,
-  ThemedIcon,
-  IconLoader,
-  IconGrid
+/**
+ * Get the correct coin icon name for a blockchain symbol
+ */
+export function getCoinIconName(symbol: string): CoinIcon {
+  return getBlockchainIcon(symbol)
 }
 
-export default BaseIcon
+/**
+ * Get the correct wallet icon name for a wallet name
+ */
+export function getWalletIconName(walletName: string): WalletIcon {
+  return getWalletIcon(walletName)
+}

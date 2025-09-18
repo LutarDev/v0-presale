@@ -26,7 +26,7 @@ export function useWallet() {
     address: null,
     balance: null,
     adapter: null,
-    chain: "TRX", // Default to TRX since user is using TronLink
+    chain: "", // Default to TRX since user is using TronLink
     isConnecting: false,
     error: null,
     lastConnected: null,
@@ -164,6 +164,7 @@ export function useWallet() {
       chain: walletState.chain,
       isConnecting: false,
       error: null,
+      lastConnected: null,
     })
 
     localStorage.removeItem("wallet_connection")
@@ -192,6 +193,7 @@ export function useWallet() {
         balance: null,
         adapter: null,
         error: null,
+        lastConnected: null,
       }))
 
       // If wallet was connected, try to reconnect with compatible wallet for new chain

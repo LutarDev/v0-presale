@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { SkeletonBalanceCard } from "@/components/ui/skeleton-card"
+import { ChainIcon, WalletIcon, FallbackIcon } from "@/components/ui/icon"
 import { Wallet, Copy, CheckCircle, AlertCircle, Download, ArrowLeft, RefreshCw } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useWallet } from "@/hooks/use-wallet"
 import { getWalletAdapters } from "@/lib/wallet-adapters"
 import { fetchWalletBalances, type WalletBalances } from "@/lib/balance-fetcher"
+import { getAllBlockchainConfigs } from "@/lib/blockchain-config"
 
 interface UnifiedWalletModalProps {
   isOpen: boolean
@@ -18,15 +20,7 @@ interface UnifiedWalletModalProps {
 
 type ModalStep = "chain-selection" | "wallet-selection" | "wallet-info"
 
-const blockchains = [
-  { name: "Bitcoin", symbol: "BTC", color: "bg-[#f7931a]", textColor: "text-[#f7931a]", iconTextColor: "text-white" },
-  { name: "Ethereum", symbol: "ETH", color: "bg-[#627eea]", textColor: "text-[#627eea]", iconTextColor: "text-white" },
-  { name: "BSC", symbol: "BNB", color: "bg-[#f3ba2f]", textColor: "text-[#f3ba2f]", iconTextColor: "text-black" },
-  { name: "Solana", symbol: "SOL", color: "bg-[#8c24a2]", textColor: "text-[#8c24a2]", iconTextColor: "text-white" },
-  { name: "Polygon", symbol: "POL", color: "bg-[#8247e5]", textColor: "text-[#8247e5]", iconTextColor: "text-white" },
-  { name: "TRON", symbol: "TRX", color: "bg-[#ff060a]", textColor: "text-[#ff060a]", iconTextColor: "text-white" },
-  { name: "TON", symbol: "TON", color: "bg-[#0088cc]", textColor: "text-[#0088cc]", iconTextColor: "text-white" },
-]
+const blockchains = getAllBlockchainConfigs()
 
 export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps) {
   const { chain, isConnected, address, balance, isConnecting, error, connect, disconnect } = useWallet()
@@ -165,10 +159,20 @@ export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps)
                   onClick={() => handleChainSelect(blockchain.symbol)}
                 >
                   <div className="text-center">
-                    <div
-                      className={`w-10 h-10 ${blockchain.color} rounded-full mx-auto mb-2 flex items-center justify-center`}
-                    >
-                      <span className={`${blockchain.iconTextColor} font-bold text-xs`}>{blockchain.symbol}</span>
+                    <div className="w-10 h-10 mx-auto mb-2 flex items-center justify-center">
+                      <ChainIcon 
+                        chain={blockchain.symbol} 
+                        size={40}
+                        className="rounded-full"
+                        fallback={
+                          <FallbackIcon 
+                            symbol={blockchain.symbol}
+                            size={40}
+                            backgroundColor={blockchain.color}
+                            color={blockchain.iconTextColor.includes('white') ? 'white' : 'black'}
+                          />
+                        }
+                      />
                     </div>
                     <div className="text-sm font-medium text-foreground">{blockchain.name}</div>
                     <div className={`text-xs ${blockchain.textColor} font-medium`}>{blockchain.symbol}</div>
@@ -187,9 +191,19 @@ export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps)
                 <ArrowLeft className="w-4 h-4" />
               </Button>
               <div className="flex items-center gap-2">
-                <div className={`w-6 h-6 ${selectedBlockchain?.color} rounded-full flex items-center justify-center`}>
-                  <span className={`${selectedBlockchain?.iconTextColor} font-bold text-xs`}>{selectedChain}</span>
-                </div>
+                <ChainIcon 
+                  chain={selectedChain} 
+                  size={24}
+                  className="rounded-full"
+                  fallback={
+                    <FallbackIcon 
+                      symbol={selectedChain}
+                      size={24}
+                      backgroundColor={selectedBlockchain?.color || '#6c757d'}
+                      color={selectedBlockchain?.iconTextColor.includes('white') ? 'white' : 'black'}
+                    />
+                  }
+                />
                 <span className="font-medium">{selectedBlockchain?.name}</span>
               </div>
             </div>
@@ -203,7 +217,11 @@ export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps)
               {availableWallets.map((adapter) => (
                 <Card key={adapter.name} className="p-4 cursor-pointer hover:bg-card/80 transition-colors">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{adapter.icon}</span>
+                    <WalletIcon 
+                      wallet={adapter.name.toLowerCase().replace(/\s+/g, '-') as any}
+                      size={32}
+                      fallback={<span className="text-2xl">{adapter.icon}</span>}
+                    />
                     <div className="flex-1">
                       <div className="font-medium">{adapter.name}</div>
                       <div className="text-xs text-muted-foreground">{adapter.description}</div>

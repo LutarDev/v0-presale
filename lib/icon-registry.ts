@@ -48,10 +48,10 @@ export const ICON_REGISTRY: IconRegistry = {
       size: { width: 24, height: 24 },
       format: 'svg'
     },
-    'ethereum': {
+    'eth-contrast': {
       category: 'coins',
-      name: 'ethereum',
-      path: '/images/icons/coins/ethereum.svg',
+      name: 'eth-contrast',
+      path: '/images/icons/coins/eth-contrast.svg',
       size: { width: 24, height: 24 },
       format: 'svg'
     },

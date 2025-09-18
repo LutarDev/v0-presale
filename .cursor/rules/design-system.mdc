@@ -1,0 +1,324 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# LUTAR Presale Platform - Design System Implementation
+
+## Overview
+
+This document outlines the comprehensive design system implementation for the LUTAR Presale Platform, focusing on the icon system for blockchain networks, cryptocurrencies, and wallet providers.
+
+## 🎨 Design System Components
+
+### 1. Icon System
+
+The platform uses a centralized icon system that provides consistent visual representation across all components.
+
+#### Core Icon Components
+
+- **`Icon`** - Base icon component with error handling and fallbacks
+- **`CoinIcon`** - For blockchain/cryptocurrency icons
+- **`ChainIcon`** - Alias for CoinIcon with string input
+- **`WalletIcon`** - For wallet provider icons
+- **`FallbackIcon`** - Fallback component when images fail to load
+
+#### Icon Categories
+
+1. **Blockchain Icons** (`/public/images/icons/coins/`)
+   - Bitcoin (BTC)
+   - Ethereum (ETH)
+   - Binance Smart Chain (BNB)
+   - Solana (SOL)
+   - Polygon (POL)
+   - TRON (TRX)
+   - TON (TON)
+
+2. **Wallet Icons** (`/public/images/icons/wallets/`)
+   - MetaMask
+   - Phantom
+   - TronLink
+   - Tonkeeper
+   - WalletConnect
+   - Trust Wallet
+   - Unisat
+   - Xverse
+   - Coinbase Wallet
+   - Rainbow
+   - Backpack
+   - Argent
+
+3. **Stablecoin Icons**
+   - USDC (USD Coin)
+   - USDT (Tether)
+
+### 2. Icon Mapping System
+
+The `lib/icon-mapping.ts` file provides intelligent mapping between:
+- Blockchain symbols and their corresponding icon files
+- Wallet names and their corresponding icon files
+- Alternative naming conventions and standard names
+
+#### Key Functions
+
+```typescript
+// Get blockchain icon
+getBlockchainIcon(symbol: string): CoinIcon
+
+// Get wallet icon
+getWalletIcon(walletName: string): WalletIcon
+
+// Get stablecoin icon
+getStablecoinIcon(symbol: string): CoinIcon
+
+// Get appropriate icon for any token
+getTokenIcon(symbol: string): CoinIcon
+```
+
+### 3. Blockchain Configuration
+
+The `lib/blockchain-config.ts` file centralizes all blockchain configurations including:
+- Visual properties (colors, text colors)
+- Technical properties (chain IDs, RPC URLs)
+- Supported tokens and wallet adapters
+- Native currency information
+
+## 🚀 Implementation Details
+
+### Component Usage Examples
+
+#### Basic Icon Usage
+
+```tsx
+import { ChainIcon, WalletIcon, FallbackIcon } from '@/components/ui/icon'
+
+// Blockchain icon
+<ChainIcon chain="BTC" size={32} />
+
+// Wallet icon
+<WalletIcon wallet="metamask" size={24} />
+
+// Fallback icon
+<FallbackIcon 
+  symbol="BTC" 
+  size={32} 
+  backgroundColor="#f7931a" 
+  color="white" 
+/>
+```
+
+#### Advanced Usage with Fallbacks
+
+```tsx
+<ChainIcon 
+  chain="BTC" 
+  size={64}
+  fallback={
+    <FallbackIcon 
+      symbol="BTC"
+      size={64}
+      backgroundColor="#f7931a"
+      color="white"
+    />
+  }
+/>
+```
+
+### Icon Sizes
+
+The system supports multiple size options:
+
+```typescript
+const ICON_SIZES = {
+  xs: 16,
+  sm: 20,
+  md: 24,
+  lg: 32,
+  xl: 48,
+  '2xl': 64,
+  '3xl': 96
+}
+```
+
+### Error Handling
+
+All icon components include:
+- Automatic fallback to placeholder icons
+- Error boundaries for failed image loads
+- Consistent sizing and styling
+- Accessibility support with alt text
+
+## 📁 File Structure
+
+```
+components/
+├── ui/
+│   └── icon.tsx                 # Core icon components
+├── icon-showcase.tsx            # Design system showcase
+├── purchase-interface.tsx       # Updated with proper icons
+├── unified-wallet-modal.tsx     # Updated with proper icons
+└── payment-method-selector.tsx  # Updated with proper icons
+
+lib/
+├── icon-mapping.ts              # Icon mapping system
+├── blockchain-config.ts         # Blockchain configurations
+├── asset-types.ts               # Type definitions
+└── icon-registry.ts             # Icon metadata registry
+
+public/images/icons/
+├── coins/                       # Blockchain/crypto icons
+└── wallets/                     # Wallet provider icons
+```
+
+## 🎯 Design Principles
+
+### 1. Consistency
+- All icons follow the same sizing and styling conventions
+- Consistent fallback behavior across all components
+- Unified color scheme and visual hierarchy
+
+### 2. Accessibility
+- Proper alt text for all icons
+- High contrast fallback icons
+- Screen reader friendly implementations
+
+### 3. Performance
+- Optimized image loading with Next.js Image component
+- Lazy loading for better performance
+- Efficient error handling
+
+### 4. Maintainability
+- Centralized configuration
+- Type-safe implementations
+- Easy to extend and modify
+
+## 🔧 Customization
+
+### Adding New Icons
+
+1. **Add the image file** to the appropriate directory:
+   - Blockchain icons: `/public/images/icons/coins/`
+   - Wallet icons: `/public/images/icons/wallets/`
+
+2. **Update the mapping** in `lib/icon-mapping.ts`:
+   ```typescript
+   export const BLOCKCHAIN_ICON_MAP: Record<string, CoinIcon> = {
+     'NEW_CHAIN': 'new-chain-icon',
+     // ... existing mappings
+   }
+   ```
+
+3. **Update type definitions** in `lib/asset-types.ts`:
+   ```typescript
+   export type CoinIcon = 
+     | 'bitcoin'
+     | 'ethereum'
+     | 'new-chain-icon'  // Add new icon
+     // ... existing types
+   ```
+
+### Customizing Colors
+
+Update the blockchain configuration in `lib/blockchain-config.ts`:
+
+```typescript
+export const BLOCKCHAIN_CONFIGS: Record<string, BlockchainConfig> = {
+  BTC: {
+    // ... existing config
+    color: '#f7931a',        // Background color
+    textColor: 'text-[#f7931a]',  // Text color
+    iconTextColor: 'text-white',   // Icon text color
+  }
+}
+```
+
+## 🧪 Testing
+
+### Icon Showcase Component
+
+The `IconShowcase` component provides a comprehensive view of all available icons:
+
+- Blockchain icons with their configurations
+- Wallet icons with proper fallbacks
+- Different icon sizes demonstration
+- Fallback icon examples
+
+### Usage
+
+```tsx
+import { IconShowcase } from '@/components/icon-showcase'
+
+// Add to any page for testing
+<IconShowcase />
+```
+
+## 📋 Checklist
+
+### ✅ Completed
+
+- [x] Core icon component system
+- [x] Icon mapping and registry
+- [x] Blockchain configuration system
+- [x] Wallet icon integration
+- [x] Fallback icon system
+- [x] Error handling and accessibility
+- [x] Type-safe implementations
+- [x] Component updates (purchase interface, wallet modal, payment selector)
+- [x] Design system showcase
+- [x] Comprehensive documentation
+
+### 🔄 Future Enhancements
+
+- [ ] Icon animation system
+- [ ] Dark/light theme icon variants
+- [ ] Icon loading states
+- [ ] Icon caching optimization
+- [ ] SVG icon support
+- [ ] Icon accessibility improvements
+
+## 🎨 Visual Guidelines
+
+### Color Scheme
+
+- **Bitcoin**: `#f7931a` (Orange)
+- **Ethereum**: `#627eea` (Blue)
+- **BSC**: `#f3ba2f` (Yellow)
+- **Solana**: `#8c24a2` (Purple)
+- **Polygon**: `#8247e5` (Purple)
+- **TRON**: `#ff060a` (Red)
+- **TON**: `#0088cc` (Blue)
+
+### Typography
+
+- Fallback icons use bold, sans-serif fonts
+- Icon text should be clearly readable
+- Consistent sizing across all components
+
+### Spacing
+
+- Icons maintain consistent padding and margins
+- Proper spacing between icon and text elements
+- Responsive sizing for different screen sizes
+
+## 🚀 Getting Started
+
+1. **Import the components**:
+   ```tsx
+   import { ChainIcon, WalletIcon } from '@/components/ui/icon'
+   ```
+
+2. **Use in your components**:
+   ```tsx
+   <ChainIcon chain="BTC" size="lg" />
+   ```
+
+3. **Add fallbacks for better UX**:
+   ```tsx
+   <ChainIcon 
+     chain="BTC" 
+     size="lg"
+     fallback={<FallbackIcon symbol="BTC" size="lg" />}
+   />
+   ```
+
+This design system provides a solid foundation for consistent, accessible, and maintainable icon usage throughout the LUTAR Presale Platform.

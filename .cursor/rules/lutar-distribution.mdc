@@ -1,3 +1,8 @@
+---
+description:
+globs:
+alwaysApply: true
+---
 # LUTAR Token Distribution System
 
 This document describes the LUTAR token distribution system that automatically sends LUTAR tokens to users' BSC wallet addresses after successful payment confirmation.

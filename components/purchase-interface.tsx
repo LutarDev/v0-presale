@@ -7,20 +7,31 @@ import { UnifiedWalletModal } from "@/components/unified-wallet-modal"
 import { TransactionModal } from "@/components/transaction-modal"
 import { PaymentMethodSelector } from "@/components/payment-method-selector"
 import { PurchaseSummary } from "@/components/purchase-summary"
+import { ChainIcon, FallbackIcon } from "@/components/ui/icon"
 import { useWallet } from "@/hooks/use-wallet"
 import { priceService } from "@/lib/price-service"
+import { getAllBlockchainConfigs } from "@/lib/blockchain-config"
 import { useState, useEffect } from "react"
 import { ArrowRight, Wallet, CheckCircle, Copy, Loader2, RefreshCw } from "lucide-react"
 
-const blockchains = [
-  { name: "Bitcoin", symbol: "BTC", color: "bg-[#f7931a]", rate: 0.000001, iconTextColor: "text-white" },
-  { name: "Ethereum", symbol: "ETH", color: "bg-[#627eea]", rate: 0.000018, iconTextColor: "text-white" },
-  { name: "BSC", symbol: "BNB", color: "bg-[#f3ba2f]", rate: 0.000075, iconTextColor: "text-black" }, // Using black text for better contrast on yellow background
-  { name: "Solana", symbol: "SOL", color: "bg-[#8c24a2]", rate: 0.0005, iconTextColor: "text-white" },
-  { name: "Polygon", symbol: "POL", color: "bg-[#8247e5]", rate: 0.06, iconTextColor: "text-white" },
-  { name: "TRON", symbol: "TRX", color: "bg-[#ff060a]", rate: 0.45, iconTextColor: "text-white" },
-  { name: "TON", symbol: "TON", color: "bg-[#0088cc]", rate: 0.02, iconTextColor: "text-white" },
-]
+// Get blockchain configurations with mock rates
+const blockchains = getAllBlockchainConfigs().map(config => ({
+  ...config,
+  rate: getMockRate(config.symbol)
+}))
+
+function getMockRate(symbol: string): number {
+  const rates: Record<string, number> = {
+    'BTC': 0.000001,
+    'ETH': 0.000018,
+    'BNB': 0.000075,
+    'SOL': 0.0005,
+    'POL': 0.06,
+    'TRX': 0.45,
+    'TON': 0.02,
+  }
+  return rates[symbol] || 0.01
+}
 
 const paymentTokens = {
   BTC: [{ symbol: "BTC", name: "Bitcoin" }],
@@ -241,11 +252,20 @@ export function PurchaseInterface() {
                   }}
                 >
                   <div className="text-center">
-                    <div
-                      className={`w-8 h-8 ${blockchain.color} rounded-full mx-auto mb-2 flex items-center justify-center`}
-                    >
-                      <span className={`${blockchain.iconTextColor} font-bold text-xs`}>{blockchain.symbol}</span>{" "}
-                      {/* Using dynamic text color for better contrast */}
+                    <div className="w-8 h-8 mx-auto mb-2 flex items-center justify-center">
+                      <ChainIcon 
+                        chain={blockchain.symbol} 
+                        size={32}
+                        className="rounded-full"
+                        fallback={
+                          <FallbackIcon 
+                            symbol={blockchain.symbol}
+                            size={32}
+                            backgroundColor={blockchain.color}
+                            color={blockchain.iconTextColor.includes('white') ? 'white' : 'black'}
+                          />
+                        }
+                      />
                     </div>
                     <div className="text-xs font-medium">{blockchain.symbol}</div>
                     {isConnected && chain === blockchain.symbol && (

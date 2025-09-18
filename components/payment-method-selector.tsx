@@ -1,6 +1,7 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
+import { ChainIcon, FallbackIcon } from "@/components/ui/icon"
 
 interface PaymentToken {
   symbol: string
@@ -21,18 +22,24 @@ export function PaymentMethodSelector({
   availableTokens,
 }: PaymentMethodSelectorProps) {
   const getTokenIcon = (symbol: string) => {
-    const icons: Record<string, string> = {
-      BTC: "🟠",
-      ETH: "🔷",
-      BNB: "🟡",
-      SOL: "🟣",
-      POL: "🟪",
-      TRX: "🔴",
-      TON: "🔵",
-      USDC: "💵",
-      USDT: "💰",
+    // For stablecoins, use the chain icon as fallback
+    if (['USDC', 'USDT'].includes(symbol)) {
+      return (
+        <ChainIcon 
+          chain={selectedChain} 
+          size={24}
+          fallback={<span className="text-2xl">💰</span>}
+        />
+      )
     }
-    return icons[symbol] || "💎"
+    
+    return (
+      <ChainIcon 
+        chain={symbol} 
+        size={24}
+        fallback={<span className="text-2xl">💎</span>}
+      />
+    )
   }
 
   return (
@@ -46,7 +53,7 @@ export function PaymentMethodSelector({
           onClick={() => onTokenSelect(token.symbol)}
         >
           <div className="flex items-center gap-3">
-            <span className="text-2xl">{getTokenIcon(token.symbol)}</span>
+            {getTokenIcon(token.symbol)}
             <div>
               <div className="font-medium">{token.symbol}</div>
               <div className="text-xs text-muted-foreground">{token.name}</div>
