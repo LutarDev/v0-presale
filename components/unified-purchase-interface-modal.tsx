@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ChainIcon, WalletIcon, FallbackIcon } from "@/components/ui/icon"
-import { Copy, CheckCircle, ArrowLeft, Wallet, QrCode, TrendingUp, AlertTriangle, Loader2 } from "lucide-react"
+import { Copy, CheckCircle, ArrowLeft, Wallet, QrCode, TrendingUp, AlertTriangle, Loader2, X } from "lucide-react"
 import { useWallet } from "@/hooks/use-wallet"
 import { useToast } from "@/hooks/use-toast"
 import { TransactionModal } from "@/components/transaction-modal"
@@ -16,7 +16,8 @@ import { UnifiedWalletModal } from "@/components/unified-wallet-modal"
 import { priceService } from "@/lib/price-service"
 import { getPaymentCurrency } from "@/lib/payment-config"
 import { getAllBlockchainConfigs } from "@/lib/blockchain-config"
-import { cn } from "@/lib/utils"
+import { TransactionHandler } from "@/lib/transaction-handler"
+import { cn, validateBSCAddress } from "@/lib/utils"
 
 interface UnifiedPurchaseInterfaceModalProps {
   isOpen: boolean
@@ -81,6 +82,11 @@ export function UnifiedPurchaseInterfaceModal({
   const [paymentAmount, setPaymentAmount] = useState("")
   const [lutarAmount, setLutarAmount] = useState("")
   const [bscAddress, setBscAddress] = useState("")
+  const [bscAddressValidation, setBscAddressValidation] = useState<{
+    isValid: boolean
+    error?: string
+    warnings?: string[]
+  } | null>(null)
   const [copied, setCopied] = useState(false)
   const [loadingPrices, setLoadingPrices] = useState(true)
   const [lutarPrice] = useState(0.004)
@@ -91,6 +97,7 @@ export function UnifiedPurchaseInterfaceModal({
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
   const [walletModalExplicitlyOpened, setWalletModalExplicitlyOpened] = useState(false)
+  const [isTransactionPending, setIsTransactionPending] = useState(false)
 
   // Helper function to get payment currency data
   const getPaymentCurrencyData = () => {
@@ -137,35 +144,122 @@ export function UnifiedPurchaseInterfaceModal({
   }
 
   // Handle Buy LUTAR action
-  const handleBuyLutar = () => {
+  const handleBuyLutar = async () => {
     if (!isConnected || !selectedPaymentMethod || selectedPaymentMethod.chain !== chain) {
       handleWalletModalOpen()
       return
     }
 
-    // TODO: Implement actual transaction logic here
-    console.log('Initiating LUTAR purchase:', {
-      paymentMethod: selectedPaymentMethod,
-      amount: paymentAmount,
-      lutarAmount,
-      bscAddress,
-      walletAddress: address
-    })
-
-    toast({
-      title: "Transaction Initiated",
-      description: "Please confirm the transaction in your wallet",
-    })
-
-    // For now, just show success
-    setTimeout(() => {
+    if (!address || !adapter) {
       toast({
-        title: "Purchase Successful!",
-        description: `You will receive ${lutarAmount} LUTAR tokens`,
+        title: "Wallet Error",
+        description: "Wallet not properly connected. Please reconnect.",
+        variant: "destructive"
       })
-      onClose()
-    }, 2000)
+      return
+    }
+
+    const paymentCurrency = getPaymentCurrencyData()
+    if (!paymentCurrency) {
+      toast({
+        title: "Payment Configuration Error",
+        description: "Unable to process payment. Please try again.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      setIsTransactionPending(true)
+      
+      // Convert payment amount to base units (wei, satoshi, etc.)
+      const amountInBaseUnits = (Number(paymentAmount) * Math.pow(10, paymentCurrency.decimals)).toString()
+
+      console.log('[Modal] Initiating LUTAR purchase:', {
+        paymentMethod: selectedPaymentMethod,
+        amount: paymentAmount,
+        amountInBaseUnits,
+        lutarAmount,
+        bscAddress,
+        walletAddress: address,
+        currency: paymentCurrency
+      })
+
+      toast({
+        title: "Transaction Initiated",
+        description: "Please confirm the transaction in your wallet",
+      })
+
+      // Execute the transaction using TransactionHandler
+      const result = await TransactionHandler.executeTransaction({
+        currency: paymentCurrency,
+        amount: amountInBaseUnits,
+        userAddress: address,
+        walletAdapter: adapter
+      })
+
+      if (result.success) {
+        console.log('[Modal] Transaction successful:', result.txHash)
+        
+        toast({
+          title: "Payment Successful!",
+          description: `Transaction confirmed: ${result.txHash?.slice(0, 10)}...`,
+        })
+
+        // TODO: Integrate with LUTAR distribution service
+        // This should call the /api/distribute-lutar endpoint to send LUTAR tokens
+        // to the user's BSC address after successful payment confirmation
+        
+        setTimeout(() => {
+          toast({
+            title: "LUTAR Tokens Sent!",
+            description: `${lutarAmount} LUTAR tokens sent to your BSC address`,
+          })
+          
+          if (onComplete) {
+            onComplete({
+              success: true,
+              txHash: result.txHash,
+              paymentAmount,
+              lutarAmount,
+              bscAddress,
+              paymentMethod: selectedPaymentMethod
+            })
+          }
+          
+          onClose()
+        }, 3000)
+        
+      } else {
+        console.error('[Modal] Transaction failed:', result.error)
+        toast({
+          title: "Transaction Failed",
+          description: result.error || "Transaction could not be completed. Please try again.",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      console.error('[Modal] Transaction error:', error)
+      toast({
+        title: "Transaction Error",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive"
+      })
+    } finally {
+      setIsTransactionPending(false)
+    }
   }
+
+  // Validate BSC address whenever it changes
+  useEffect(() => {
+    if (!bscAddress) {
+      setBscAddressValidation(null)
+      return
+    }
+
+    const validation = validateBSCAddress(bscAddress)
+    setBscAddressValidation(validation)
+  }, [bscAddress])
 
   // Load exchange rates with better error handling and rate limiting
   useEffect(() => {
@@ -428,12 +522,45 @@ export function UnifiedPurchaseInterfaceModal({
             placeholder="0x..."
             value={bscAddress}
             onChange={(e) => setBscAddress(e.target.value)}
-            className="font-mono"
+            className={cn(
+              "font-mono",
+              bscAddressValidation?.error && "border-red-500 focus:border-red-500",
+              bscAddressValidation?.isValid && "border-green-500 focus:border-green-500"
+            )}
           />
-          <p className="text-xs text-muted-foreground mt-2">
-            Enter your BSC wallet address to receive LUTAR tokens after payment confirmation.
-            LUTAR tokens will be sent immediately after successful payment.
-          </p>
+          
+          {/* Validation feedback */}
+          {bscAddressValidation?.error && (
+            <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+              <X className="w-3 h-3" />
+              {bscAddressValidation.error}
+            </p>
+          )}
+          
+          {bscAddressValidation?.isValid && (
+            <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+              <CheckCircle className="w-3 h-3" />
+              Valid BSC address
+            </p>
+          )}
+          
+          {bscAddressValidation?.warnings && bscAddressValidation.warnings.length > 0 && (
+            <div className="mt-2">
+              {bscAddressValidation.warnings.map((warning, index) => (
+                <p key={index} className="text-xs text-yellow-600 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  {warning}
+                </p>
+              ))}
+            </div>
+          )}
+          
+          {!bscAddress && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Enter your BSC wallet address to receive LUTAR tokens after payment confirmation.
+              LUTAR tokens will be sent immediately after successful payment.
+            </p>
+          )}
         </div>
 
         {bscAddress && (
@@ -480,17 +607,17 @@ export function UnifiedPurchaseInterfaceModal({
         </Button>
         <Button 
           onClick={() => {
-            if (bscAddress && bscAddress.startsWith("0x") && bscAddress.length === 42) {
+            if (bscAddressValidation?.isValid) {
               setCurrentStep(3)
             } else {
               toast({
                 title: "Invalid BSC Address",
-                description: "Please enter a valid BSC wallet address",
+                description: bscAddressValidation?.error || "Please enter a valid BSC wallet address",
                 variant: "destructive"
               })
             }
           }}
-          disabled={!bscAddress || !bscAddress.startsWith("0x") || bscAddress.length !== 42}
+          disabled={!bscAddressValidation?.isValid}
           className="flex-1"
         >
           Continue
@@ -635,10 +762,18 @@ export function UnifiedPurchaseInterfaceModal({
           ) : (
             <Button 
               onClick={handleBuyLutar}
+              disabled={isTransactionPending}
               className="flex-1"
               size="lg"
             >
-              Buy LUTAR
+              {isTransactionPending ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Processing...
+                </div>
+              ) : (
+                "Buy LUTAR"
+              )}
             </Button>
           )}
         </div>

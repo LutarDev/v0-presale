@@ -14,6 +14,12 @@ export interface WalletAdapter {
   disconnect: () => Promise<void>
   getBalance: (address: string) => Promise<{ success: boolean; balance?: string; error?: string }>
   signTransaction?: (transaction: any) => Promise<string>
+  // TON Connect integration
+  tonConnect?: {
+    sendTransaction: (transaction: any) => Promise<{ boc: string }>
+    isConnected: () => boolean
+    disconnect: () => Promise<void>
+  }
 }
 
 // Bitcoin Wallet Adapters
@@ -26,20 +32,35 @@ export class UnisatAdapter implements WalletAdapter {
     return typeof window !== "undefined" && "unisat" in window
   }
 
-  async connect(): Promise<{ address: string; balance: string }> {
+  async connect(chain?: string): Promise<{ 
+    success: boolean
+    address?: string
+    balance?: string
+    detectedChain?: string
+    error?: string
+  }> {
     if (!this.isInstalled()) {
-      throw new Error("Unisat wallet is not installed")
+      return {
+        success: false,
+        error: "Unisat wallet is not installed"
+      }
     }
 
     try {
       const accounts = await (window as any).unisat.requestAccounts()
       const balance = await (window as any).unisat.getBalance()
+      
       return {
+        success: true,
         address: accounts[0],
         balance: (balance.confirmed / 100000000).toFixed(8), // Convert satoshis to BTC
+        detectedChain: "BTC"
       }
     } catch (error) {
-      throw new Error("Failed to connect to Unisat wallet")
+      return {
+        success: false,
+        error: `Failed to connect to Unisat wallet: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }
     }
   }
 
@@ -47,13 +68,22 @@ export class UnisatAdapter implements WalletAdapter {
     // Unisat doesn't have a disconnect method, handled by browser
   }
 
-  async getBalance(address: string): Promise<string> {
-    if (!this.isInstalled()) return "0.0000"
+  async getBalance(address: string): Promise<{ success: boolean; balance?: string; error?: string }> {
+    if (!this.isInstalled()) {
+      return { success: false, error: "Unisat wallet not installed" }
+    }
+    
     try {
       const balance = await (window as any).unisat.getBalance()
-      return (balance.confirmed / 100000000).toFixed(8)
-    } catch {
-      return "0.0000"
+      return { 
+        success: true, 
+        balance: (balance.confirmed / 100000000).toFixed(8) 
+      }
+    } catch (error) {
+      return { 
+        success: false, 
+        error: "Failed to get balance from Unisat wallet" 
+      }
     }
   }
 }
@@ -67,9 +97,18 @@ export class XverseAdapter implements WalletAdapter {
     return typeof window !== "undefined" && "XverseProviders" in window
   }
 
-  async connect(): Promise<{ address: string; balance: string }> {
+  async connect(chain?: string): Promise<{ 
+    success: boolean
+    address?: string
+    balance?: string
+    detectedChain?: string
+    error?: string
+  }> {
     if (!this.isInstalled()) {
-      throw new Error("Xverse wallet is not installed")
+      return {
+        success: false,
+        error: "Xverse wallet is not installed"
+      }
     }
 
     try {
@@ -89,11 +128,16 @@ export class XverseAdapter implements WalletAdapter {
 
       const response = await (window as any).XverseProviders.getAddress(getAddressOptions)
       return {
+        success: true,
         address: response.addresses[0].address,
         balance: "0.0000", // Xverse doesn't provide balance directly
+        detectedChain: "BTC"
       }
     } catch (error) {
-      throw new Error("Failed to connect to Xverse wallet")
+      return {
+        success: false,
+        error: `Failed to connect to Xverse wallet: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }
     }
   }
 
@@ -101,8 +145,31 @@ export class XverseAdapter implements WalletAdapter {
     // Xverse doesn't have a disconnect method
   }
 
-  async getBalance(address: string): Promise<string> {
-    return "0.0000" // Would need to query Bitcoin API
+  async getBalance(address: string): Promise<{ success: boolean; balance?: string; error?: string }> {
+    try {
+      // Use Blockstream API for Bitcoin balance
+      const response = await fetch(`https://blockstream.info/api/address/${address}`)
+      if (response.ok) {
+        const data = await response.json()
+        const balanceInSats = data.chain_stats?.funded_txo_sum || 0
+        const spentInSats = data.chain_stats?.spent_txo_sum || 0
+        const balanceInBTC = (balanceInSats - spentInSats) / Math.pow(10, 8)
+        return { 
+          success: true, 
+          balance: balanceInBTC.toFixed(8)
+        }
+      } else {
+        return {
+          success: false,
+          error: "Failed to fetch balance from Blockstream API"
+        }
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: `Error fetching Bitcoin balance: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }
+    }
   }
 }
 
@@ -257,21 +324,35 @@ export class PhantomAdapter implements WalletAdapter {
     return typeof window !== "undefined" && "solana" in window && (window as any).solana.isPhantom
   }
 
-  async connect(): Promise<{ address: string; balance: string }> {
+  async connect(chain?: string): Promise<{ 
+    success: boolean
+    address?: string
+    balance?: string
+    detectedChain?: string
+    error?: string
+  }> {
     if (!this.isInstalled()) {
-      throw new Error("Phantom wallet is not installed")
+      return {
+        success: false,
+        error: "Phantom wallet is not installed"
+      }
     }
 
     try {
       const response = await (window as any).solana.connect()
-      const balance = await this.getBalance(response.publicKey.toString())
+      const balanceResult = await this.getBalance(response.publicKey.toString())
 
       return {
+        success: true,
         address: response.publicKey.toString(),
-        balance,
+        balance: balanceResult.success ? balanceResult.balance : "0.0000",
+        detectedChain: "SOL"
       }
     } catch (error) {
-      throw new Error("Failed to connect to Phantom wallet")
+      return {
+        success: false,
+        error: `Failed to connect to Phantom wallet: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }
     }
   }
 
@@ -281,12 +362,42 @@ export class PhantomAdapter implements WalletAdapter {
     }
   }
 
-  async getBalance(address: string): Promise<string> {
+  async getBalance(address: string): Promise<{ success: boolean; balance?: string; error?: string }> {
     try {
-      // Would need to use Solana RPC to get actual balance
-      return "0.0000"
-    } catch {
-      return "0.0000"
+      // Use Solana RPC to get actual balance
+      const response = await fetch("https://api.mainnet-beta.solana.com", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getBalance",
+          params: [address],
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.result && data.result.value !== undefined) {
+          const balanceInSOL = data.result.value / Math.pow(10, 9)
+          return { 
+            success: true, 
+            balance: balanceInSOL.toFixed(4)
+          }
+        }
+      }
+      
+      return {
+        success: false,
+        error: "Failed to fetch balance from Solana RPC"
+      }
+    } catch (error) {
+      return { 
+        success: false, 
+        error: `Error fetching Solana balance: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }
     }
   }
 }
@@ -300,19 +411,35 @@ export class SolflareAdapter implements WalletAdapter {
     return typeof window !== "undefined" && "solflare" in window
   }
 
-  async connect(): Promise<{ address: string; balance: string }> {
+  async connect(chain?: string): Promise<{ 
+    success: boolean
+    address?: string
+    balance?: string
+    detectedChain?: string
+    error?: string
+  }> {
     if (!this.isInstalled()) {
-      throw new Error("Solflare wallet is not installed")
+      return {
+        success: false,
+        error: "Solflare wallet is not installed"
+      }
     }
 
     try {
       const response = await (window as any).solflare.connect()
+      const balanceResult = await this.getBalance(response.publicKey.toString())
+
       return {
+        success: true,
         address: response.publicKey.toString(),
-        balance: "0.0000",
+        balance: balanceResult.success ? balanceResult.balance : "0.0000",
+        detectedChain: "SOL"
       }
     } catch (error) {
-      throw new Error("Failed to connect to Solflare wallet")
+      return {
+        success: false,
+        error: `Failed to connect to Solflare wallet: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }
     }
   }
 
@@ -322,8 +449,43 @@ export class SolflareAdapter implements WalletAdapter {
     }
   }
 
-  async getBalance(address: string): Promise<string> {
-    return "0.0000"
+  async getBalance(address: string): Promise<{ success: boolean; balance?: string; error?: string }> {
+    try {
+      // Use Solana RPC to get actual balance
+      const response = await fetch("https://api.mainnet-beta.solana.com", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "getBalance",
+          params: [address],
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.result && data.result.value !== undefined) {
+          const balanceInSOL = data.result.value / Math.pow(10, 9)
+          return { 
+            success: true, 
+            balance: balanceInSOL.toFixed(4)
+          }
+        }
+      }
+      
+      return {
+        success: false,
+        error: "Failed to fetch balance from Solana RPC"
+      }
+    } catch (error) {
+      return { 
+        success: false, 
+        error: `Error fetching Solana balance: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }
+    }
   }
 }
 
@@ -483,33 +645,185 @@ export class TonkeeperAdapter implements WalletAdapter {
   name = "Tonkeeper"
   icon = "💎"
   description = "Leading TON wallet"
+  private connectedAddress: string | null = null
+  
+  // TON Connect integration
+  tonConnect = {
+    sendTransaction: async (transaction: any) => {
+      if (!this.connectedAddress) {
+        throw new Error("TON wallet not connected")
+      }
 
-  isInstalled(): boolean {
-    return typeof window !== "undefined" && "tonkeeper" in window
+      try {
+        // Use TON Connect protocol for transaction
+        if (typeof window !== "undefined" && (window as any).tonkeeper) {
+          const result = await (window as any).tonkeeper.send("ton_sendTransaction", {
+            transaction
+          })
+          return { boc: result }
+        }
+        throw new Error("TON wallet not available")
+      } catch (error) {
+        throw new Error(`Transaction failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
+    },
+    
+    isConnected: () => {
+      return this.connectedAddress !== null
+    },
+    
+    disconnect: async () => {
+      this.connectedAddress = null
+      if (typeof window !== "undefined" && (window as any).tonkeeper) {
+        try {
+          await (window as any).tonkeeper.send("ton_disconnect")
+        } catch (error) {
+          console.warn("Error disconnecting from Tonkeeper:", error)
+        }
+      }
+    }
   }
 
-  async connect(): Promise<{ address: string; balance: string }> {
+  isInstalled(): boolean {
+    return typeof window !== "undefined" && 
+           ((window as any).tonkeeper !== undefined || 
+            (window as any).ton !== undefined)
+  }
+
+  async connect(chain?: string): Promise<{ 
+    success: boolean
+    address?: string
+    balance?: string
+    detectedChain?: string
+    error?: string
+  }> {
     if (!this.isInstalled()) {
-      throw new Error("Tonkeeper wallet is not installed")
+      return {
+        success: false,
+        error: "Tonkeeper wallet is not installed. Please install Tonkeeper browser extension or use Tonkeeper mobile app."
+      }
     }
 
     try {
-      const response = await (window as any).tonkeeper.send("ton_requestAccounts")
+      let address: string
+      
+      // Try modern TON Connect first
+      if ((window as any).tonkeeper) {
+        const response = await (window as any).tonkeeper.send("ton_requestAccounts")
+        address = Array.isArray(response) ? response[0] : response.address || response
+      } 
+      // Fallback to legacy TON API
+      else if ((window as any).ton) {
+        const response = await (window as any).ton.send("ton_requestAccounts")
+        address = Array.isArray(response) ? response[0] : response.address || response
+      }
+      else {
+        throw new Error("No TON wallet API found")
+      }
+
+      if (!address) {
+        throw new Error("No address received from wallet")
+      }
+
+      // Store connected address
+      this.connectedAddress = address
+      
+      // Get balance
+      const balanceResult = await this.getBalance(address)
+      
       return {
-        address: response[0],
-        balance: "0.0000",
+        success: true,
+        address,
+        balance: balanceResult.success ? balanceResult.balance : "0.0000",
+        detectedChain: "TON"
       }
     } catch (error) {
-      throw new Error("Failed to connect to Tonkeeper wallet")
+      this.connectedAddress = null
+      return {
+        success: false,
+        error: `Failed to connect to Tonkeeper wallet: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }
     }
   }
 
   async disconnect(): Promise<void> {
-    // Tonkeeper disconnect would be handled here
+    await this.tonConnect.disconnect()
   }
 
-  async getBalance(address: string): Promise<string> {
-    return "0.0000"
+  async getBalance(address: string): Promise<{ success: boolean; balance?: string; error?: string }> {
+    try {
+      // Use TON Center API for TON balance with better error handling
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+      
+      const response = await fetch(
+        `https://toncenter.com/api/v2/getAddressBalance?address=${address}`, 
+        { 
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json'
+          }
+        }
+      )
+      
+      clearTimeout(timeoutId)
+      
+      if (response.ok) {
+        const data = await response.json()
+        if (data.ok && data.result !== undefined) {
+          const balanceInNanoTON = Number(data.result)
+          const balanceInTON = balanceInNanoTON / Math.pow(10, 9)
+          return { 
+            success: true, 
+            balance: balanceInTON.toFixed(4)
+          }
+        } else {
+          console.warn('TON Center API returned invalid data:', data)
+        }
+      } else {
+        console.warn(`TON Center API error: ${response.status} ${response.statusText}`)
+      }
+      
+      // Fallback: try alternative TON API
+      try {
+        const fallbackResponse = await fetch(
+          `https://tonapi.io/v1/account/getInfo?account=${address}`,
+          { 
+            signal: AbortSignal.timeout(5000),
+            headers: { 'Accept': 'application/json' }
+          }
+        )
+        
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json()
+          if (fallbackData.balance !== undefined) {
+            const balanceInTON = Number(fallbackData.balance) / Math.pow(10, 9)
+            return { 
+              success: true, 
+              balance: balanceInTON.toFixed(4)
+            }
+          }
+        }
+      } catch (fallbackError) {
+        console.warn('TON API fallback failed:', fallbackError)
+      }
+      
+      return {
+        success: false,
+        error: "Failed to fetch balance from TON APIs"
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return { 
+          success: false, 
+          error: "Request timeout - TON API is not responding"
+        }
+      }
+      return { 
+        success: false, 
+        error: `Error fetching TON balance: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }
+    }
   }
 }
 

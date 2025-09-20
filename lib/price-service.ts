@@ -21,6 +21,8 @@ const CACHE_TTL = 60000 // 1 minute
 const INTERNAL_API = "/api/prices"
 const COINGECKO_API = "https://api.coingecko.com/api/v3"
 const BINANCE_API = "https://api.binance.com/api/v3"
+const COINBASE_API = "https://api.coinbase.com/v2"
+const CRYPTOCOMPARE_API = "https://min-api.cryptocompare.com/data"
 
 // Fallback mock prices when API fails
 const FALLBACK_PRICES = {
@@ -189,10 +191,11 @@ export class PriceService {
     await this.getTokenPrices(symbols)
   }
 
-  // Fetch price for a single token using internal API
+  // Fetch price for a single token with multiple API fallbacks
   private async fetchTokenPrice(symbol: string): Promise<number> {
     const upperSymbol = symbol.toUpperCase()
     
+    // Try internal API first
     try {
       await this.rateLimit()
       
@@ -202,23 +205,113 @@ export class PriceService {
           headers: {
             'Accept': 'application/json',
           },
+          signal: AbortSignal.timeout(8000)
         }
       )
       
-      if (!response.ok) {
-        this.markRequestFailure()
-        throw new Error(`Failed to fetch price for ${symbol}`)
+      if (response.ok) {
+        const data = await response.json()
+        const price = data.prices?.[upperSymbol]
+        if (price && price > 0) {
+          this.markRequestSuccess()
+          return price
+        }
       }
-
-      const data = await response.json()
-      this.markRequestSuccess()
-      return data.prices?.[upperSymbol] || 0
     } catch (error) {
-      this.markRequestFailure()
-      console.error(`[PriceService] API error for ${symbol}, using fallback:`, error)
-      // Return fallback price if API fails
-      return FALLBACK_PRICES[upperSymbol as keyof typeof FALLBACK_PRICES] || 0
+      console.warn(`[PriceService] Internal API failed for ${symbol}:`, error)
     }
+
+    // Try external APIs as fallbacks
+    const externalPrice = await this.tryExternalTokenPrice(upperSymbol)
+    if (externalPrice > 0) {
+      this.markRequestSuccess()
+      return externalPrice
+    }
+
+    // Mark failure and return fallback
+    this.markRequestFailure()
+    console.warn(`[PriceService] All APIs failed for ${symbol}, using fallback`)
+    return FALLBACK_PRICES[upperSymbol as keyof typeof FALLBACK_PRICES] || 0
+  }
+
+  // Try external APIs for token price
+  private async tryExternalTokenPrice(symbol: string): Promise<number> {
+    const tokenId = TOKEN_IDS[symbol as keyof typeof TOKEN_IDS]
+    if (!tokenId) {
+      console.warn(`[PriceService] No token ID mapping for ${symbol}`)
+      return 0
+    }
+
+    const apis = [
+      {
+        name: 'CoinGecko',
+        fetch: async () => {
+          const response = await fetch(
+            `${COINGECKO_API}/simple/price?ids=${tokenId}&vs_currencies=usd`,
+            { 
+              headers: { 'Accept': 'application/json' },
+              signal: AbortSignal.timeout(5000)
+            }
+          )
+          if (response.ok) {
+            const data = await response.json()
+            return data[tokenId]?.usd || 0
+          }
+          throw new Error(`CoinGecko API error: ${response.status}`)
+        }
+      },
+      {
+        name: 'CryptoCompare',
+        fetch: async () => {
+          const response = await fetch(
+            `${CRYPTOCOMPARE_API}/price?fsym=${symbol}&tsyms=USD`,
+            { 
+              headers: { 'Accept': 'application/json' },
+              signal: AbortSignal.timeout(5000)
+            }
+          )
+          if (response.ok) {
+            const data = await response.json()
+            return data.USD || 0
+          }
+          throw new Error(`CryptoCompare API error: ${response.status}`)
+        }
+      },
+      {
+        name: 'Coinbase',
+        fetch: async () => {
+          const response = await fetch(
+            `${COINBASE_API}/exchange-rates?currency=${symbol}`,
+            { 
+              headers: { 'Accept': 'application/json' },
+              signal: AbortSignal.timeout(5000)
+            }
+          )
+          if (response.ok) {
+            const data = await response.json()
+            const rate = data.data?.rates?.USD
+            return rate ? parseFloat(rate) : 0
+          }
+          throw new Error(`Coinbase API error: ${response.status}`)
+        }
+      }
+    ]
+
+    // Try each external API
+    for (const api of apis) {
+      try {
+        const price = await api.fetch()
+        if (price > 0) {
+          console.log(`[PriceService] Got ${symbol} price from ${api.name}: $${price}`)
+          return price
+        }
+      } catch (error) {
+        console.warn(`[PriceService] ${api.name} failed for ${symbol}:`, error)
+        continue
+      }
+    }
+
+    return 0 // No external API worked
   }
 
   // Fetch multiple token prices using internal API
@@ -263,7 +356,7 @@ export class PriceService {
     }
   }
 
-  // Fetch exchange rate between two tokens
+  // Fetch exchange rate between two tokens with multiple API sources
   private async fetchExchangeRate(from: string, to: string): Promise<number> {
     try {
       // Handle USD as the base currency
@@ -276,7 +369,13 @@ export class PriceService {
         return toPrice === 0 ? 0 : 1 / toPrice
       }
 
-      // For token-to-token rates, get both prices in USD and calculate ratio
+      // Try direct exchange rate APIs first for better accuracy
+      const directRate = await this.tryDirectExchangeRate(from, to)
+      if (directRate !== null) {
+        return directRate
+      }
+
+      // Fallback: calculate from USD prices
       const [fromPrice, toPrice] = await Promise.all([
         this.fetchTokenPrice(from),
         this.fetchTokenPrice(to),
@@ -292,6 +391,55 @@ export class PriceService {
       // Return fallback exchange rate if calculation fails
       return this.getFallbackExchangeRate(from, to)
     }
+  }
+
+  // Try direct exchange rate from multiple APIs
+  private async tryDirectExchangeRate(from: string, to: string): Promise<number | null> {
+    const apis = [
+      {
+        name: 'Binance',
+        fetch: async () => {
+          const response = await fetch(`${BINANCE_API}/ticker/price?symbol=${from}${to}`, {
+            signal: AbortSignal.timeout(5000)
+          })
+          if (response.ok) {
+            const data = await response.json()
+            return parseFloat(data.price)
+          }
+          throw new Error(`Binance API error: ${response.status}`)
+        }
+      },
+      {
+        name: 'CryptoCompare',
+        fetch: async () => {
+          const response = await fetch(`${CRYPTOCOMPARE_API}/price?fsym=${from}&tsyms=${to}`, {
+            signal: AbortSignal.timeout(5000)
+          })
+          if (response.ok) {
+            const data = await response.json()
+            const rate = data[to]
+            if (rate && rate > 0) return rate
+          }
+          throw new Error(`CryptoCompare API error: ${response.status}`)
+        }
+      }
+    ]
+
+    // Try each API with proper error handling
+    for (const api of apis) {
+      try {
+        const rate = await api.fetch()
+        if (rate && rate > 0) {
+          console.log(`[PriceService] Got ${from}/${to} direct rate from ${api.name}: ${rate}`)
+          return rate
+        }
+      } catch (error) {
+        console.warn(`[PriceService] ${api.name} failed for ${from}/${to}:`, error)
+        continue
+      }
+    }
+
+    return null // No direct rate available
   }
 
   // Get fallback exchange rate when API fails
