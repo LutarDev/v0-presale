@@ -18,6 +18,8 @@ export const assetLibrary: AssetLibrary = {
       'bnb',
       'solana',
       'polygon',
+      'tether',
+      'usd-coin',
       'usdt-ton',
       'usdc-ton',
       'usdt-tron',

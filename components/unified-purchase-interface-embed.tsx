@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -8,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ChainIcon, WalletIcon, FallbackIcon } from "@/components/ui/icon"
+import { ChainIcon, WalletIcon, CoinIcon, FallbackIcon } from "@/components/ui/icon"
 import { Copy, CheckCircle, ArrowLeft, ArrowRight, Wallet, QrCode, TrendingUp, AlertTriangle, Loader2, X } from "lucide-react"
 import { useWallet } from "@/hooks/wallet-context"
 import { useToast } from "@/hooks/use-toast"
@@ -77,8 +78,9 @@ export function UnifiedPurchaseInterfaceEmbed({
   // Component state
   const [currentStep, setCurrentStep] = useState<EmbedStep>(1)
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod | null>(null)
-  const [paymentAmount, setPaymentAmount] = useState("")
+  const [usdAmount, setUsdAmount] = useState("")
   const [lutarAmount, setLutarAmount] = useState("")
+  const [cryptoAmount, setCryptoAmount] = useState("")
   const [bscAddress, setBscAddress] = useState("")
   const [bscAddressValidation, setBscAddressValidation] = useState<{
     isValid: boolean
@@ -139,10 +141,10 @@ export function UnifiedPurchaseInterfaceEmbed({
   // Generate QR Code URL
   const generateQRCode = () => {
     const paymentData = getPaymentCurrencyData()
-    if (!paymentData || !paymentAmount) return ""
+    if (!paymentData || !cryptoAmount) return ""
     
     const address = paymentData.wallet.address
-    const amount = paymentAmount
+    const amount = cryptoAmount
     const qrData = `${selectedPaymentMethod?.chain}:${address}?amount=${amount}`
     return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`
   }
@@ -196,11 +198,12 @@ export function UnifiedPurchaseInterfaceEmbed({
       setIsTransactionPending(true)
       
       // Convert payment amount to base units (wei, satoshi, etc.)
-      const amountInBaseUnits = (Number(paymentAmount) * Math.pow(10, paymentCurrency.decimals)).toString()
+      const amountInBaseUnits = (Number(cryptoAmount) * Math.pow(10, paymentCurrency.decimals)).toString()
 
       console.log('[Embed] Initiating LUTAR purchase:', {
         paymentMethod: selectedPaymentMethod,
-        amount: paymentAmount,
+        usdAmount: usdAmount,
+        cryptoAmount: cryptoAmount,
         amountInBaseUnits,
         lutarAmount,
         bscAddress,
@@ -239,7 +242,8 @@ export function UnifiedPurchaseInterfaceEmbed({
             onComplete({
               success: true,
               txHash: result.txHash,
-              paymentAmount,
+              usdAmount,
+              cryptoAmount,
               lutarAmount,
               bscAddress,
               paymentMethod: selectedPaymentMethod
@@ -342,35 +346,40 @@ export function UnifiedPurchaseInterfaceEmbed({
     loadPrices()
   }, [])
 
-  // Calculate LUTAR amount
+  // Calculate LUTAR amount and crypto amount based on USD input
   useEffect(() => {
-    if (paymentAmount && selectedPaymentMethod && !loadingPrices && exchangeRates.size > 0) {
-      const amount = parseFloat(paymentAmount)
-      if (isNaN(amount) || amount <= 0) {
+    if (usdAmount && selectedPaymentMethod && !loadingPrices && exchangeRates.size > 0) {
+      const usdValue = parseFloat(usdAmount)
+      if (isNaN(usdValue) || usdValue <= 0) {
         setLutarAmount("")
+        setCryptoAmount("")
         return
       }
 
-      let usdValue: number
-      
+      // Calculate LUTAR tokens from USD
+      const tokens = (usdValue / lutarPrice).toFixed(2)
+      setLutarAmount(tokens)
+
+      // Calculate crypto amount needed for the USD value
       if (selectedPaymentMethod.token === "USDC" || selectedPaymentMethod.token === "USDT") {
-        usdValue = amount
+        // For stablecoins, crypto amount = USD amount
+        setCryptoAmount(usdValue.toFixed(6))
       } else {
         const exchangeRate = exchangeRates.get(selectedPaymentMethod.token)
         if (!exchangeRate || exchangeRate <= 0) {
           console.warn(`No valid exchange rate for ${selectedPaymentMethod.token}`)
-          setLutarAmount("")
+          setCryptoAmount("")
           return
         }
-        usdValue = amount * exchangeRate
+        // Calculate how much crypto is needed for the USD amount
+        const cryptoNeeded = (usdValue / exchangeRate).toFixed(6)
+        setCryptoAmount(cryptoNeeded)
       }
-      
-      const tokens = (usdValue / lutarPrice).toFixed(2)
-      setLutarAmount(tokens)
     } else {
       setLutarAmount("")
+      setCryptoAmount("")
     }
-  }, [paymentAmount, selectedPaymentMethod, lutarPrice, exchangeRates, loadingPrices])
+  }, [usdAmount, selectedPaymentMethod, lutarPrice, exchangeRates, loadingPrices])
 
   const handlePaymentMethodSelect = (selectedChain: string, token: string) => {
     console.log(`[Embed] Payment method selected: ${token} on ${selectedChain}`)
@@ -403,16 +412,16 @@ export function UnifiedPurchaseInterfaceEmbed({
 
       <div className="space-y-4">
         <div>
-          <label className="text-sm font-medium mb-2 block">Pay with</label>
+          <label className="text-sm font-medium mb-2 block">You Pay (in USD)</label>
           <div className="relative">
             <Input
               type="number"
-              placeholder="Enter amount"
-              value={paymentAmount}
-              onChange={(e) => setPaymentAmount(e.target.value)}
-              className="pr-24"
+              placeholder="Enter USD amount"
+              value={usdAmount}
+              onChange={(e) => setUsdAmount(e.target.value)}
+              className="pr-36"
               disabled={loadingPrices}
-              step="0.000001"
+              step="0.01"
               min="0"
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -437,6 +446,11 @@ export function UnifiedPurchaseInterfaceEmbed({
               </Button>
             </div>
           </div>
+          {selectedPaymentMethod && cryptoAmount && (
+            <p className="text-xs text-muted-foreground mt-1">
+              ≈ {cryptoAmount} {selectedPaymentMethod.token} on {selectedPaymentMethod.chain}
+            </p>
+          )}
         </div>
 
         <div>
@@ -453,7 +467,13 @@ export function UnifiedPurchaseInterfaceEmbed({
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <>
-                  <div className="w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center text-xs font-bold text-white">L</div>
+                  <Image 
+                    src="/images/icons/coins/lutar.svg" 
+                    alt="LUTAR Token" 
+                    width={18} 
+                    height={18}
+                    className="w-4 h-4"
+                  />
                   <span className="text-sm font-medium text-green-600">LUTAR</span>
                 </>
               )}
@@ -479,7 +499,7 @@ export function UnifiedPurchaseInterfaceEmbed({
 
       <Button 
         onClick={() => {
-          if (selectedPaymentMethod && paymentAmount && Number(paymentAmount) > 0) {
+          if (selectedPaymentMethod && usdAmount && Number(usdAmount) > 0) {
             setCurrentStep(2)
           } else {
             toast({
@@ -489,7 +509,7 @@ export function UnifiedPurchaseInterfaceEmbed({
             })
           }
         }}
-        disabled={!selectedPaymentMethod || !paymentAmount || Number(paymentAmount) <= 0 || loadingPrices}
+        disabled={!selectedPaymentMethod || !usdAmount || Number(usdAmount) <= 0 || loadingPrices}
         className="w-full"
         size="lg"
       >
@@ -588,7 +608,7 @@ export function UnifiedPurchaseInterfaceEmbed({
             <div className="flex justify-between">
               <span className="text-muted-foreground">Pay with:</span>
               <span className="font-medium">
-                {paymentAmount} {selectedPaymentMethod?.token} on {selectedPaymentMethod?.chain}
+                {cryptoAmount} {selectedPaymentMethod?.token} on {selectedPaymentMethod?.chain}
               </span>
             </div>
             <div className="flex justify-between">
@@ -705,7 +725,7 @@ export function UnifiedPurchaseInterfaceEmbed({
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Amount to Send:</span>
-              <span className="font-medium">{paymentAmount} {selectedPaymentMethod?.token}</span>
+              <span className="font-medium">{cryptoAmount} {selectedPaymentMethod?.token}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">You Receive:</span>

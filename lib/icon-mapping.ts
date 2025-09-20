@@ -96,7 +96,7 @@ export const WALLET_ICON_MAP: Record<string, WalletIcon> = {
 
 export const STABLECOIN_ICON_MAP: Record<string, CoinIcon> = {
   // USDT icons by chain
-  //'USDT': 'usdt',
+  'USDT': 'tether',
   'USDT_ETH': 'usdt-erc20',
   'USDT_BSC': 'usdt-bep20',
   'USDT_SOL': 'usdt-solana',
@@ -105,7 +105,7 @@ export const STABLECOIN_ICON_MAP: Record<string, CoinIcon> = {
   'USDT_TON': 'usdt-ton',
   
   // USDC icons by chain
-  //'USDC': 'usdc',
+  'USDC': 'usd-coin',
   'USDC_ETH': 'usdc-erc20',
   'USDC_BSC': 'usdc-bep20',
   'USDC_SOL': 'usdc-solana',
@@ -114,8 +114,8 @@ export const STABLECOIN_ICON_MAP: Record<string, CoinIcon> = {
   'USDC_TON': 'usdc-ton',
   
   // Legacy mappings for backward compatibility
-  'USDC': 'usdc',
-  'USDT': 'usdt',
+  'USDC': 'usd-coin',
+  'USDT': 'tether',
   'USDC_ERC20': 'usdc-erc20',
   'USDC_BEP20': 'usdc-bep20',
   //'USDC_POL': 'usdc-polygon',

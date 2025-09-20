@@ -25,7 +25,7 @@ export type CoinIcon =
   // Major cryptocurrencies (available icons)
   | 'bitcoin' | 'eth-contrast' | 'bnb' | 'solana' | 'tron' | 'ton' | 'polygon'
   // Stablecoins (using chain icons as fallbacks)
-  | 'usdc' | 'usdt' | 'dai' | 'busd' | 'usdc-ton' | 'usdt-ton' | 'usdc-tron' | 'usdt-tron' | 'usdc-solana' | 'usdt-solana' | 'usdc-polygon' | 'usdt-polygon' | 'usdc-erc20' | 'usdt-erc20' | 'usdc-bep20' | 'usdt-bep20'
+  | 'usdc' | 'usdt' | 'dai' | 'busd' | 'usdc-ton' | 'usdt-ton' | 'usdc-tron' | 'usdt-tron' | 'usdc-solana' | 'usdt-solana' | 'usdc-polygon' | 'usdt-polygon' | 'usdc-erc20' | 'usdt-erc20' | 'usdc-bep20' | 'usdt-bep20' | 'usd-coin' | 'tether'
   // LUTAR tokens
   | 'lutar'
   // Other popular tokens

@@ -199,20 +199,20 @@ export const ICON_REGISTRY: IconRegistry = {
       size: { width: 24, height: 24 },
       format: 'svg'
     },
-    /* 'usdc': {
+     'usd-coin': {
       category: 'coins',
-      name: 'usdc',
+      name: 'usd-coin',
       path: '/images/icons/coins/usdc.svg',
       size: { width: 24, height: 24 },
       format: 'svg'
     },
-    'usdt': {
+    'tether': {
       category: 'coins',
-      name: 'usdt',
+      name: 'tether',
       path: '/images/icons/coins/usdt.svg',
       size: { width: 24, height: 24 },
       format: 'svg'
-    }, */
+    }, 
     'usdc-tron': {
       category: 'coins',
       name: 'usdc-tron',
