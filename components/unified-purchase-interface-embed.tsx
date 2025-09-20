@@ -621,7 +621,7 @@ export function UnifiedPurchaseInterfaceEmbed({
         )}
 
         {/* Purchase Summary */}
-        <Card className="p-4">
+        <Card className="p-4 bg-muted/30">
           <h3 className="font-medium mb-3">Purchase Summary</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -733,7 +733,7 @@ export function UnifiedPurchaseInterfaceEmbed({
         </Card>
 
         {/* Purchase Summary */}
-        <Card className="p-4">
+        <Card className="p-4 bg-muted/30">
           <h3 className="font-medium mb-3">Purchase Summary</h3>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -766,13 +766,19 @@ export function UnifiedPurchaseInterfaceEmbed({
 
         {/* Wallet Connection Status */}
         {isCorrectChain ? (
-          <Card className="p-4 bg-green-50 border-green-200">
+          <Card className="p-4 bg-muted/30">
             <div className="flex items-center gap-3">
               <CheckCircle className="w-5 h-5 text-green-500" />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   <ChainIcon chain={chain} size={20} />
-                  <WalletIcon wallet={adapter?.name.toLowerCase().replace(/\s+/g, '-') as any} size={20} />
+                  {adapter?.name && (
+                    <WalletIcon 
+                      wallet={adapter.name.toLowerCase().replace(/\s+/g, '-') as any} 
+                      size={20} 
+                      fallback={<div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center text-white text-xs">W</div>}
+                    />
+                  )}
                   <span className="font-medium">{adapter?.name} Connected</span>
                 </div>
                 <div className="text-sm text-muted-foreground">
@@ -782,7 +788,7 @@ export function UnifiedPurchaseInterfaceEmbed({
             </div>
           </Card>
         ) : (
-          <Card className="p-4 bg-amber-50 border-amber-200">
+          <Card className="p-4 bg-muted/30">
             <div className="flex items-center gap-2 text-amber-600">
               <AlertTriangle className="w-4 h-4" />
               <span className="text-sm">
@@ -893,9 +899,15 @@ export function UnifiedPurchaseInterfaceEmbed({
               if (blockchain.symbol === 'BTC') {
                 return (
                   <div key={blockchain.symbol} className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <ChainIcon chain={blockchain.symbol} size={20} />
-                      <span className="font-medium">{blockchain.name}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ChainIcon chain={blockchain.symbol} size={20} />
+                        <span className="font-medium">{blockchain.name}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <WalletIcon wallet="metamask" size={14} fallback={null} />
+                        <WalletIcon wallet="trust" size={14} fallback={null} />
+                      </div>
                     </div>
                     <Button
                       variant="outline"
@@ -912,9 +924,51 @@ export function UnifiedPurchaseInterfaceEmbed({
               // Regular dropdown for other chains with multiple tokens
               return (
                 <div key={blockchain.symbol} className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <ChainIcon chain={blockchain.symbol} size={20} />
-                    <span className="font-medium">{blockchain.name}</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ChainIcon chain={blockchain.symbol} size={20} />
+                      <span className="font-medium">{blockchain.name}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {blockchain.symbol === 'ETH' && (
+                        <>
+                          <WalletIcon wallet="metamask" size={14} fallback={null} />
+                          <WalletIcon wallet="coinbase" size={14} fallback={null} />
+                          <WalletIcon wallet="trust" size={14} fallback={null} />
+                        </>
+                      )}
+                      {blockchain.symbol === 'BNB' && (
+                        <>
+                          <WalletIcon wallet="metamask" size={14} fallback={null} />
+                          <WalletIcon wallet="binance" size={14} fallback={null} />
+                          <WalletIcon wallet="trust" size={14} fallback={null} />
+                        </>
+                      )}
+                      {blockchain.symbol === 'SOL' && (
+                        <>
+                          <WalletIcon wallet="phantom" size={14} fallback={null} />
+                          <WalletIcon wallet="backpack" size={14} fallback={null} />
+                          <WalletIcon wallet="solflare" size={14} fallback={null} />
+                        </>
+                      )}
+                      {blockchain.symbol === 'TRX' && (
+                        <>
+                          <WalletIcon wallet="tronlink" size={14} fallback={null} />
+                          <WalletIcon wallet="trust" size={14} fallback={null} />
+                        </>
+                      )}
+                      {blockchain.symbol === 'TON' && (
+                        <>
+                          <WalletIcon wallet="tonconnect" size={14} fallback={null} />
+                        </>
+                      )}
+                      {(blockchain.symbol === 'POL') && (
+                        <>
+                          <WalletIcon wallet="metamask" size={14} fallback={null} />
+                          <WalletIcon wallet="trust" size={14} fallback={null} />
+                        </>
+                      )}
+                    </div>
                   </div>
                   <Select onValueChange={(tokenSymbol) => handlePaymentMethodSelect(blockchain.symbol, tokenSymbol)}>
                     <SelectTrigger className="w-full">

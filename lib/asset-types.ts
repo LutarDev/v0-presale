@@ -47,12 +47,11 @@ export interface CoinIconData {
 // ============================================================================
 
 export type WalletIcon = 
-  // Available wallet icons
-  | 'metamask' | 'phantom' | 'walletconnect' | 'trust' | 'backpack' | 'argent'
-  // Fallback icons (using available ones)
-  | 'tronlink' | 'tonconnect' | 'trust-wallet' | 'coinbase-wallet' | 'rainbow' | 'imtoken'
-  | 'tokenpocket' | 'safepal' | 'math-wallet' | 'bitget-wallet' | 'okx-wallet'
-  | 'exodus' | 'atomic-wallet' | 'ledger' | 'trezor' | 'keystone'
+  // Available wallet icons (matching actual files in /public/images/icons/wallets/)
+  | 'argent' | 'backpack' | 'bestwallet' | 'binance' | 'bitget'
+  | 'coinbase' | 'ctrl' | 'holdstation' | 'metamask' | 'near'
+  | 'phantom' | 'slush' | 'solflare' | 'sui-wallet' | 'suiet'
+  | 'tokenpocket' | 'tonconnect' | 'tronlink' | 'trust' | 'walletconnect'
 
 export interface WalletData {
   id: string

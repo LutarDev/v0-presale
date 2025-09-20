@@ -44,15 +44,17 @@ export const WALLET_ICON_MAP: Record<string, WalletIcon> = {
   'phantom': 'phantom',
   'Phantom': 'phantom',
   
-  // TronLink (fallback to metamask)
-  'tronlink': 'metamask',
-  'TronLink': 'metamask',
-  'TRON_LINK': 'metamask',
+  // TronLink (available)
+  'tronlink': 'tronlink',
+  'TronLink': 'tronlink',
+  'TRON_LINK': 'tronlink',
   
-  // Tonkeeper (fallback to phantom)
-  'tonkeeper': 'phantom',
-  'Tonkeeper': 'phantom',
-  'TON_KEEPER': 'phantom',
+  // TON Connect (available)
+  'tonkeeper': 'tonconnect',
+  'Tonkeeper': 'tonconnect',
+  'TON_KEEPER': 'tonconnect',
+  'tonconnect': 'tonconnect',
+  'TonConnect': 'tonconnect',
   
   // WalletConnect (available)
   'walletconnect': 'walletconnect',
@@ -63,23 +65,15 @@ export const WALLET_ICON_MAP: Record<string, WalletIcon> = {
   'trustwallet': 'trust',
   'Trust Wallet': 'trust',
   'TRUST_WALLET': 'trust',
+  'trust': 'trust',
+  'Trust': 'trust',
   
-  // Unisat (fallback to metamask)
-  'unisat': 'metamask',
-  'Unisat': 'metamask',
-  
-  // Xverse (fallback to phantom)
-  'xverse': 'phantom',
-  'Xverse': 'phantom',
-  
-  // Coinbase Wallet (fallback to metamask)
-  'coinbase': 'metamask',
-  'Coinbase': 'metamask',
-  'COINBASE_WALLET': 'metamask',
-  
-  // Rainbow (fallback to walletconnect)
-  'rainbow': 'walletconnect',
-  'Rainbow': 'walletconnect',
+  // Coinbase Wallet (available)
+  'coinbase': 'coinbase',
+  'Coinbase': 'coinbase',
+  'COINBASE_WALLET': 'coinbase',
+  'coinbasewallet': 'coinbase',
+  'Coinbase Wallet': 'coinbase',
   
   // Backpack (available)
   'backpack': 'backpack',
@@ -88,6 +82,71 @@ export const WALLET_ICON_MAP: Record<string, WalletIcon> = {
   // Argent (available)
   'argent': 'argent',
   'Argent': 'argent',
+  
+  // Binance Web3 Wallet (available)
+  'binance': 'binance',
+  'Binance': 'binance',
+  'binancewallet': 'binance',
+  'Binance Wallet': 'binance',
+  
+  // Bitget Wallet (available)
+  'bitget': 'bitget',
+  'Bitget': 'bitget',
+  'bitgetwallet': 'bitget',
+  'Bitget Wallet': 'bitget',
+  
+  // TokenPocket (available)
+  'tokenpocket': 'tokenpocket',
+  'TokenPocket': 'tokenpocket',
+  'TOKEN_POCKET': 'tokenpocket',
+  
+  // Near Wallet (available)
+  'near': 'near',
+  'Near': 'near',
+  'nearwallet': 'near',
+  'Near Wallet': 'near',
+  
+  // Sui Wallet (available)
+  'sui': 'sui-wallet',
+  'Sui': 'sui-wallet',
+  'suiwallet': 'sui-wallet',
+  'Sui Wallet': 'sui-wallet',
+  
+  // Suiet Wallet (available)
+  'suiet': 'suiet',
+  'Suiet': 'suiet',
+  
+  // Solflare (available)
+  'solflare': 'solflare',
+  'Solflare': 'solflare',
+  
+  // Best Wallet (available)
+  'bestwallet': 'bestwallet',
+  'Best Wallet': 'bestwallet',
+  'BestWallet': 'bestwallet',
+  
+  // Ctrl Wallet (available)
+  'ctrl': 'ctrl',
+  'Ctrl': 'ctrl',
+  'ctrlwallet': 'ctrl',
+  'Ctrl Wallet': 'ctrl',
+  
+  // Holdstation (available)
+  'holdstation': 'holdstation',
+  'Holdstation': 'holdstation',
+  'HoldStation': 'holdstation',
+  
+  // Slush (available)
+  'slush': 'slush',
+  'Slush': 'slush',
+  
+  // Generic fallbacks for unknown wallets
+  'unisat': 'metamask',
+  'Unisat': 'metamask',
+  'xverse': 'phantom',
+  'Xverse': 'phantom',
+  'rainbow': 'walletconnect',
+  'Rainbow': 'walletconnect',
 }
 
 // ============================================================================
