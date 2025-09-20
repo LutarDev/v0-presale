@@ -438,7 +438,7 @@ export function UnifiedPurchaseInterfaceEmbed({
               placeholder="Enter USD amount"
               value={usdAmount}
               onChange={(e) => setUsdAmount(e.target.value)}
-              className="pr-36"
+              className="pr-36 focus-visible:ring-[#ffc700] focus-visible:border-[#ffc700]"
               disabled={loadingPrices}
               step="0.01"
               min="0"
@@ -479,7 +479,7 @@ export function UnifiedPurchaseInterfaceEmbed({
               type="text"
               value={loadingPrices ? "Loading..." : (lutarAmount || "0.00")}
               readOnly
-              className="pr-20"
+              className="pr-20 focus-visible:ring-[#ffc700] focus-visible:border-[#ffc700]"
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
               {loadingPrices ? (
@@ -529,7 +529,7 @@ export function UnifiedPurchaseInterfaceEmbed({
           }
         }}
         disabled={!selectedPaymentMethod || !usdAmount || Number(usdAmount) <= 0 || loadingPrices}
-        className="w-full"
+        className="w-full bg-[#ffc700] hover:bg-[#ffc700]/90 text-black"
         size="lg"
       >
         {loadingPrices ? (
@@ -660,7 +660,7 @@ export function UnifiedPurchaseInterfaceEmbed({
             }
           }}
           disabled={!bscAddressValidation?.isValid}
-          className="flex-1"
+          className="flex-1 bg-[#ffc700] hover:bg-[#ffc700]/90 text-black"
         >
           Continue
           <ArrowRight className="w-4 h-4 ml-2" />
@@ -757,7 +757,7 @@ export function UnifiedPurchaseInterfaceEmbed({
             <Separator />
             <div className="flex justify-between font-medium">
               <span>Bonus (5%):</span>
-              <span className="font-bold text-primary">
+              <span className="font-bold text-[#ffc700]">
                 {lutarAmount ? (Number(lutarAmount) * 1.05).toFixed(2) : "0"} LUTAR
               </span>
             </div>
@@ -776,7 +776,7 @@ export function UnifiedPurchaseInterfaceEmbed({
                     <WalletIcon 
                       wallet={adapter.name.toLowerCase().replace(/\s+/g, '-') as any} 
                       size={20} 
-                      fallback={<div className="w-5 h-5 bg-primary rounded-full flex items-center justify-center text-white text-xs">W</div>}
+                      fallback={<div className="w-5 h-5 bg-[#ffc700] rounded-full flex items-center justify-center text-white text-xs">W</div>}
                     />
                   )}
                   <span className="font-medium">{adapter?.name} Connected</span>
@@ -789,7 +789,7 @@ export function UnifiedPurchaseInterfaceEmbed({
           </Card>
         ) : (
           <Card className="p-4 bg-muted/30">
-            <div className="flex items-center gap-2 text-amber-600">
+            <div className="flex items-center gap-2 text-[#ffc700]">
               <AlertTriangle className="w-4 h-4" />
               <span className="text-sm">
                 {!isConnected ? 
@@ -809,7 +809,7 @@ export function UnifiedPurchaseInterfaceEmbed({
           {!isCorrectChain ? (
             <Button 
               onClick={handleWalletModalOpen}
-              className="flex-1"
+              className="flex-1 bg-[#ffc700] hover:bg-[#ffc700]/90 text-black"
               disabled={isWalletModalOpen}
             >
               <Wallet className="w-4 h-4 mr-2" />
@@ -819,7 +819,7 @@ export function UnifiedPurchaseInterfaceEmbed({
             <Button 
               onClick={handleBuyLutar}
               disabled={isTransactionPending}
-              className="flex-1"
+              className="flex-1 bg-[#ffc700] hover:bg-[#ffc700]/90 text-black"
               size="lg"
             >
               {isTransactionPending ? (
@@ -858,7 +858,7 @@ export function UnifiedPurchaseInterfaceEmbed({
               <div className={cn(
                 "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
                 currentStep >= step 
-                  ? "bg-primary text-primary-foreground" 
+                  ? "bg-[#ffc700] text-black" 
                   : "bg-muted text-muted-foreground"
               )}>
                 {step}
@@ -866,7 +866,7 @@ export function UnifiedPurchaseInterfaceEmbed({
               {step < 3 && (
                 <div className={cn(
                   "w-8 h-0.5 mx-1",
-                  currentStep > step ? "bg-primary" : "bg-muted"
+                  currentStep > step ? "bg-[#ffc700]" : "bg-muted"
                 )} />
               )}
             </div>
