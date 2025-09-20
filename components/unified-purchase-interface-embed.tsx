@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChainIcon, WalletIcon, FallbackIcon } from "@/components/ui/icon"
 import { Copy, CheckCircle, ArrowLeft, ArrowRight, Wallet, QrCode, TrendingUp, AlertTriangle, Loader2, X } from "lucide-react"
 import { useWallet } from "@/hooks/wallet-context"
@@ -445,7 +446,7 @@ export function UnifiedPurchaseInterfaceEmbed({
               type="text"
               value={loadingPrices ? "Loading..." : (lutarAmount || "0.00")}
               readOnly
-              className="pr-20 bg-green-50 border-green-200"
+              className="pr-20"
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
               {loadingPrices ? (
@@ -835,27 +836,55 @@ export function UnifiedPurchaseInterfaceEmbed({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            {blockchains.map((blockchain) => (
-              <div key={blockchain.symbol} className="space-y-2">
-                <h3 className="font-medium flex items-center gap-2">
-                  <ChainIcon chain={blockchain.symbol} size={20} />
-                  {blockchain.name}
-                </h3>
-                <div className="grid gap-2">
-                  {(paymentTokens[blockchain.symbol as keyof typeof paymentTokens] || []).map((token) => (
+            {blockchains.map((blockchain) => {
+              const chainTokens = paymentTokens[blockchain.symbol as keyof typeof paymentTokens] || []
+              if (chainTokens.length === 0) return null
+              
+              // Special case for Bitcoin - no dropdown, just a single button
+              if (blockchain.symbol === 'BTC') {
+                return (
+                  <div key={blockchain.symbol} className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <ChainIcon chain={blockchain.symbol} size={20} />
+                      <span className="font-medium">{blockchain.name}</span>
+                    </div>
                     <Button
-                      key={`${blockchain.symbol}-${token.symbol}`}
                       variant="outline"
-                      className="justify-start"
-                      onClick={() => handlePaymentMethodSelect(blockchain.symbol, token.symbol)}
+                      className="w-full justify-start"
+                      onClick={() => handlePaymentMethodSelect(blockchain.symbol, 'BTC')}
                     >
-                      <ChainIcon chain={token.symbol} size={16} className="mr-2" />
-                      {token.name} ({token.symbol})
+                      <ChainIcon chain="BTC" size={16} className="mr-2" />
+                      Bitcoin (BTC)
                     </Button>
-                  ))}
+                  </div>
+                )
+              }
+              
+              // Regular dropdown for other chains with multiple tokens
+              return (
+                <div key={blockchain.symbol} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <ChainIcon chain={blockchain.symbol} size={20} />
+                    <span className="font-medium">{blockchain.name}</span>
+                  </div>
+                  <Select onValueChange={(tokenSymbol) => handlePaymentMethodSelect(blockchain.symbol, tokenSymbol)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder={`Select ${blockchain.symbol} token`} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {chainTokens.map((token) => (
+                        <SelectItem key={`${blockchain.symbol}-${token.symbol}`} value={token.symbol}>
+                          <div className="flex items-center gap-2">
+                            <ChainIcon chain={token.symbol} size={16} />
+                            <span>{token.name} ({token.symbol})</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </DialogContent>
       </Dialog>
