@@ -297,28 +297,73 @@ export class TronLinkAdapter implements WalletAdapter {
 
     try {
       const tronWeb = this.tronWeb
-      if (!tronWeb || !tronWeb.ready) {
-        throw new Error("TronLink is not ready")
+      
+      // Wait for TronLink to be ready
+      if (!tronWeb.ready) {
+        console.log("[TronLink Adapter] Waiting for TronLink to be ready...")
+        
+        // Use the new recommended method
+        try {
+          await tronWeb.request({ method: 'tron_requestAccounts' })
+        } catch (error) {
+          console.warn("[TronLink Adapter] New method failed, trying legacy method")
+          // Fallback to legacy method if needed
+          if (tronWeb.request) {
+            await tronWeb.request({ method: 'tron_requestAccounts' })
+          }
+        }
+
+        // Wait a bit for TronLink to initialize
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        if (!tronWeb.ready) {
+          throw new Error("TronLink failed to initialize. Please refresh the page and try again.")
+        }
+      }
+
+      // Check if we have access to the address
+      if (!tronWeb.defaultAddress || !tronWeb.defaultAddress.base58) {
+        console.log("[TronLink Adapter] No default address, requesting account access...")
+        
+        try {
+          await tronWeb.request({ method: 'tron_requestAccounts' })
+        } catch (error) {
+          throw new Error("Please unlock TronLink and grant access to this website")
+        }
+        
+        // Wait for address to be available
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        if (!tronWeb.defaultAddress || !tronWeb.defaultAddress.base58) {
+          throw new Error("No TronLink account found. Please create or import an account.")
+        }
       }
 
       const address = tronWeb.defaultAddress.base58
-      const balance = await tronWeb.trx.getBalance(address)
-      const balanceInTrx = balance / 1000000 // Convert from sun to TRX
+      
+      // Get balance
+      let balance = "0.0000"
+      try {
+        const balanceResult = await tronWeb.trx.getBalance(address)
+        balance = (balanceResult / 1000000).toFixed(4) // Convert from sun to TRX
+      } catch (error) {
+        console.warn("[TronLink Adapter] Failed to get balance:", error)
+        // Continue without balance, it's not critical for connection
+      }
 
-      console.log("[TronLink Adapter] Connected balance:", {
+      console.log("[TronLink Adapter] Successfully connected:", {
         address,
-        rawBalance: balance,
-        balanceInTrx: balanceInTrx.toFixed(4),
+        balance,
         timestamp: new Date().toISOString()
       })
 
       return {
         address,
-        balance: balanceInTrx.toFixed(4),
+        balance,
       }
     } catch (error) {
       console.error("[TronLink Adapter] Connection error:", error)
-      throw new Error("Failed to connect to TronLink wallet")
+      throw new Error(`Failed to connect to TronLink wallet: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 
@@ -330,7 +375,8 @@ export class TronLinkAdapter implements WalletAdapter {
     if (!this.isInstalled()) return "0.0000"
     try {
       const tronWeb = this.tronWeb
-      if (!tronWeb) return "0.0000"
+      if (!tronWeb || !tronWeb.ready) return "0.0000"
+      
       const balance = await tronWeb.trx.getBalance(address)
       const balanceInTrx = (balance / 1000000).toFixed(4)
       

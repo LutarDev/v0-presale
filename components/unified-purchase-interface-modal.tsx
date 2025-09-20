@@ -729,7 +729,8 @@ export function UnifiedPurchaseInterfaceModal({
           onClose={() => {
             setIsWalletModalOpen(false)
             setWalletModalExplicitlyOpened(false)
-          }} 
+          }}
+          targetChain={selectedPaymentMethod?.chain} // Pass the selected chain
         />
       )}
     </>

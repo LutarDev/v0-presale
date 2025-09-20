@@ -16,13 +16,14 @@ import { getAllBlockchainConfigs } from "@/lib/blockchain-config"
 interface UnifiedWalletModalProps {
   isOpen: boolean
   onClose: () => void
+  targetChain?: string // Add optional target chain prop
 }
 
 type ModalStep = "chain-selection" | "wallet-selection" | "wallet-info"
 
 const blockchains = getAllBlockchainConfigs()
 
-export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps) {
+export function UnifiedWalletModal({ isOpen, onClose, targetChain }: UnifiedWalletModalProps) {
   const { chain, isConnected, address, balance, isConnecting, error, connect, disconnect } = useWallet()
   const [currentStep, setCurrentStep] = useState<ModalStep>("chain-selection")
   const [selectedChain, setSelectedChain] = useState<string>(chain)
@@ -30,20 +31,31 @@ export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps)
   const [walletBalances, setWalletBalances] = useState<WalletBalances | null>(null)
   const [loadingBalances, setLoadingBalances] = useState(false)
 
-  // Determine which step to show based on connection status
+  // Determine which step to show based on connection status and target chain
   useEffect(() => {
     if (isConnected) {
       setCurrentStep("wallet-info")
       loadWalletBalances()
+    } else if (targetChain) {
+      // If target chain is provided, skip chain selection and go directly to wallet selection
+      setSelectedChain(targetChain)
+      setCurrentStep("wallet-selection")
     } else {
       setCurrentStep("chain-selection")
     }
-  }, [isConnected])
+  }, [isConnected, targetChain])
 
-  // Reset selected chain when modal opens
+  // Reset state when modal opens
   useEffect(() => {
     if (isOpen) {
-      setSelectedChain(chain)
+      if (targetChain) {
+        setSelectedChain(targetChain)
+        setCurrentStep("wallet-selection")
+      } else {
+        setSelectedChain(chain)
+        setCurrentStep(isConnected ? "wallet-info" : "chain-selection")
+      }
+      
       // Clear any previous errors when modal opens
       if (error) {
         // Error state will be cleared by the useWallet hook when connection succeeds
@@ -51,11 +63,13 @@ export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps)
       if (isConnected) {
         setCurrentStep("wallet-info")
         loadWalletBalances()
+      } else if (targetChain) {
+        setCurrentStep("wallet-selection")
       } else {
         setCurrentStep("chain-selection")
       }
     }
-  }, [isOpen, chain, isConnected, error])
+  }, [isOpen, chain, isConnected, error, targetChain])
 
   const loadWalletBalances = async () => {
     if (!address || !chain) return
@@ -94,7 +108,11 @@ export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps)
 
   const handleDisconnect = async () => {
     await disconnect()
-    setCurrentStep("chain-selection")
+    if (targetChain) {
+      setCurrentStep("wallet-selection")
+    } else {
+      setCurrentStep("chain-selection")
+    }
     setWalletBalances(null)
   }
 
@@ -146,11 +164,10 @@ export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps)
           </div>
         )}
 
-        {/* Chain Selection Step */}
-        {currentStep === "chain-selection" && (
+        {/* Chain Selection Step - Only show if no target chain specified */}
+        {currentStep === "chain-selection" && !targetChain && (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">Choose a blockchain network to connect your wallet.</p>
-
             <div className="grid grid-cols-2 gap-3">
               {blockchains.map((blockchain) => (
                 <Card
@@ -187,9 +204,11 @@ export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps)
         {currentStep === "wallet-selection" && (
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCurrentStep("chain-selection")}>
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
+              {!targetChain && (
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCurrentStep("chain-selection")}>
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+              )}
               <div className="flex items-center gap-2">
                 <ChainIcon 
                   chain={selectedChain} 
@@ -300,66 +319,41 @@ export function UnifiedWalletModal({ isOpen, onClose }: UnifiedWalletModalProps)
             {/* Balances Section */}
             {loadingBalances ? (
               <SkeletonBalanceCard />
-            ) : (
+            ) : walletBalances ? (
               <Card className="p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Balances</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={loadWalletBalances}
-                    >
-                      <RefreshCw className="w-3 h-3" />
-                    </Button>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-medium">Balances</h3>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={loadWalletBalances}>
+                    <RefreshCw className="w-3 h-3" />
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>{walletBalances.native.symbol}</span>
+                    <span className="font-medium">{walletBalances.native.balance}</span>
                   </div>
-
-                  {walletBalances && (
-                    <div className="space-y-2">
-                      {/* Native Balance */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">{walletBalances.native.symbol}</span>
-                        <span className="text-sm font-medium">{walletBalances.native.balance}</span>
-                      </div>
-
-                      {/* LUTAR Balance */}
-                      {walletBalances.lutar && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">LUTAR</span>
-                          <span className="text-sm font-medium">{walletBalances.lutar.balance}</span>
-                        </div>
-                      )}
-
-                      {/* USDC Balance */}
-                      {walletBalances.usdc && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">USDC</span>
-                          <span className="text-sm font-medium">{walletBalances.usdc.balance}</span>
-                        </div>
-                      )}
-
-                      {/* USDT Balance */}
-                      {walletBalances.usdt && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">USDT</span>
-                          <span className="text-sm font-medium">{walletBalances.usdt.balance}</span>
-                        </div>
-                      )}
+                  {walletBalances.tokens?.map((token, index) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span>{token.symbol}</span>
+                      <span className="font-medium">{token.balance}</span>
                     </div>
-                  )}
+                  ))}
                 </div>
               </Card>
+            ) : null}
+
+            {copied && (
+              <div className="text-xs text-green-500 text-center">
+                Address copied to clipboard!
+              </div>
             )}
 
-            {copied && <div className="text-xs text-green-500 text-center">Address copied to clipboard!</div>}
-
             <div className="flex gap-2">
-              <Button className="flex-1" onClick={onClose}>
-                Continue
-              </Button>
-              <Button variant="outline" onClick={handleDisconnect}>
+              <Button variant="outline" onClick={handleDisconnect} className="flex-1">
                 Disconnect
+              </Button>
+              <Button onClick={onClose} className="flex-1">
+                Done
               </Button>
             </div>
           </div>
