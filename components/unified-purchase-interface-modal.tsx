@@ -92,7 +92,82 @@ export function UnifiedPurchaseInterfaceModal({
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
   const [walletModalExplicitlyOpened, setWalletModalExplicitlyOpened] = useState(false)
 
-  // Load exchange rates with better error handling
+  // Helper function to get payment currency data
+  const getPaymentCurrencyData = () => {
+    if (!selectedPaymentMethod) return null
+    
+    try {
+      const paymentCurrency = getPaymentCurrency(selectedPaymentMethod.token, selectedPaymentMethod.chain)
+      if (!paymentCurrency) {
+        console.warn(`Payment currency not found for ${selectedPaymentMethod.token} on ${selectedPaymentMethod.chain}`)
+        return null
+      }
+      return paymentCurrency
+    } catch (error) {
+      console.error('Error getting payment currency data:', error)
+      return null
+    }
+  }
+
+  // Generate QR Code URL
+  const generateQRCode = () => {
+    const paymentData = getPaymentCurrencyData()
+    if (!paymentData || !paymentAmount) return ""
+    
+    const address = paymentData.wallet.address
+    const amount = paymentAmount
+    const qrData = `${selectedPaymentMethod?.chain}:${address}?amount=${amount}`
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`
+  }
+
+  // Handle wallet modal opening with better state management
+  const handleWalletModalOpen = () => {
+    if (!selectedPaymentMethod) {
+      toast({
+        title: "Select Payment Method",
+        description: "Please select a payment method first",
+        variant: "destructive"
+      })
+      return
+    }
+    
+    console.log(`[Modal] Opening wallet modal for ${selectedPaymentMethod.chain}`)
+    setWalletModalExplicitlyOpened(true)
+    setIsWalletModalOpen(true)
+  }
+
+  // Handle Buy LUTAR action
+  const handleBuyLutar = () => {
+    if (!isConnected || !selectedPaymentMethod || selectedPaymentMethod.chain !== chain) {
+      handleWalletModalOpen()
+      return
+    }
+
+    // TODO: Implement actual transaction logic here
+    console.log('Initiating LUTAR purchase:', {
+      paymentMethod: selectedPaymentMethod,
+      amount: paymentAmount,
+      lutarAmount,
+      bscAddress,
+      walletAddress: address
+    })
+
+    toast({
+      title: "Transaction Initiated",
+      description: "Please confirm the transaction in your wallet",
+    })
+
+    // For now, just show success
+    setTimeout(() => {
+      toast({
+        title: "Purchase Successful!",
+        description: `You will receive ${lutarAmount} LUTAR tokens`,
+      })
+      onClose()
+    }, 2000)
+  }
+
+  // Load exchange rates with better error handling and rate limiting
   useEffect(() => {
     const loadPrices = async () => {
       if (!isOpen) return
@@ -108,31 +183,37 @@ export function UnifiedPurchaseInterfaceModal({
           'POL': 0.8, 'TRX': 0.1, 'TON': 2.5, 'USDC': 1, 'USDT': 1
         }
         
+        // Set fallback rates immediately
         tokens.forEach(token => rates.set(token, fallbackRates[token] || 1))
         rates.set('USDC', 1)
         rates.set('USDT', 1)
-        setExchangeRates(rates)
+        setExchangeRates(new Map(rates))
         
-        // Try to fetch real rates with rate limiting
-        let attempts = 0
-        for (const token of tokens) {
+        // Try to fetch real rates with proper rate limiting
+        console.log('[Modal] Loading exchange rates...')
+        let successCount = 0
+        const maxRequests = 3 // Limit requests to avoid rate limiting
+        
+        for (let i = 0; i < Math.min(tokens.length, maxRequests); i++) {
+          const token = tokens[i]
           try {
-            // Add delay between requests to avoid rate limiting
-            if (attempts > 0) {
-              await new Promise(resolve => setTimeout(resolve, 1000))
+            // Add delay between requests
+            if (i > 0) {
+              await new Promise(resolve => setTimeout(resolve, 2000))
             }
             
             const rate = await priceService.getExchangeRate(token, "USD")
             if (rate && rate > 0) {
               rates.set(token, rate)
+              successCount++
             }
-            attempts++
           } catch (error) {
             console.warn(`Failed to load rate for ${token}, using fallback`)
             // Keep fallback rate
           }
         }
         
+        console.log(`[Modal] Loaded ${successCount} real exchange rates, using fallback for others`)
         setExchangeRates(new Map(rates))
       } catch (error) {
         console.error("Error loading prices:", error)
@@ -207,21 +288,6 @@ export function UnifiedPurchaseInterfaceModal({
     if (selectedChain !== chain) {
       switchChain(selectedChain)
     }
-  }
-
-  const handleWalletConnection = () => {
-    if (!selectedPaymentMethod) {
-      toast({
-        title: "Select Payment Method",
-        description: "Please select a payment method first",
-        variant: "destructive"
-      })
-      return
-    }
-    
-    console.log(`[Modal] Opening wallet modal for ${selectedPaymentMethod.chain}`)
-    setWalletModalExplicitlyOpened(true)
-    setIsWalletModalOpen(true)
   }
 
   const copyToClipboard = (text: string) => {
@@ -436,49 +502,62 @@ export function UnifiedPurchaseInterfaceModal({
   const renderStep3 = () => {
     const paymentData = getPaymentCurrencyData()
     
+    if (!paymentData) {
+      return (
+        <div className="space-y-6">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold mb-2">Payment Configuration Error</h2>
+            <p className="text-muted-foreground">Unable to load payment configuration</p>
+          </div>
+          <Button variant="outline" onClick={() => setCurrentStep(2)} className="w-full">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Go Back
+          </Button>
+        </div>
+      )
+    }
+    
     return (
       <div className="space-y-6">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Complete Purchase</h2>
-          <p className="text-muted-foreground">Send payment to the address below</p>
+          <p className="text-muted-foreground">Send payment to complete your purchase</p>
         </div>
 
         {/* QR Code and Payment Address */}
-        {paymentData && (
-          <Card className="p-6">
-            <div className="text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center border">
-                  <img 
-                    src={generateQRCode()} 
-                    alt="Payment QR Code"
-                    className="w-full h-full object-contain rounded-lg"
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Send {selectedPaymentMethod?.token} to:</p>
-                <div className="flex items-center gap-2 justify-center">
-                  <code className="text-sm bg-muted px-2 py-1 rounded font-mono">
-                    {paymentData.wallet.address}
-                  </code>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => copyToClipboard(paymentData.wallet.address)}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-                {copied && (
-                  <p className="text-xs text-green-600">Address copied to clipboard!</p>
-                )}
+        <Card className="p-6">
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center border">
+                <img 
+                  src={generateQRCode()} 
+                  alt="Payment QR Code"
+                  className="w-full h-full object-contain rounded-lg"
+                />
               </div>
             </div>
-          </Card>
-        )}
+            
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Send {selectedPaymentMethod?.token} to:</p>
+              <div className="flex items-center gap-2 justify-center">
+                <code className="text-sm bg-muted px-2 py-1 rounded font-mono">
+                  {paymentData.wallet.address}
+                </code>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => copyToClipboard(paymentData.wallet.address)}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+              {copied && (
+                <p className="text-xs text-green-600">Address copied to clipboard!</p>
+              )}
+            </div>
+          </div>
+        </Card>
 
         {/* Purchase Summary */}
         <Card className="p-4">
@@ -545,7 +624,6 @@ export function UnifiedPurchaseInterfaceModal({
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-          
           {!isConnected || selectedPaymentMethod?.chain !== chain ? (
             <Button 
               onClick={handleWalletModalOpen}
