@@ -1,19 +1,18 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ChainIcon, WalletIcon, FallbackIcon } from "@/components/ui/icon"
-import { Copy, CheckCircle, ArrowLeft, Wallet, QrCode, TrendingUp, AlertTriangle } from "lucide-react"
+import { Copy, CheckCircle, ArrowLeft, Wallet, QrCode, TrendingUp, AlertTriangle, Loader2 } from "lucide-react"
 import { useWallet } from "@/hooks/use-wallet"
 import { useToast } from "@/hooks/use-toast"
 import { TransactionModal } from "@/components/transaction-modal"
 import { UnifiedWalletModal } from "@/components/unified-wallet-modal"
-import { PaymentMethodSelector } from "@/components/payment-method-selector"
 import { priceService } from "@/lib/price-service"
 import { getPaymentCurrency } from "@/lib/payment-config"
 import { getAllBlockchainConfigs } from "@/lib/blockchain-config"
@@ -73,7 +72,7 @@ export function UnifiedPurchaseInterfaceModal({
   onClose, 
   onComplete 
 }: UnifiedPurchaseInterfaceModalProps) {
-  const { chain, isConnected, address, balance, adapter } = useWallet()
+  const { chain, isConnected, address, balance, adapter, switchChain } = useWallet()
   const { toast } = useToast()
   
   // Modal state
@@ -91,50 +90,91 @@ export function UnifiedPurchaseInterfaceModal({
   const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] = useState(false)
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
   const [isTransactionModalOpen, setIsTransactionModalOpen] = useState(false)
+  const [walletModalExplicitlyOpened, setWalletModalExplicitlyOpened] = useState(false)
 
-  // Load exchange rates
+  // Load exchange rates with better error handling
   useEffect(() => {
     const loadPrices = async () => {
+      if (!isOpen) return
+      
       try {
         setLoadingPrices(true)
         const tokens = ["BTC", "ETH", "BNB", "SOL", "POL", "TRX", "TON"]
         const rates = new Map<string, number>()
         
+        // Set immediate fallback rates
+        const fallbackRates: Record<string, number> = {
+          'BTC': 43000, 'ETH': 2500, 'BNB': 300, 'SOL': 100, 
+          'POL': 0.8, 'TRX': 0.1, 'TON': 2.5, 'USDC': 1, 'USDT': 1
+        }
+        
+        tokens.forEach(token => rates.set(token, fallbackRates[token] || 1))
+        rates.set('USDC', 1)
+        rates.set('USDT', 1)
+        setExchangeRates(rates)
+        
+        // Try to fetch real rates with rate limiting
+        let attempts = 0
         for (const token of tokens) {
           try {
-            const rate = await priceService.getExchangeRate(token, "USD")
-            rates.set(token, rate)
-          } catch (error) {
-            console.warn(`Failed to load rate for ${token}:`, error)
-            const mockRates: Record<string, number> = {
-              'BTC': 43000, 'ETH': 2500, 'BNB': 300, 'SOL': 100, 'POL': 0.8, 'TRX': 0.1, 'TON': 2.5
+            // Add delay between requests to avoid rate limiting
+            if (attempts > 0) {
+              await new Promise(resolve => setTimeout(resolve, 1000))
             }
-            rates.set(token, mockRates[token] || 1)
+            
+            const rate = await priceService.getExchangeRate(token, "USD")
+            if (rate && rate > 0) {
+              rates.set(token, rate)
+            }
+            attempts++
+          } catch (error) {
+            console.warn(`Failed to load rate for ${token}, using fallback`)
+            // Keep fallback rate
           }
         }
-        setExchangeRates(rates)
+        
+        setExchangeRates(new Map(rates))
       } catch (error) {
         console.error("Error loading prices:", error)
+        // Ensure we always have fallback rates
+        const fallbackMap = new Map<string, number>()
+        const fallbackRates = {
+          'BTC': 43000, 'ETH': 2500, 'BNB': 300, 'SOL': 100,
+          'POL': 0.8, 'TRX': 0.1, 'TON': 2.5, 'USDC': 1, 'USDT': 1
+        }
+        Object.entries(fallbackRates).forEach(([token, rate]) => {
+          fallbackMap.set(token, rate)
+        })
+        setExchangeRates(fallbackMap)
       } finally {
         setLoadingPrices(false)
       }
     }
 
-    if (isOpen) {
-      loadPrices()
-    }
+    loadPrices()
   }, [isOpen])
 
-  // Calculate LUTAR amount when payment amount changes
+  // Calculate LUTAR amount
   useEffect(() => {
-    if (paymentAmount && selectedPaymentMethod && !loadingPrices) {
+    if (paymentAmount && selectedPaymentMethod && !loadingPrices && exchangeRates.size > 0) {
+      const amount = parseFloat(paymentAmount)
+      if (isNaN(amount) || amount <= 0) {
+        setLutarAmount("")
+        return
+      }
+
       let usdValue: number
       
       if (selectedPaymentMethod.token === "USDC" || selectedPaymentMethod.token === "USDT") {
-        usdValue = Number(paymentAmount)
+        usdValue = amount
       } else {
-        const exchangeRate = exchangeRates.get(selectedPaymentMethod.token) || 1
-        usdValue = Number(paymentAmount) * exchangeRate
+        const exchangeRate = exchangeRates.get(selectedPaymentMethod.token)
+        if (!exchangeRate || exchangeRate <= 0) {
+          console.warn(`No valid exchange rate for ${selectedPaymentMethod.token}`)
+          setLutarAmount("")
+          return
+        }
+        usdValue = amount * exchangeRate
       }
       
       const tokens = (usdValue / lutarPrice).toFixed(2)
@@ -153,44 +193,35 @@ export function UnifiedPurchaseInterfaceModal({
       setLutarAmount("")
       setBscAddress("")
       setCopied(false)
+      setWalletModalExplicitlyOpened(false)
+      setIsWalletModalOpen(false)
     }
   }, [isOpen])
 
-  const handlePaymentMethodSelect = (chain: string, token: string) => {
-    setSelectedPaymentMethod({ chain, token })
+  const handlePaymentMethodSelect = (selectedChain: string, token: string) => {
+    console.log(`[Modal] Payment method selected: ${token} on ${selectedChain}`)
+    setSelectedPaymentMethod({ chain: selectedChain, token })
     setIsPaymentMethodModalOpen(false)
-  }
-
-  const handleContinueFromStep1 = () => {
-    if (selectedPaymentMethod && paymentAmount && Number(paymentAmount) > 0) {
-      setCurrentStep(2)
-    } else {
-      toast({
-        title: "Incomplete Information",
-        description: "Please select payment method and enter amount",
-        variant: "destructive"
-      })
+    
+    // Update the wallet chain without auto-connecting
+    if (selectedChain !== chain) {
+      switchChain(selectedChain)
     }
   }
 
-  const handleContinueFromStep2 = () => {
-    if (bscAddress && bscAddress.startsWith("0x") && bscAddress.length === 42) {
-      setCurrentStep(3)
-    } else {
+  const handleWalletConnection = () => {
+    if (!selectedPaymentMethod) {
       toast({
-        title: "Invalid BSC Address",
-        description: "Please enter a valid BSC wallet address",
+        title: "Select Payment Method",
+        description: "Please select a payment method first",
         variant: "destructive"
       })
-    }
-  }
-
-  const handleBuyLutar = () => {
-    if (!isConnected) {
-      setIsWalletModalOpen(true)
       return
     }
-    setIsTransactionModalOpen(true)
+    
+    console.log(`[Modal] Opening wallet modal for ${selectedPaymentMethod.chain}`)
+    setWalletModalExplicitlyOpened(true)
+    setIsWalletModalOpen(true)
   }
 
   const copyToClipboard = (text: string) => {
@@ -203,41 +234,6 @@ export function UnifiedPurchaseInterfaceModal({
     })
   }
 
-  const getPaymentCurrencyData = () => {
-    if (!selectedPaymentMethod) return null
-    return getPaymentCurrency(selectedPaymentMethod.token, selectedPaymentMethod.chain)
-  }
-
-  const getMinimumPurchase = () => {
-    if (!selectedPaymentMethod) return "0"
-    return selectedPaymentMethod.token === "USDC" || selectedPaymentMethod.token === "USDT" ? "10" : "0.001"
-  }
-
-  const generateQRCode = () => {
-    const paymentData = getPaymentCurrencyData()
-    if (!paymentData) return ""
-    
-    // Generate QR code data based on payment method
-    const qrData = {
-      address: paymentData.wallet.address,
-      amount: paymentAmount,
-      token: selectedPaymentMethod?.token,
-      chain: selectedPaymentMethod?.chain
-    }
-    
-    return `data:image/svg+xml;base64,${btoa(`
-      <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
-        <rect width="200" height="200" fill="white"/>
-        <text x="100" y="100" text-anchor="middle" font-family="monospace" font-size="12" fill="black">
-          QR Code
-        </text>
-        <text x="100" y="120" text-anchor="middle" font-family="monospace" font-size="8" fill="gray">
-          ${paymentData.wallet.address.slice(0, 16)}...
-        </text>
-      </svg>
-    `)}`
-  }
-
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center">
@@ -245,24 +241,26 @@ export function UnifiedPurchaseInterfaceModal({
         <p className="text-muted-foreground">Select your payment method and amount</p>
       </div>
 
-      {/* Payment Amount Input */}
       <div className="space-y-4">
         <div>
           <label className="text-sm font-medium mb-2 block">Pay with</label>
           <div className="relative">
             <Input
               type="number"
-              placeholder={`Minimum ${getMinimumPurchase()}`}
+              placeholder="Enter amount"
               value={paymentAmount}
               onChange={(e) => setPaymentAmount(e.target.value)}
-              className="pr-20"
+              className="pr-24"
+              disabled={loadingPrices}
+              step="0.000001"
+              min="0"
             />
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
               {selectedPaymentMethod && (
                 <div className="flex items-center gap-1">
                   <ChainIcon 
                     chain={selectedPaymentMethod.chain} 
-                    size={20}
+                    size={16}
                     fallback={<span className="text-xs">💎</span>}
                   />
                   <span className="text-sm font-medium">{selectedPaymentMethod.token}</span>
@@ -272,7 +270,8 @@ export function UnifiedPurchaseInterfaceModal({
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsPaymentMethodModalOpen(true)}
-                className="h-8 px-2"
+                className="h-8 px-2 text-xs"
+                disabled={loadingPrices}
               >
                 {selectedPaymentMethod ? "Change" : "Select"}
               </Button>
@@ -280,33 +279,38 @@ export function UnifiedPurchaseInterfaceModal({
           </div>
         </div>
 
-        {/* You Receive */}
         <div>
           <label className="text-sm font-medium mb-2 block text-green-600">You Receive</label>
           <div className="relative">
             <Input
               type="text"
-              value={lutarAmount || "0.00"}
+              value={loadingPrices ? "Loading..." : (lutarAmount || "0.00")}
               readOnly
-              className="pr-16 bg-green-50 border-green-200"
+              className="pr-20 bg-green-50 border-green-200"
             />
             <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-              <img src="/lutar.svg" alt="LUTAR" className="w-5 h-5" />
-              <span className="text-sm font-medium text-green-600">LUTAR</span>
+              {loadingPrices ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <div className="w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center text-xs font-bold text-white">L</div>
+                  <span className="text-sm font-medium text-green-600">LUTAR</span>
+                </>
+              )}
             </div>
           </div>
         </div>
 
-        {selectedPaymentMethod && (
+        {selectedPaymentMethod && !loadingPrices && (
           <div className="bg-muted/50 rounded-lg p-3">
             <div className="flex justify-between text-sm">
-              <span>Token Price:</span>
+              <span>LUTAR Price:</span>
               <span className="font-medium">${lutarPrice.toFixed(3)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Exchange Rate:</span>
               <span className="font-medium">
-                1 {selectedPaymentMethod.token} = ${exchangeRates.get(selectedPaymentMethod.token)?.toFixed(2) || "0.00"}
+                1 {selectedPaymentMethod.token} = ${exchangeRates.get(selectedPaymentMethod.token)?.toLocaleString() || "0.00"}
               </span>
             </div>
           </div>
@@ -314,12 +318,29 @@ export function UnifiedPurchaseInterfaceModal({
       </div>
 
       <Button 
-        onClick={handleContinueFromStep1}
-        disabled={!selectedPaymentMethod || !paymentAmount || Number(paymentAmount) <= 0}
+        onClick={() => {
+          if (selectedPaymentMethod && paymentAmount && Number(paymentAmount) > 0) {
+            setCurrentStep(2)
+          } else {
+            toast({
+              title: "Incomplete Information",
+              description: "Please select payment method and enter amount",
+              variant: "destructive"
+            })
+          }
+        }}
+        disabled={!selectedPaymentMethod || !paymentAmount || Number(paymentAmount) <= 0 || loadingPrices}
         className="w-full"
         size="lg"
       >
-        Continue
+        {loadingPrices ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            Loading Prices...
+          </>
+        ) : (
+          "Continue"
+        )}
       </Button>
     </div>
   )
@@ -392,7 +413,17 @@ export function UnifiedPurchaseInterfaceModal({
           Back
         </Button>
         <Button 
-          onClick={handleContinueFromStep2}
+          onClick={() => {
+            if (bscAddress && bscAddress.startsWith("0x") && bscAddress.length === 42) {
+              setCurrentStep(3)
+            } else {
+              toast({
+                title: "Invalid BSC Address",
+                description: "Please enter a valid BSC wallet address",
+                variant: "destructive"
+              })
+            }
+          }}
           disabled={!bscAddress || !bscAddress.startsWith("0x") || bscAddress.length !== 42}
           className="flex-1"
         >
@@ -517,7 +548,7 @@ export function UnifiedPurchaseInterfaceModal({
           
           {!isConnected || selectedPaymentMethod?.chain !== chain ? (
             <Button 
-              onClick={() => setIsWalletModalOpen(true)}
+              onClick={handleWalletModalOpen}
               className="flex-1"
             >
               <Wallet className="w-4 h-4 mr-2" />
@@ -544,27 +575,30 @@ export function UnifiedPurchaseInterfaceModal({
           <DialogHeader>
             <DialogTitle className="text-center">
               Purchase LUTAR Tokens
-              <div className="flex justify-center mt-2">
-                {[1, 2, 3].map((step) => (
-                  <div key={step} className="flex items-center">
-                    <div className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
-                      currentStep >= step 
-                        ? "bg-primary text-primary-foreground" 
-                        : "bg-muted text-muted-foreground"
-                    )}>
-                      {step}
-                    </div>
-                    {step < 3 && (
-                      <div className={cn(
-                        "w-8 h-0.5 mx-1",
-                        currentStep > step ? "bg-primary" : "bg-muted"
-                      )} />
-                    )}
-                  </div>
-                ))}
-              </div>
             </DialogTitle>
+            <DialogDescription className="text-center">
+              Secure token purchase with multi-step verification
+            </DialogDescription>
+            <div className="flex justify-center mt-2">
+              {[1, 2, 3].map((step) => (
+                <div key={step} className="flex items-center">
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                    currentStep >= step 
+                      ? "bg-primary text-primary-foreground" 
+                      : "bg-muted text-muted-foreground"
+                  )}>
+                    {step}
+                  </div>
+                  {step < 3 && (
+                    <div className={cn(
+                      "w-8 h-0.5 mx-1",
+                      currentStep > step ? "bg-primary" : "bg-muted"
+                    )} />
+                  )}
+                </div>
+              ))}
+            </div>
           </DialogHeader>
 
           <div className="py-4">
@@ -580,9 +614,11 @@ export function UnifiedPurchaseInterfaceModal({
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Select Payment Method</DialogTitle>
+            <DialogDescription>
+              Choose your preferred blockchain and token
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">Choose your preferred blockchain and token</p>
             {blockchains.map((blockchain) => (
               <div key={blockchain.symbol} className="space-y-2">
                 <h3 className="font-medium flex items-center gap-2">
@@ -608,23 +644,14 @@ export function UnifiedPurchaseInterfaceModal({
         </DialogContent>
       </Dialog>
 
-      {/* Wallet Modal */}
-      <UnifiedWalletModal 
-        isOpen={isWalletModalOpen} 
-        onClose={() => setIsWalletModalOpen(false)} 
-      />
-
-      {/* Transaction Modal */}
-      {selectedPaymentMethod && (
-        <TransactionModal
-          isOpen={isTransactionModalOpen}
-          onClose={() => setIsTransactionModalOpen(false)}
-          selectedChain={selectedPaymentMethod.chain}
-          selectedToken={selectedPaymentMethod.token}
-          paymentAmount={paymentAmount}
-          lutarAmount={lutarAmount}
-          walletAddress={address || ""}
-          bscAddress={bscAddress}
+      {/* Only render wallet modal when explicitly opened */}
+      {walletModalExplicitlyOpened && (
+        <UnifiedWalletModal 
+          isOpen={isWalletModalOpen} 
+          onClose={() => {
+            setIsWalletModalOpen(false)
+            setWalletModalExplicitlyOpened(false)
+          }} 
         />
       )}
     </>

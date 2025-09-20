@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { type WalletAdapter, getWalletAdapters } from "@/lib/wallet-adapters"
-import { realtimeService } from "@/lib/realtime-service"
+import { getWalletAdapters, type WalletAdapter } from "@/lib/wallet-adapters"
 
 interface WalletState {
   isConnected: boolean
@@ -26,117 +25,71 @@ export function useWallet() {
     address: null,
     balance: null,
     adapter: null,
-    chain: "", // Default to TRX since user is using TronLink
+    chain: "BTC", // Default to BTC to prevent auto MetaMask connection
     isConnecting: false,
     error: null,
     lastConnected: null,
   })
 
+  // Flag to prevent auto-connection on initial load
+  const [hasUserInteracted, setHasUserInteracted] = useState(false)
+
   const connect = useCallback(async (adapter: WalletAdapter, chain: string) => {
+    console.log(`[useWallet] Manual connection initiated for ${adapter.name} to chain: ${chain}`)
     setWalletState((prev) => ({ ...prev, isConnecting: true, error: null }))
 
+    // Add connection timeout
+    const connectTimeout = setTimeout(() => {
+      setWalletState((prev) => ({ 
+        ...prev, 
+        isConnecting: false, 
+        error: "Connection timeout. Please try again." 
+      }))
+    }, 15000)
+
     try {
-      if (!adapter.isInstalled()) {
-        const error: ConnectionError = new Error(`${adapter.name} wallet is not installed. Please install it first.`)
-        error.type = 'WALLET_NOT_FOUND'
-        throw error
-      }
-
-      // Auto-detect chain based on wallet adapter if not explicitly provided
-      let detectedChain = chain
-      if (!chain || chain === "ETH") {
-        switch (adapter.name) {
-          case "TronLink":
-            detectedChain = "TRX"
-            break
-          case "Phantom":
-          case "Solflare":
-            detectedChain = "SOL"
-            break
-          case "Tonkeeper":
-            detectedChain = "TON"
-            break
-          case "Unisat":
-          case "Xverse":
-            detectedChain = "BTC"
-            break
-          case "MetaMask":
-            // Keep current chain for MetaMask or default to ETH
-            detectedChain = chain || "ETH"
-            break
-          default:
-            detectedChain = chain || "ETH"
-        }
-      }
-
-      console.log(`[useWallet] Connecting ${adapter.name} to chain: ${detectedChain}`)
-
-      // For EVM chains, switch to correct network
-      if (["ETH", "BNB", "POL"].includes(detectedChain) && adapter.name === "MetaMask") {
-        const chainIds = {
-          ETH: "0x1",
-          BNB: "0x38",
-          POL: "0x89",
-        }
-        try {
-          await (adapter as any).switchToNetwork(chainIds[detectedChain as keyof typeof chainIds])
-        } catch (networkError) {
-          console.warn(`[useWallet] Network switch failed for ${detectedChain}:`, networkError)
-          // Continue with connection attempt
-        }
-      }
-
-      const { address, balance } = await adapter.connect()
-
-      setWalletState({
-        isConnected: true,
-        address,
-        balance,
-        adapter,
-        chain: detectedChain, // Use the detected chain
-        isConnecting: false,
-        error: null,
-        lastConnected: Date.now(),
-      })
-
-      // Subscribe to real-time balance updates
-      if (address && detectedChain) {
-        realtimeService.subscribeToBalanceUpdates(address, detectedChain, (balanceUpdate) => {
-          setWalletState(prev => ({
-            ...prev,
-            balance: balanceUpdate.balances.native || prev.balance,
-          }))
-        })
-      }
-
-      // Store connection in localStorage with timestamp
-      localStorage.setItem(
-        "wallet_connection",
-        JSON.stringify({
-          adapterName: adapter.name,
-          chain: detectedChain, // Store the detected chain
-          address,
-          timestamp: Date.now(),
-        }),
-      )
-    } catch (error: any) {
-      const connectionError = error as ConnectionError
+      const result = await adapter.connect(chain)
+      clearTimeout(connectTimeout)
       
-      // Determine error type for better user feedback
+      if (result.success) {
+        const { address, balance, detectedChain } = result
+        
+        setWalletState({
+          isConnected: true,
+          address,
+          balance,
+          adapter,
+          chain: detectedChain || chain,
+          isConnecting: false,
+          error: null,
+          lastConnected: Date.now(),
+        })
+
+        // Store connection info for potential reconnection
+        localStorage.setItem('wallet_connection', JSON.stringify({
+          adapterName: adapter.name,
+          chain: detectedChain || chain,
+          lastConnected: Date.now(),
+        }))
+      } else {
+        throw new Error(result.error || "Connection failed")
+      }
+    } catch (error: any) {
+      clearTimeout(connectTimeout)
+      console.error(`[useWallet] Connection failed:`, error)
+      
       let errorMessage = "Failed to connect wallet"
       let errorType: ConnectionError['type'] = 'UNKNOWN'
 
-      if (connectionError.type === 'USER_REJECTED') {
-        errorMessage = "Connection was rejected by user"
+      if (error.message?.includes('rejected') || error.code === 4001) {
+        errorMessage = "Connection request was rejected"
         errorType = 'USER_REJECTED'
-      } else if (connectionError.type === 'WALLET_NOT_FOUND') {
-        errorMessage = connectionError.message
+      } else if (error.message?.includes('not found') || error.code === -32002) {
+        errorMessage = "Wallet extension not found or locked"
         errorType = 'WALLET_NOT_FOUND'
-      } else if (connectionError.code === 'NETWORK_ERROR' || connectionError.message?.includes('network')) {
-        errorMessage = "Network error occurred. Please check your connection."
+      } else if (error.message?.includes('network')) {
+        errorMessage = "Network connection error"
         errorType = 'NETWORK_ERROR'
-      } else {
-        errorMessage = connectionError.message || errorMessage
       }
 
       setWalletState((prev) => ({
@@ -161,133 +114,117 @@ export function useWallet() {
       address: null,
       balance: null,
       adapter: null,
-      chain: walletState.chain,
+      chain: "BTC", // Reset to BTC to prevent auto-connection
       isConnecting: false,
       error: null,
       lastConnected: null,
     })
 
-    localStorage.removeItem("wallet_connection")
-  }, [walletState.adapter, walletState.chain])
+    // Clear stored connection info
+    localStorage.removeItem('wallet_connection')
+    setHasUserInteracted(false)
+  }, [walletState.adapter])
 
   const switchChain = useCallback(
     async (newChain: string) => {
-      const currentAdapter = walletState.adapter
-      const wasConnected = walletState.isConnected
-
-      // First disconnect current wallet if connected
-      if (currentAdapter && wasConnected) {
-        try {
-          await currentAdapter.disconnect()
-        } catch (error) {
-          console.error("Error disconnecting wallet during chain switch:", error)
-        }
+      console.log(`[useWallet] Manual chain switch to: ${newChain}`)
+      setHasUserInteracted(true)
+      
+      if (!walletState.adapter || !walletState.isConnected) {
+        // Just update the chain without connecting
+        setWalletState((prev) => ({ ...prev, chain: newChain }))
+        return
       }
 
-      // Update chain state
-      setWalletState((prev) => ({
-        ...prev,
-        chain: newChain,
-        isConnected: false,
-        address: null,
-        balance: null,
-        adapter: null,
-        error: null,
-        lastConnected: null,
-      }))
-
-      // If wallet was connected, try to reconnect with compatible wallet for new chain
-      if (wasConnected && currentAdapter) {
-        const newAdapters = getWalletAdapters(newChain)
-
-        // Try to find a compatible wallet for the new chain
-        let compatibleAdapter = null
-
-        // For EVM chains, try to use MetaMask if available
-        if (["ETH", "BNB", "POL"].includes(newChain) && currentAdapter.name === "MetaMask") {
-          compatibleAdapter = newAdapters.find((a) => a.name === "MetaMask")
+      try {
+        setWalletState((prev) => ({ ...prev, isConnecting: true, error: null }))
+        const result = await walletState.adapter.connect(newChain)
+        
+        if (result.success) {
+          setWalletState((prev) => ({
+            ...prev,
+            chain: result.detectedChain || newChain,
+            address: result.address,
+            balance: result.balance,
+            isConnecting: false,
+          }))
+        } else {
+          throw new Error(result.error || "Chain switch failed")
         }
-        // For Solana, try to use the same wallet if it was Phantom or Solflare
-        else if (newChain === "SOL" && ["Phantom", "Solflare"].includes(currentAdapter.name)) {
-          compatibleAdapter = newAdapters.find((a) => a.name === currentAdapter.name)
-        }
-        // For other chains, try to find the first available wallet
-        else {
-          compatibleAdapter = newAdapters.find((a) => a.isInstalled())
-        }
-
-        // Auto-reconnect if compatible wallet found
-        if (compatibleAdapter && compatibleAdapter.isInstalled()) {
-          setTimeout(() => {
-            connect(compatibleAdapter, newChain)
-          }, 500) // Small delay to ensure state is updated
-        }
-      }
-
-      // Update localStorage with new chain preference
-      const savedConnection = localStorage.getItem("wallet_connection")
-      if (savedConnection) {
-        try {
-          const connectionData = JSON.parse(savedConnection)
-          localStorage.setItem(
-            "wallet_connection",
-            JSON.stringify({
-              ...connectionData,
-              chain: newChain,
-            }),
-          )
-        } catch (error) {
-          console.error("Error updating saved connection:", error)
-        }
+      } catch (error: any) {
+        console.error(`[useWallet] Chain switch failed:`, error)
+        setWalletState((prev) => ({
+          ...prev,
+          isConnecting: false,
+          error: "Failed to switch chain",
+        }))
       }
     },
-    [walletState.adapter, walletState.isConnected, connect],
+    [walletState.adapter, walletState.isConnected],
   )
 
   const refreshBalance = useCallback(async () => {
-    if (walletState.adapter && walletState.address) {
-      try {
-        console.log("[useWallet] Refreshing balance for:", walletState.address)
-        const balance = await walletState.adapter.getBalance(walletState.address)
-        console.log("[useWallet] New balance:", balance)
-        setWalletState((prev) => ({ ...prev, balance }))
-      } catch (error) {
-        console.error("[useWallet] Error refreshing balance:", error)
+    if (!walletState.adapter || !walletState.address) return
+
+    try {
+      const result = await walletState.adapter.getBalance(walletState.address)
+      if (result.success) {
+        setWalletState((prev) => ({ ...prev, balance: result.balance }))
       }
+    } catch (error) {
+      console.error("Failed to refresh balance:", error)
     }
   }, [walletState.adapter, walletState.address])
 
-  // Auto-reconnect on page load
+  // Only attempt auto-reconnect if user has previously interacted
   useEffect(() => {
-    const savedConnection = localStorage.getItem("wallet_connection")
-    if (savedConnection) {
-      try {
-        const { adapterName, chain } = JSON.parse(savedConnection)
-        const adapters = getWalletAdapters(chain)
-        const adapter = adapters.find((a) => a.name === adapterName)
+    const attemptReconnection = async () => {
+      const stored = localStorage.getItem('wallet_connection')
+      if (!stored || hasUserInteracted) return
 
-        if (adapter && adapter.isInstalled()) {
-          connect(adapter, chain)
+      try {
+        const connectionInfo = JSON.parse(stored)
+        const timeSinceLastConnection = Date.now() - connectionInfo.lastConnected
+        
+        // Only auto-reconnect if it was within the last hour and user hasn't interacted
+        if (timeSinceLastConnection < 60 * 60 * 1000) {
+          console.log('[useWallet] Attempting auto-reconnection...')
+          const adapters = getWalletAdapters(connectionInfo.chain)
+          const adapter = adapters.find(a => a.name === connectionInfo.adapterName)
+          
+          if (adapter && adapter.isAvailable()) {
+            // Set user interaction flag to prevent loops
+            setHasUserInteracted(true)
+            await connect(adapter, connectionInfo.chain)
+          }
         } else {
-          localStorage.removeItem("wallet_connection")
+          // Clear old connection info
+          localStorage.removeItem('wallet_connection')
         }
       } catch (error) {
-        localStorage.removeItem("wallet_connection")
+        console.error('[useWallet] Auto-reconnection failed:', error)
+        localStorage.removeItem('wallet_connection')
       }
     }
-  }, [connect])
+
+    // Delay auto-reconnection to prevent immediate execution
+    const timer = setTimeout(attemptReconnection, 2000)
+    return () => clearTimeout(timer)
+  }, [connect, hasUserInteracted])
 
   return {
     ...walletState,
-    connect,
+    connect: useCallback((adapter: WalletAdapter, chain: string) => {
+      setHasUserInteracted(true)
+      return connect(adapter, chain)
+    }, [connect]),
     disconnect,
     switchChain,
     refreshBalance,
     availableWallets: getWalletAdapters(walletState.chain),
     isWalletCompatible: (targetChain: string) => {
-      if (!walletState.adapter) return false
-      const targetAdapters = getWalletAdapters(targetChain)
-      return targetAdapters.some((adapter) => adapter.name === walletState.adapter?.name)
+      const adapters = getWalletAdapters(targetChain)
+      return adapters.some(adapter => adapter.isAvailable())
     },
   }
 }
