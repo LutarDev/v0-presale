@@ -3,9 +3,16 @@ export interface WalletAdapter {
   icon: string
   description: string
   isInstalled: () => boolean
-  connect: () => Promise<{ address: string; balance: string }>
+  isAvailable?: () => boolean
+  connect: (chain?: string) => Promise<{ 
+    success: boolean
+    address?: string
+    balance?: string
+    detectedChain?: string
+    error?: string
+  }>
   disconnect: () => Promise<void>
-  getBalance: (address: string) => Promise<string>
+  getBalance: (address: string) => Promise<{ success: boolean; balance?: string; error?: string }>
   signTransaction?: (transaction: any) => Promise<string>
 }
 
@@ -109,15 +116,35 @@ export class MetaMaskAdapter implements WalletAdapter {
     return typeof window !== "undefined" && "ethereum" in window && (window as any).ethereum.isMetaMask
   }
 
-  async connect(): Promise<{ address: string; balance: string }> {
+  isAvailable(): boolean {
+    return this.isInstalled()
+  }
+
+  async connect(chain?: string): Promise<{ 
+    success: boolean
+    address?: string
+    balance?: string
+    detectedChain?: string
+    error?: string
+  }> {
     if (!this.isInstalled()) {
-      throw new Error("MetaMask is not installed")
+      return {
+        success: false,
+        error: "MetaMask is not installed"
+      }
     }
 
     try {
       const accounts = await (window as any).ethereum.request({
         method: "eth_requestAccounts",
       })
+
+      if (!accounts || accounts.length === 0) {
+        return {
+          success: false,
+          error: "No accounts found in MetaMask"
+        }
+      }
 
       const balance = await (window as any).ethereum.request({
         method: "eth_getBalance",
@@ -126,12 +153,33 @@ export class MetaMaskAdapter implements WalletAdapter {
 
       const balanceInEth = Number.parseInt(balance, 16) / Math.pow(10, 18)
 
+      // Handle chain switching if needed
+      if (chain && chain !== "ETH") {
+        const chainIds: Record<string, string> = {
+          "BNB": "0x38",
+          "POL": "0x89"
+        }
+        
+        if (chainIds[chain]) {
+          try {
+            await this.switchToNetwork(chainIds[chain])
+          } catch (error) {
+            console.warn("Failed to switch network:", error)
+          }
+        }
+      }
+
       return {
+        success: true,
         address: accounts[0],
         balance: balanceInEth.toFixed(4),
+        detectedChain: chain || "ETH"
       }
     } catch (error) {
-      throw new Error("Failed to connect to MetaMask")
+      return {
+        success: false,
+        error: `Failed to connect to MetaMask: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }
     }
   }
 
@@ -139,17 +187,20 @@ export class MetaMaskAdapter implements WalletAdapter {
     // MetaMask doesn't have a programmatic disconnect
   }
 
-  async getBalance(address: string): Promise<string> {
-    if (!this.isInstalled()) return "0.0000"
+  async getBalance(address: string): Promise<{ success: boolean; balance?: string; error?: string }> {
+    if (!this.isInstalled()) {
+      return { success: false, error: "MetaMask not installed" }
+    }
+    
     try {
       const balance = await (window as any).ethereum.request({
         method: "eth_getBalance",
         params: [address, "latest"],
       })
       const balanceInEth = Number.parseInt(balance, 16) / Math.pow(10, 18)
-      return balanceInEth.toFixed(4)
-    } catch {
-      return "0.0000"
+      return { success: true, balance: balanceInEth.toFixed(4) }
+    } catch (error) {
+      return { success: false, error: "Failed to get balance" }
     }
   }
 
@@ -290,9 +341,22 @@ export class TronLinkAdapter implements WalletAdapter {
     return typeof window !== "undefined" && "tronWeb" in window
   }
 
-  async connect(): Promise<{ address: string; balance: string }> {
+  isAvailable(): boolean {
+    return this.isInstalled()
+  }
+
+  async connect(chain?: string): Promise<{ 
+    success: boolean
+    address?: string
+    balance?: string
+    detectedChain?: string
+    error?: string
+  }> {
     if (!this.isInstalled()) {
-      throw new Error("TronLink wallet is not installed")
+      return {
+        success: false,
+        error: "TronLink wallet is not installed"
+      }
     }
 
     try {
@@ -317,7 +381,10 @@ export class TronLinkAdapter implements WalletAdapter {
         await new Promise(resolve => setTimeout(resolve, 1000))
         
         if (!tronWeb.ready) {
-          throw new Error("TronLink failed to initialize. Please refresh the page and try again.")
+          return {
+            success: false,
+            error: "TronLink failed to initialize. Please refresh the page and try again."
+          }
         }
       }
 
@@ -328,14 +395,20 @@ export class TronLinkAdapter implements WalletAdapter {
         try {
           await tronWeb.request({ method: 'tron_requestAccounts' })
         } catch (error) {
-          throw new Error("Please unlock TronLink and grant access to this website")
+          return {
+            success: false,
+            error: "Please unlock TronLink and grant access to this website"
+          }
         }
         
         // Wait for address to be available
         await new Promise(resolve => setTimeout(resolve, 500))
         
         if (!tronWeb.defaultAddress || !tronWeb.defaultAddress.base58) {
-          throw new Error("No TronLink account found. Please create or import an account.")
+          return {
+            success: false,
+            error: "No TronLink account found. Please create or import an account."
+          }
         }
       }
 
@@ -358,12 +431,17 @@ export class TronLinkAdapter implements WalletAdapter {
       })
 
       return {
+        success: true,
         address,
         balance,
+        detectedChain: "TRX"
       }
     } catch (error) {
       console.error("[TronLink Adapter] Connection error:", error)
-      throw new Error(`Failed to connect to TronLink wallet: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      return {
+        success: false,
+        error: `Failed to connect to TronLink wallet: ${error instanceof Error ? error.message : 'Unknown error'}`
+      }
     }
   }
 
@@ -371,11 +449,16 @@ export class TronLinkAdapter implements WalletAdapter {
     // TronLink doesn't have a disconnect method
   }
 
-  async getBalance(address: string): Promise<string> {
-    if (!this.isInstalled()) return "0.0000"
+  async getBalance(address: string): Promise<{ success: boolean; balance?: string; error?: string }> {
+    if (!this.isInstalled()) {
+      return { success: false, error: "TronLink not installed" }
+    }
+    
     try {
       const tronWeb = this.tronWeb
-      if (!tronWeb || !tronWeb.ready) return "0.0000"
+      if (!tronWeb || !tronWeb.ready) {
+        return { success: false, error: "TronLink not ready" }
+      }
       
       const balance = await tronWeb.trx.getBalance(address)
       const balanceInTrx = (balance / 1000000).toFixed(4)
@@ -387,10 +470,10 @@ export class TronLinkAdapter implements WalletAdapter {
         timestamp: new Date().toISOString()
       })
       
-      return balanceInTrx
+      return { success: true, balance: balanceInTrx }
     } catch (error) {
       console.error("[TronLink Adapter] getBalance error:", error)
-      return "0.0000"
+      return { success: false, error: "Failed to get balance" }
     }
   }
 }

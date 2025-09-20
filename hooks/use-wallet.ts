@@ -168,8 +168,8 @@ export function useWallet() {
 
     try {
       const result = await walletState.adapter.getBalance(walletState.address)
-      if (result.success) {
-        setWalletState((prev) => ({ ...prev, balance: result.balance }))
+      if (result.success && result.balance) {
+        setWalletState((prev) => ({ ...prev, balance: result.balance! }))
       }
     } catch (error) {
       console.error("Failed to refresh balance:", error)
