@@ -37,24 +37,37 @@ export function getTronLinkState(): TronLinkState {
   }
 }
 
-export function waitForTronLinkReady(timeout: number = 10000): Promise<boolean> {
+export function waitForTronLinkReady(timeout: number = 15000): Promise<boolean> {
   return new Promise((resolve) => {
     const startTime = Date.now()
+    let attempts = 0
+    const maxAttempts = Math.floor(timeout / 500) // Check every 500ms instead of 100ms
     
     const checkReady = () => {
+      attempts++
       const state = getTronLinkState()
       
+      console.log(`[TronLink Helper] Check attempt ${attempts}/${maxAttempts}:`, {
+        isReady: state.isReady,
+        hasAccount: state.hasAccount,
+        address: state.address,
+        elapsed: Date.now() - startTime
+      })
+      
       if (state.isReady && state.hasAccount) {
+        console.log('[TronLink Helper] TronLink is ready!')
         resolve(true)
         return
       }
       
-      if (Date.now() - startTime > timeout) {
+      if (attempts >= maxAttempts || Date.now() - startTime > timeout) {
+        console.warn('[TronLink Helper] Timeout waiting for TronLink to be ready')
         resolve(false)
         return
       }
       
-      setTimeout(checkReady, 100)
+      // Use longer intervals to avoid overwhelming TronLink
+      setTimeout(checkReady, 500)
     }
     
     checkReady()
@@ -69,10 +82,20 @@ export async function requestTronLinkAccess(): Promise<{ success: boolean; error
       return { success: false, error: "TronLink not found" }
     }
 
-    await tronWeb.request({ method: 'tron_requestAccounts' })
+    console.log('[TronLink Helper] Requesting account access...')
     
-    // Wait for the request to complete
-    const isReady = await waitForTronLinkReady(5000)
+    // Use a timeout for the request itself
+    const requestPromise = tronWeb.request({ method: 'tron_requestAccounts' })
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout')), 10000)
+    })
+    
+    await Promise.race([requestPromise, timeoutPromise])
+    
+    console.log('[TronLink Helper] Account request completed, waiting for initialization...')
+    
+    // Wait for the request to complete with longer timeout
+    const isReady = await waitForTronLinkReady(15000)
     
     if (!isReady) {
       return { success: false, error: "TronLink failed to initialize after account request" }
@@ -84,6 +107,10 @@ export async function requestTronLinkAccess(): Promise<{ success: boolean; error
     
     if (error.code === 4001) {
       return { success: false, error: "User rejected the connection request" }
+    }
+    
+    if (error.message?.includes('timeout')) {
+      return { success: false, error: "Request timed out. Please try again." }
     }
     
     return { 
