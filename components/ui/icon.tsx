@@ -133,7 +133,7 @@ interface CurrencyIconProps extends BaseIconProps {
   currency: {
     symbol: string
     chain: string
-    icon: string
+    icon?: string
     type: 'native' | 'token'
   }
 }

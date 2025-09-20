@@ -13,6 +13,7 @@ export interface PaymentCurrency {
   contractAddress?: string
   decimals: number
   wallet: PaymentWallet
+  icon?: string
 }
 
 export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
@@ -97,6 +98,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     wallet: {
       address: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
     },
+    icon: "usdc",
   },
   "USDC-BEP20": {
     symbol: "USDC",
@@ -108,6 +110,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     wallet: {
       address: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
     },
+    icon: "usdc",
   },
   "USDC-POL": {
     symbol: "USDC",
@@ -119,6 +122,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     wallet: {
       address: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
     },
+    icon: "usdc",
   },
   "USDC-SOL": {
     symbol: "USDC",
@@ -130,6 +134,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     wallet: {
       address: "2qyJAaBoeNBnXb2zmnYBzLAGRKGhmHqgb2ZejqMpuoue",
     },
+    icon: "usdc",
   },
   "USDT-TRC20": {
     symbol: "USDT",
@@ -141,6 +146,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     wallet: {
       address: "TPmj9q2R53ytGGu8gL7CFLwCqGxprEUe9r",
     },
+    icon: "usdt",
   },
   "USDT-TON": {
     symbol: "USDT",
@@ -153,6 +159,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
       address: "UQAKRgdm0BN7Bgfojsj-bJMrwvFUw0sY5BPGeGgF8mtckTQI",
       comment: "",
     },
+    icon: "usdt",
   },
   "USDT-POL": {
     symbol: "USDT",
@@ -164,6 +171,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     wallet: {
       address: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
     },
+    icon: "usdt",
   },
   "USDT-ERC20": {
     symbol: "USDT",
@@ -175,6 +183,7 @@ export const PAYMENT_WALLETS: Record<string, PaymentCurrency> = {
     wallet: {
       address: "0x6e8E31e66826424B318aBcD97DcabAF0C0d52736",
     },
+    icon: "usdt",
   },
 }
 

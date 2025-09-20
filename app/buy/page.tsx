@@ -5,7 +5,7 @@ import { Footer } from "@/components/footer"
 export default function BuyPage() {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      {/* <Header /> */}
       <main className="py-8">
         <PurchaseInterface />
       </main>

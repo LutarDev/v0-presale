@@ -26,7 +26,7 @@ export function PurchaseSummary({
   onPurchase,
 }: PurchaseSummaryProps) {
   const estimatedGasFee = "0.002" // Mock gas fee
-  const bonusPercentage = 15 // 15% bonus for early participants
+  const bonusPercentage = 5 // 5% bonus for early participants
   const bonusTokens = lutarAmount ? ((Number(lutarAmount) * bonusPercentage) / 100).toFixed(2) : "0"
   const totalTokens = lutarAmount ? (Number(lutarAmount) + Number(bonusTokens)).toFixed(2) : "0"
 
@@ -58,7 +58,7 @@ export function PurchaseSummary({
           </div>
 
           <div className="flex justify-between">
-            <span className="text-sm text-muted-foreground">Early Bird Bonus (15%)</span>
+            <span className="text-sm text-muted-foreground">Early Bird Bonus (5%)</span>
             <span className="font-medium text-green-500">+{bonusTokens} LUTAR</span>
           </div>
 
@@ -85,7 +85,7 @@ export function PurchaseSummary({
             <span className="text-sm font-medium">Price Increase Alert</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            Token price increases to $0.055 in the next phase. Secure your tokens now!
+            Token price increases to $0.007 in the next phase. Secure your tokens now!
           </p>
 
           <div className="flex items-center gap-2 text-amber-500">
@@ -105,7 +105,7 @@ export function PurchaseSummary({
           <div className="text-xs text-amber-600">
             <p className="font-medium mb-1">Important Notice</p>
             <p>
-              Tokens will be distributed to your BSC wallet address after the presale ends. Vesting schedule applies.
+              Tokens will be distributed to your BSC wallet address after payment confirmation. Transfers will be enabled after the presale ends.
             </p>
           </div>
         </div>
