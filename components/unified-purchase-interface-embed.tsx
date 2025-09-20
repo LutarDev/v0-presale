@@ -14,6 +14,7 @@ import { Copy, CheckCircle, ArrowLeft, ArrowRight, Wallet, QrCode, TrendingUp, A
 import { useWallet } from "@/hooks/wallet-context"
 import { useToast } from "@/hooks/use-toast"
 import { UnifiedWalletModal } from "@/components/unified-wallet-modal"
+import { CountdownTimer } from "@/components/presale-widget/shared/CountdownTimer"
 import { priceService } from "@/lib/price-service"
 import { getPaymentCurrency } from "@/lib/payment-config"
 import { getAllBlockchainConfigs } from "@/lib/blockchain-config"
@@ -97,6 +98,9 @@ export function UnifiedPurchaseInterfaceEmbed({
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false)
   const [walletModalExplicitlyOpened, setWalletModalExplicitlyOpened] = useState(false)
   const [isTransactionPending, setIsTransactionPending] = useState(false)
+  
+  // Countdown timer state
+  const [timeLeft, setTimeLeft] = useState(30 * 24 * 60 * 60 * 1000) // 30 days in milliseconds
 
   // Debug wallet state and auto-close wallet modal on successful connection
   useEffect(() => {
@@ -120,6 +124,21 @@ export function UnifiedPurchaseInterfaceEmbed({
       }, 100)
     }
   }, [isConnected, chain, address, adapter, selectedPaymentMethod?.chain, isWalletModalOpen, walletModalExplicitlyOpened])
+
+  // Countdown timer effect
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prevTime => {
+        if (prevTime <= 1000) {
+          clearInterval(timer)
+          return 0
+        }
+        return prevTime - 1000
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [])
 
   // Helper function to get payment currency data
   const getPaymentCurrencyData = () => {
@@ -429,10 +448,10 @@ export function UnifiedPurchaseInterfaceEmbed({
                 <div className="flex items-center gap-1">
                   <ChainIcon 
                     chain={selectedPaymentMethod.chain} 
-                    size={16}
+                    size={18}
                     fallback={<span className="text-xs">💎</span>}
                   />
-                  <span className="text-sm font-medium">{selectedPaymentMethod.token}</span>
+                  {/* <span className="text-sm font-medium">{selectedPaymentMethod.token}</span> */}
                 </div>
               )}
               <Button
@@ -442,7 +461,7 @@ export function UnifiedPurchaseInterfaceEmbed({
                 className="h-8 px-2 text-xs"
                 disabled={loadingPrices}
               >
-                {selectedPaymentMethod ? "Change" : "Select"}
+                {selectedPaymentMethod ? `${selectedPaymentMethod.token}` : "Select Crypto"}
               </Button>
             </div>
           </div>
@@ -816,34 +835,44 @@ export function UnifiedPurchaseInterfaceEmbed({
   }
 
   return (
-    <div className={cn("space-y-6", className)}>
-      {/* Step Indicator */}
-      <div className="flex justify-center">
-        {[1, 2, 3].map((step) => (
-          <div key={step} className="flex items-center">
-            <div className={cn(
-              "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
-              currentStep >= step 
-                ? "bg-primary text-primary-foreground" 
-                : "bg-muted text-muted-foreground"
-            )}>
-              {step}
-            </div>
-            {step < 3 && (
-              <div className={cn(
-                "w-8 h-0.5 mx-1",
-                currentStep > step ? "bg-primary" : "bg-muted"
-              )} />
-            )}
-          </div>
-        ))}
-      </div>
+    <div className={cn("w-full max-w-md mx-auto", className)}>
+      <div className="space-y-5 p-5 border rounded-lg bg-card">
+        {/* Countdown Timer */}
+        <div className="w-full">
+          <CountdownTimer 
+            timeLeft={timeLeft}
+            className="w-full"
+          />
+        </div>
 
-      {/* Step Content */}
-      <div className="max-w-2xl mx-auto">
-        {currentStep === 1 && renderStep1()}
-        {currentStep === 2 && renderStep2()}
-        {currentStep === 3 && renderStep3()}
+        {/* Step Indicator */}
+        <div className="flex justify-center">
+          {[1, 2, 3].map((step) => (
+            <div key={step} className="flex items-center">
+              <div className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium",
+                currentStep >= step 
+                  ? "bg-primary text-primary-foreground" 
+                  : "bg-muted text-muted-foreground"
+              )}>
+                {step}
+              </div>
+              {step < 3 && (
+                <div className={cn(
+                  "w-8 h-0.5 mx-1",
+                  currentStep > step ? "bg-primary" : "bg-muted"
+                )} />
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Step Content */}
+        <div className="w-full">
+          {currentStep === 1 && renderStep1()}
+          {currentStep === 2 && renderStep2()}
+          {currentStep === 3 && renderStep3()}
+        </div>
       </div>
 
       {/* Payment Method Selection Modal */}
