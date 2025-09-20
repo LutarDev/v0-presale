@@ -1,3 +1,5 @@
+import { getTronLinkState, waitForTronLinkReady, requestTronLinkAccess } from './tronlink-helper'
+
 export interface WalletAdapter {
   name: string
   icon: string
@@ -338,7 +340,7 @@ export class TronLinkAdapter implements WalletAdapter {
   }
 
   isInstalled(): boolean {
-    return typeof window !== "undefined" && "tronWeb" in window
+    return getTronLinkState().isInstalled
   }
 
   isAvailable(): boolean {
@@ -352,7 +354,9 @@ export class TronLinkAdapter implements WalletAdapter {
     detectedChain?: string
     error?: string
   }> {
-    if (!this.isInstalled()) {
+    const state = getTronLinkState()
+    
+    if (!state.isInstalled) {
       return {
         success: false,
         error: "TronLink wallet is not installed"
@@ -360,68 +364,41 @@ export class TronLinkAdapter implements WalletAdapter {
     }
 
     try {
-      const tronWeb = this.tronWeb
+      // If not ready or no account, request access
+      if (!state.isReady || !state.hasAccount) {
+        console.log("[TronLink Adapter] Requesting access...")
+        const accessResult = await requestTronLinkAccess()
+        
+        if (!accessResult.success) {
+          return {
+            success: false,
+            error: accessResult.error || "Failed to get TronLink access"
+          }
+        }
+      }
+
+      // Get the current state after potential access request
+      const currentState = getTronLinkState()
       
-      // Wait for TronLink to be ready
-      if (!tronWeb.ready) {
-        console.log("[TronLink Adapter] Waiting for TronLink to be ready...")
-        
-        // Use the new recommended method
-        try {
-          await tronWeb.request({ method: 'tron_requestAccounts' })
-        } catch (error) {
-          console.warn("[TronLink Adapter] New method failed, trying legacy method")
-          // Fallback to legacy method if needed
-          if (tronWeb.request) {
-            await tronWeb.request({ method: 'tron_requestAccounts' })
-          }
-        }
-
-        // Wait a bit for TronLink to initialize
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        
-        if (!tronWeb.ready) {
-          return {
-            success: false,
-            error: "TronLink failed to initialize. Please refresh the page and try again."
-          }
+      if (!currentState.address) {
+        return {
+          success: false,
+          error: "No TronLink address available"
         }
       }
 
-      // Check if we have access to the address
-      if (!tronWeb.defaultAddress || !tronWeb.defaultAddress.base58) {
-        console.log("[TronLink Adapter] No default address, requesting account access...")
-        
-        try {
-          await tronWeb.request({ method: 'tron_requestAccounts' })
-        } catch (error) {
-          return {
-            success: false,
-            error: "Please unlock TronLink and grant access to this website"
-          }
-        }
-        
-        // Wait for address to be available
-        await new Promise(resolve => setTimeout(resolve, 500))
-        
-        if (!tronWeb.defaultAddress || !tronWeb.defaultAddress.base58) {
-          return {
-            success: false,
-            error: "No TronLink account found. Please create or import an account."
-          }
-        }
-      }
-
-      const address = tronWeb.defaultAddress.base58
+      const address = currentState.address
       
       // Get balance
       let balance = "0.0000"
       try {
-        const balanceResult = await tronWeb.trx.getBalance(address)
-        balance = (balanceResult / 1000000).toFixed(4) // Convert from sun to TRX
+        const tronWeb = this.tronWeb
+        if (tronWeb && tronWeb.ready) {
+          const balanceResult = await tronWeb.trx.getBalance(address)
+          balance = (balanceResult / 1000000).toFixed(4)
+        }
       } catch (error) {
         console.warn("[TronLink Adapter] Failed to get balance:", error)
-        // Continue without balance, it's not critical for connection
       }
 
       console.log("[TronLink Adapter] Successfully connected:", {
@@ -450,25 +427,16 @@ export class TronLinkAdapter implements WalletAdapter {
   }
 
   async getBalance(address: string): Promise<{ success: boolean; balance?: string; error?: string }> {
-    if (!this.isInstalled()) {
-      return { success: false, error: "TronLink not installed" }
+    const state = getTronLinkState()
+    
+    if (!state.isInstalled || !state.isReady) {
+      return { success: false, error: "TronLink not ready" }
     }
     
     try {
       const tronWeb = this.tronWeb
-      if (!tronWeb || !tronWeb.ready) {
-        return { success: false, error: "TronLink not ready" }
-      }
-      
       const balance = await tronWeb.trx.getBalance(address)
       const balanceInTrx = (balance / 1000000).toFixed(4)
-      
-      console.log("[TronLink Adapter] getBalance:", {
-        address,
-        rawBalance: balance,
-        balanceInTrx,
-        timestamp: new Date().toISOString()
-      })
       
       return { success: true, balance: balanceInTrx }
     } catch (error) {
