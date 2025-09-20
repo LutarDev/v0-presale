@@ -195,12 +195,6 @@ export function useWallet() {
           if (adapter && adapter.isAvailable()) {
             // Set user interaction flag to prevent loops
             setHasUserInteracted(true)
-            
-            // For TronLink, add extra delay to ensure proper initialization
-            if (adapter.name === "TronLink") {
-              await new Promise(resolve => setTimeout(resolve, 2000))
-            }
-            
             await connect(adapter, connectionInfo.chain)
           }
         } else {
@@ -213,12 +207,9 @@ export function useWallet() {
       }
     }
 
-    // Only attempt auto-reconnection once after component mounts
-    if (!hasUserInteracted) {
-      // Delay auto-reconnection to prevent immediate execution
-      const timer = setTimeout(attemptReconnection, 3000) // Increased delay
-      return () => clearTimeout(timer)
-    }
+    // Delay auto-reconnection to prevent immediate execution
+    const timer = setTimeout(attemptReconnection, 2000)
+    return () => clearTimeout(timer)
   }, [connect, hasUserInteracted])
 
   return {
