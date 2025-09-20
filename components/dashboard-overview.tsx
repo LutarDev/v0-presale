@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useWallet } from "@/hooks/use-wallet"
+import { useWallet } from "@/hooks/wallet-context"
 import { TrendingUp, Wallet, Clock, Gift, ArrowUpRight } from "lucide-react"
 import Link from "next/link"
 

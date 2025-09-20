@@ -11,7 +11,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet"
 import { UnifiedWalletModal } from "@/components/unified-wallet-modal"
-import { useWallet } from "@/hooks/use-wallet"
+import { useWallet } from "@/hooks/wallet-context"
 import { Wallet, Menu, Copy, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"

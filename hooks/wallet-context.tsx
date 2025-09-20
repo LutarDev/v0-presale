@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useCallback, useEffect, useRef } from "react"
-import { getWalletAdapters, type WalletAdapter } from "@/lib/wallet-adapters"
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react'
+import { WalletAdapter, getWalletAdapters } from '@/lib/wallet-adapters'
 
 interface WalletState {
   isConnected: boolean
@@ -19,10 +19,32 @@ interface ConnectionError extends Error {
   type?: 'USER_REJECTED' | 'NETWORK_ERROR' | 'WALLET_NOT_FOUND' | 'UNKNOWN'
 }
 
-export function useWallet() {
-  const hookId = useRef(Math.random().toString(36).substr(2, 9))
-  console.log(`[useWallet:${hookId.current}] Hook instance created/called`)
+interface WalletContextType {
+  // State
+  isConnected: boolean
+  address: string | null
+  balance: string | null
+  adapter: WalletAdapter | null
+  chain: string
+  isConnecting: boolean
+  error: string | null
+  lastConnected: number | null
   
+  // Actions
+  connect: (adapter: WalletAdapter, chain: string) => Promise<void>
+  disconnect: () => Promise<void>
+  switchChain: (newChain: string) => Promise<void>
+  refreshBalance: () => Promise<void>
+  availableWallets: WalletAdapter[]
+  isWalletCompatible: (targetChain: string) => boolean
+}
+
+const WalletContext = createContext<WalletContextType | null>(null)
+
+export function WalletProvider({ children }: { children: React.ReactNode }) {
+  const contextId = useRef(Math.random().toString(36).substr(2, 9))
+  console.log(`[WalletProvider:${contextId.current}] Provider created`)
+
   const [walletState, setWalletState] = useState<WalletState>({
     isConnected: false,
     address: null,
@@ -39,13 +61,12 @@ export function useWallet() {
   
   // Debug wallet state changes for troubleshooting
   useEffect(() => {
-    console.log(`[useWallet:${hookId.current}] Wallet state updated:`, {
+    console.log(`[WalletProvider:${contextId.current}] Global wallet state updated:`, {
       isConnected: walletState.isConnected,
       address: walletState.address ? walletState.address.slice(0, 10) + '...' : null,
       adapter: walletState.adapter?.name,
       chain: walletState.chain
     })
-    console.trace(`[useWallet:${hookId.current}] State update stack trace`)
   }, [walletState])
   
   // Ref to hold current adapter to avoid stale closures
@@ -57,17 +78,17 @@ export function useWallet() {
   }, [walletState.adapter])
 
   const connect = useCallback(async (adapter: WalletAdapter, chain: string) => {
-    console.log(`[useWallet] Manual connection initiated for ${adapter.name} to chain: ${chain}`)
+    console.log(`[WalletProvider:${contextId.current}] Manual connection initiated for ${adapter.name} to chain: ${chain}`)
     setWalletState((prev) => ({ ...prev, isConnecting: true, error: null }))
 
     // Add connection timeout
     const connectTimeout = setTimeout(() => {
-      setWalletState((prev) => ({ 
-        ...prev, 
-        isConnecting: false, 
-        error: "Connection timeout. Please try again." 
+      setWalletState((prev) => ({
+        ...prev,
+        isConnecting: false,
+        error: "Connection timeout"
       }))
-    }, 15000)
+    }, 30000) // 30 second timeout
 
     try {
       const result = await adapter.connect(chain)
@@ -76,14 +97,14 @@ export function useWallet() {
       if (result.success) {
         const { address, balance, detectedChain } = result
         
-        console.log('[useWallet] Setting wallet state to connected:', {
+        console.log(`[WalletProvider:${contextId.current}] Setting wallet state to connected:`, {
           address,
           balance,
           detectedChain: detectedChain || chain,
           adapterName: adapter.name
         })
         
-        console.log('[useWallet] About to call setWalletState with connected state')
+        console.log(`[WalletProvider:${contextId.current}] About to call setWalletState with connected state`)
         setWalletState({
           isConnected: true,
           address,
@@ -95,52 +116,45 @@ export function useWallet() {
           lastConnected: Date.now(),
         })
         
-        console.log('[useWallet] Wallet state should now be connected')
+        console.log(`[WalletProvider:${contextId.current}] Wallet state should now be connected`)
 
         // Store connection info for potential reconnection
         localStorage.setItem('wallet_connection', JSON.stringify({
           adapterName: adapter.name,
           chain: detectedChain || chain,
-          lastConnected: Date.now(),
+          address,
+          timestamp: Date.now()
         }))
       } else {
         throw new Error(result.error || "Connection failed")
       }
     } catch (error: any) {
       clearTimeout(connectTimeout)
-      console.error(`[useWallet] Connection failed:`, error)
+      console.error(`[WalletProvider:${contextId.current}] Connection failed:`, error)
       
-      let errorMessage = "Failed to connect wallet"
-      let errorType: ConnectionError['type'] = 'UNKNOWN'
-
-      if (error.message?.includes('rejected') || error.code === 4001) {
-        errorMessage = "Connection request was rejected"
-        errorType = 'USER_REJECTED'
-      } else if (error.message?.includes('not found') || error.code === -32002) {
-        errorMessage = "Wallet extension not found or locked"
-        errorType = 'WALLET_NOT_FOUND'
-      } else if (error.message?.includes('network')) {
-        errorMessage = "Network connection error"
-        errorType = 'NETWORK_ERROR'
-      }
-
+      const errorType: ConnectionError['type'] = 
+        error.code === 4001 ? 'USER_REJECTED' :
+        error.code === -32002 ? 'NETWORK_ERROR' :
+        error.message?.includes('not found') ? 'WALLET_NOT_FOUND' :
+        'UNKNOWN'
+      
       setWalletState((prev) => ({
         ...prev,
         isConnecting: false,
-        error: errorMessage,
+        error: error.message || "Failed to connect wallet",
       }))
     }
   }, [])
 
-    const disconnect = useCallback(async () => {
-    console.log('[useWallet] DISCONNECT called - this might be unexpected!')
-    console.log('[useWallet] Current state before disconnect:', {
+  const disconnect = useCallback(async () => {
+    console.log(`[WalletProvider:${contextId.current}] DISCONNECT called - this might be unexpected!`)
+    console.log(`[WalletProvider:${contextId.current}] Current state before disconnect:`, {
       isConnected: walletState.isConnected,
       address: walletState.address,
       adapter: walletState.adapter?.name,
       chain: walletState.chain
     })
-    console.trace('[useWallet] Disconnect call stack')
+    console.trace(`[WalletProvider:${contextId.current}] Disconnect call stack`)
     
     if (walletState.adapter) {
       try {
@@ -164,34 +178,34 @@ export function useWallet() {
     // Clear stored connection info
     localStorage.removeItem('wallet_connection')
     setHasUserInteracted(false)
-  }, [walletState.adapter, walletState.isConnected, walletState.address, walletState.chain]) // Add dependencies for logging
+  }, [walletState.adapter, walletState.isConnected, walletState.address, walletState.chain])
 
   const switchChain = useCallback(
     async (newChain: string) => {
-      console.log(`[useWallet] Manual chain switch to: ${newChain}`)
-      console.log(`[useWallet] Current state: chain=${walletState.chain}, isConnected=${walletState.isConnected}, adapter=${walletState.adapter?.name}`)
+      console.log(`[WalletProvider:${contextId.current}] Manual chain switch to: ${newChain}`)
+      console.log(`[WalletProvider:${contextId.current}] Current state: chain=${walletState.chain}, isConnected=${walletState.isConnected}, adapter=${walletState.adapter?.name}`)
       setHasUserInteracted(true)
       
       // If chain is already correct, don't do anything
       if (walletState.chain === newChain) {
-        console.log(`[useWallet] Chain already set to ${newChain}, no action needed`)
+        console.log(`[WalletProvider:${contextId.current}] Chain already set to ${newChain}, no action needed`)
         return
       }
       
       if (!walletState.adapter || !walletState.isConnected) {
         // Just update the chain without connecting
-        console.log(`[useWallet] No wallet connected, just updating chain to ${newChain}`)
+        console.log(`[WalletProvider:${contextId.current}] No wallet connected, just updating chain to ${newChain}`)
         setWalletState((prev) => ({ ...prev, chain: newChain }))
         return
       }
 
       try {
-        console.log(`[useWallet] Attempting to switch connected wallet from ${walletState.chain} to ${newChain}`)
+        console.log(`[WalletProvider:${contextId.current}] Attempting to switch connected wallet from ${walletState.chain} to ${newChain}`)
         setWalletState((prev) => ({ ...prev, isConnecting: true, error: null }))
         const result = await walletState.adapter.connect(newChain)
         
         if (result.success) {
-          console.log(`[useWallet] Chain switch successful to ${result.detectedChain || newChain}`)
+          console.log(`[WalletProvider:${contextId.current}] Chain switch successful to ${result.detectedChain || newChain}`)
           setWalletState((prev) => ({
             ...prev,
             chain: result.detectedChain || newChain,
@@ -203,7 +217,7 @@ export function useWallet() {
           throw new Error(result.error || "Chain switch failed")
         }
       } catch (error: any) {
-        console.error(`[useWallet] Chain switch failed:`, error)
+        console.error(`[WalletProvider:${contextId.current}] Chain switch failed:`, error)
         setWalletState((prev) => ({
           ...prev,
           isConnecting: false,
@@ -218,37 +232,32 @@ export function useWallet() {
     const currentAdapter = adapterRef.current
     const currentAddress = walletState.address
     
-    if (!currentAdapter || !currentAddress) return
+    if (!currentAdapter || !currentAddress) {
+      console.log(`[WalletProvider:${contextId.current}] Cannot refresh balance: no adapter or address`)
+      return
+    }
 
     try {
+      console.log(`[WalletProvider:${contextId.current}] Refreshing balance for ${currentAddress}`)
       const result = await currentAdapter.getBalance(currentAddress)
-      if (result.success && result.balance) {
+      if (result.success && result.balance !== undefined) {
         setWalletState((prev) => ({ ...prev, balance: result.balance! }))
+        console.log(`[WalletProvider:${contextId.current}] Balance refreshed: ${result.balance}`)
       }
     } catch (error) {
       console.error("Failed to refresh balance:", error)
     }
-  }, [walletState.address]) // Only depend on address
+  }, [walletState.address])
 
-  // Only attempt auto-reconnect if user has previously interacted - DISABLED FOR NOW
+  // Auto-reconnection disabled to prevent interference with manual connections
   useEffect(() => {
-    console.log('[useWallet] Auto-reconnection is disabled to prevent interference with manual connections')
-    // Commenting out auto-reconnection logic to prevent interference
-    
-    // const attemptReconnection = async () => {
-    //   console.log('[useWallet] Auto-reconnection check - hasUserInteracted:', hasUserInteracted)
-    //   // ... auto-reconnection logic commented out
-    // }
+    console.log(`[WalletProvider:${contextId.current}] Auto-reconnection is disabled to prevent interference with manual connections`)
+  }, [])
 
-    // // Delay auto-reconnection to prevent immediate execution
-    // const timer = setTimeout(attemptReconnection, 2000)
-    // return () => clearTimeout(timer)
-  }, []) // Empty dependency array since we're not doing anything
-
-  return {
+  const contextValue: WalletContextType = {
     ...walletState,
     connect: useCallback((adapter: WalletAdapter, chain: string) => {
-      console.log('[useWallet] Manual wallet connection requested by user for:', adapter.name, 'on chain:', chain)
+      console.log(`[WalletProvider:${contextId.current}] Manual wallet connection requested by user for:`, adapter.name, 'on chain:', chain)
       setHasUserInteracted(true)
       return connect(adapter, chain)
     }, [connect]),
@@ -258,7 +267,21 @@ export function useWallet() {
     availableWallets: getWalletAdapters(walletState.chain),
     isWalletCompatible: (targetChain: string) => {
       const adapters = getWalletAdapters(targetChain)
-      return adapters.some(adapter => adapter.isAvailable())
+      return adapters.length > 0
     },
   }
+
+  return (
+    <WalletContext.Provider value={contextValue}>
+      {children}
+    </WalletContext.Provider>
+  )
+}
+
+export function useWallet() {
+  const context = useContext(WalletContext)
+  if (!context) {
+    throw new Error('useWallet must be used within a WalletProvider')
+  }
+  return context
 }

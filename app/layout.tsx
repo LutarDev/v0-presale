@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { AntiPhishingBanner } from "@/components/anti-phishing-banner"
 import { ErrorBoundary } from "@/components/ui/error-boundary"
 import { RealtimeProvider } from "@/components/realtime-provider"
+import { WalletProvider } from "@/hooks/wallet-context"
 import { Suspense } from "react"
 import "./globals.css"
 
@@ -25,11 +26,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
         <ErrorBoundary>
-          <RealtimeProvider>
-            <AntiPhishingBanner />
-            <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
-            <Analytics />
-          </RealtimeProvider>
+          <WalletProvider>
+            <RealtimeProvider>
+              <AntiPhishingBanner />
+              <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>
+              <Analytics />
+            </RealtimeProvider>
+          </WalletProvider>
         </ErrorBoundary>
       </body>
     </html>

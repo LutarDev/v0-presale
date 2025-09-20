@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ChainIcon, WalletIcon, FallbackIcon } from "@/components/ui/icon"
 import { Copy, CheckCircle, ArrowLeft, Wallet, QrCode, TrendingUp, AlertTriangle, Loader2, X } from "lucide-react"
-import { useWallet } from "@/hooks/use-wallet"
+import { useWallet } from "@/hooks/wallet-context"
 import { useToast } from "@/hooks/use-toast"
 import { TransactionModal } from "@/components/transaction-modal"
 import { UnifiedWalletModal } from "@/components/unified-wallet-modal"
@@ -99,6 +99,30 @@ export function UnifiedPurchaseInterfaceModal({
   const [walletModalExplicitlyOpened, setWalletModalExplicitlyOpened] = useState(false)
   const [isTransactionPending, setIsTransactionPending] = useState(false)
 
+  // Debug wallet state and auto-close wallet modal on successful connection
+  useEffect(() => {
+    console.log('[Modal] Wallet state changed:', {
+      isConnected,
+      chain,
+      address,
+      balance,
+      adapter: adapter?.name,
+      selectedPaymentMethod: selectedPaymentMethod?.token + ' on ' + selectedPaymentMethod?.chain,
+      walletModalOpen: isWalletModalOpen,
+      explicitlyOpened: walletModalExplicitlyOpened
+    })
+
+    // Auto-close wallet modal when successfully connected to the correct chain
+    if (isConnected && address && adapter && selectedPaymentMethod?.chain === chain && isWalletModalOpen && walletModalExplicitlyOpened) {
+      console.log('[Modal] Successful connection detected, closing wallet modal')
+      // Use a small delay to ensure state is stable
+      setTimeout(() => {
+        setIsWalletModalOpen(false)
+        setWalletModalExplicitlyOpened(false)
+      }, 100)
+    }
+  }, [isConnected, chain, address, adapter, selectedPaymentMethod?.chain, isWalletModalOpen, walletModalExplicitlyOpened])
+
   // Helper function to get payment currency data
   const getPaymentCurrencyData = () => {
     if (!selectedPaymentMethod) return null
@@ -145,20 +169,23 @@ export function UnifiedPurchaseInterfaceModal({
 
   // Handle Buy LUTAR action
   const handleBuyLutar = async () => {
-    if (!isConnected || !selectedPaymentMethod || selectedPaymentMethod.chain !== chain) {
+    console.log('[Modal] Buy LUTAR clicked, checking connection state:', {
+      isConnected,
+      address,
+      adapter: adapter?.name,
+      selectedPaymentMethod,
+      chain,
+      walletModalOpen: isWalletModalOpen
+    })
+
+    // Only open wallet modal if we're truly not connected to the right chain
+    if (!isConnected || !address || !adapter || !selectedPaymentMethod || selectedPaymentMethod.chain !== chain) {
+      console.log('[Modal] Connection check failed, opening wallet modal')
       handleWalletModalOpen()
       return
     }
 
-    if (!address || !adapter) {
-      toast({
-        title: "Wallet Error",
-        description: "Wallet not properly connected. Please reconnect.",
-        variant: "destructive"
-      })
-      return
-    }
-
+    // If we reach here, we're properly connected - proceed with transaction
     const paymentCurrency = getPaymentCurrencyData()
     if (!paymentCurrency) {
       toast({
@@ -375,12 +402,16 @@ export function UnifiedPurchaseInterfaceModal({
 
   const handlePaymentMethodSelect = (selectedChain: string, token: string) => {
     console.log(`[Modal] Payment method selected: ${token} on ${selectedChain}`)
+    console.log(`[Modal] Current wallet chain: ${chain}, isConnected: ${isConnected}`)
     setSelectedPaymentMethod({ chain: selectedChain, token })
     setIsPaymentMethodModalOpen(false)
     
-    // Update the wallet chain without auto-connecting
+    // Only switch chain if different and not connected, or if we need to change chains
     if (selectedChain !== chain) {
+      console.log(`[Modal] Switching chain from ${chain} to ${selectedChain}`)
       switchChain(selectedChain)
+    } else {
+      console.log(`[Modal] Chain already correct (${chain}), no switch needed`)
     }
   }
 
@@ -644,6 +675,9 @@ export function UnifiedPurchaseInterfaceModal({
       )
     }
     
+    // Check if we're connected to the correct chain
+    const isCorrectChain = isConnected && address && adapter && selectedPaymentMethod?.chain === chain
+    
     return (
       <div className="space-y-6">
         <div className="text-center">
@@ -697,22 +731,20 @@ export function UnifiedPurchaseInterfaceModal({
               </Badge>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">You Pay:</span>
+              <span className="text-muted-foreground">Amount to Send:</span>
               <span className="font-medium">{paymentAmount} {selectedPaymentMethod?.token}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">LUTAR Tokens:</span>
-              <span className="font-medium">{lutarAmount} LUTAR</span>
+              <span className="text-muted-foreground">You Receive:</span>
+              <span className="font-medium text-green-600">{lutarAmount} LUTAR</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Early Bird Bonus (5%):</span>
-              <span className="font-medium text-green-500">
-                +{lutarAmount ? ((Number(lutarAmount) * 5) / 100).toFixed(2) : "0"} LUTAR
-              </span>
+              <span className="text-muted-foreground">BSC Address:</span>
+              <span className="font-mono text-xs">{bscAddress || "Not set"}</span>
             </div>
             <Separator />
-            <div className="flex justify-between">
-              <span className="font-medium">Total LUTAR Tokens:</span>
+            <div className="flex justify-between font-medium">
+              <span>Bonus (5%):</span>
               <span className="font-bold text-primary">
                 {lutarAmount ? (Number(lutarAmount) * 1.05).toFixed(2) : "0"} LUTAR
               </span>
@@ -721,7 +753,7 @@ export function UnifiedPurchaseInterfaceModal({
         </Card>
 
         {/* Wallet Connection Status */}
-        {isConnected && selectedPaymentMethod?.chain === chain ? (
+        {isCorrectChain ? (
           <Card className="p-4 bg-green-50 border-green-200">
             <div className="flex items-center gap-3">
               <CheckCircle className="w-5 h-5 text-green-500" />
@@ -732,7 +764,7 @@ export function UnifiedPurchaseInterfaceModal({
                   <span className="font-medium">{adapter?.name} Connected</span>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {address?.slice(0, 6)}...{address?.slice(-4)} • Balance: {balance} {selectedPaymentMethod.token}
+                  {address?.slice(0, 6)}...{address?.slice(-4)} • Balance: {balance || '0.00'} {selectedPaymentMethod?.token}
                 </div>
               </div>
             </div>
@@ -741,7 +773,12 @@ export function UnifiedPurchaseInterfaceModal({
           <Card className="p-4 bg-amber-50 border-amber-200">
             <div className="flex items-center gap-2 text-amber-600">
               <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm">Connect your {selectedPaymentMethod?.chain} wallet to continue</span>
+              <span className="text-sm">
+                {!isConnected ? 
+                  `Connect your ${selectedPaymentMethod?.chain} wallet to continue` :
+                  `Switch to ${selectedPaymentMethod?.chain} network to continue`
+                }
+              </span>
             </div>
           </Card>
         )}
@@ -751,13 +788,14 @@ export function UnifiedPurchaseInterfaceModal({
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-          {!isConnected || selectedPaymentMethod?.chain !== chain ? (
+          {!isCorrectChain ? (
             <Button 
               onClick={handleWalletModalOpen}
               className="flex-1"
+              disabled={isWalletModalOpen} // Prevent multiple opens
             >
               <Wallet className="w-4 h-4 mr-2" />
-              Select Wallet
+              {!isConnected ? 'Connect Wallet' : 'Switch Network'}
             </Button>
           ) : (
             <Button 
@@ -862,8 +900,23 @@ export function UnifiedPurchaseInterfaceModal({
         <UnifiedWalletModal 
           isOpen={isWalletModalOpen} 
           onClose={() => {
+            console.log('[Modal] Wallet modal closed - wallet state before close:', {
+              isConnected,
+              address: address?.slice(0, 10) + '...',
+              adapter: adapter?.name,
+              chain
+            })
             setIsWalletModalOpen(false)
             setWalletModalExplicitlyOpened(false)
+            // Add a delay to see what happens to wallet state after modal close
+            setTimeout(() => {
+              console.log('[Modal] Wallet state 1 second after modal close:', {
+                isConnected,
+                address: address?.slice(0, 10) + '...',
+                adapter: adapter?.name,
+                chain
+              })
+            }, 1000)
           }}
           targetChain={selectedPaymentMethod?.chain} // Pass the selected chain
         />
