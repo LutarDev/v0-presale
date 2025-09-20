@@ -91,36 +91,18 @@ export function UnifiedWalletModal({ isOpen, onClose, targetChain }: UnifiedWall
   }
 
   const handleWalletConnect = async (adapter: any) => {
-    console.log("[UnifiedWalletModal] Attempting to connect:", {
-      adapter: adapter.name,
-      chain: selectedChain,
-      timestamp: new Date().toISOString()
-    })
-    
     try {
       await connect(adapter, selectedChain)
-      
-      // Wait a moment for state to update
+      // Connection successful - move to wallet info step
+      setCurrentStep("wallet-info")
+      // Load balances after a short delay to ensure state is updated
       setTimeout(() => {
-        console.log("[UnifiedWalletModal] Connection completed, checking state:", {
-          isConnected,
-          address,
-          chain,
-          adapter: adapter.name
-        })
-        
-        if (isConnected && address) {
-          // Connection successful - move to wallet info step
-          setCurrentStep("wallet-info")
-          // Load balances after a short delay to ensure state is updated
-          setTimeout(() => {
-            loadWalletBalances()
-          }, 500)
-        }
+        loadWalletBalances()
       }, 500)
     } catch (error) {
       console.error("[UnifiedWalletModal] Connection error:", error)
       // Error is handled by the connect function in useWallet hook
+      // Stay on wallet selection step to allow retry
     }
   }
 

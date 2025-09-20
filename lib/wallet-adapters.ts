@@ -364,50 +364,26 @@ export class TronLinkAdapter implements WalletAdapter {
     }
 
     try {
-      console.log("[TronLink Adapter] Starting connection with state:", state)
-      
-      // If TronLink is already ready and has an account, use it directly
-      if (state.isReady && state.hasAccount && state.address) {
-        console.log("[TronLink Adapter] TronLink already ready, using existing connection")
-        
-        // Get balance
-        let balance = "0.0000"
-        try {
-          const tronWeb = this.tronWeb
-          if (tronWeb && tronWeb.ready) {
-            const balanceResult = await tronWeb.trx.getBalance(state.address)
-            balance = (balanceResult / 1000000).toFixed(4)
-          }
-        } catch (error) {
-          console.warn("[TronLink Adapter] Failed to get balance:", error)
-        }
-
-        return {
-          success: true,
-          address: state.address,
-          balance,
-          detectedChain: "TRX"
-        }
-      }
-      
       // If not ready or no account, request access
-      console.log("[TronLink Adapter] Requesting access...")
-      const accessResult = await requestTronLinkAccess()
-      
-      if (!accessResult.success) {
-        return {
-          success: false,
-          error: accessResult.error || "Failed to get TronLink access"
+      if (!state.isReady || !state.hasAccount) {
+        console.log("[TronLink Adapter] Requesting access...")
+        const accessResult = await requestTronLinkAccess()
+        
+        if (!accessResult.success) {
+          return {
+            success: false,
+            error: accessResult.error || "Failed to get TronLink access"
+          }
         }
       }
 
-      // Get the current state after access request
+      // Get the current state after potential access request
       const currentState = getTronLinkState()
       
       if (!currentState.address) {
         return {
           success: false,
-          error: "No TronLink address available after connection"
+          error: "No TronLink address available"
         }
       }
 

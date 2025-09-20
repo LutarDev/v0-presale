@@ -559,34 +559,15 @@ export function UnifiedPurchaseInterfaceModal({
       )
     }
     
-    // Enhanced debug logging
-    console.log('[renderStep3] Complete wallet state debug:', {
+    // Debug logging to understand the wallet state
+    console.log('[renderStep3] Wallet state debug:', {
       isConnected,
       address,
       chain,
       selectedPaymentMethodChain: selectedPaymentMethod?.chain,
       adapter: adapter?.name,
       chainMatch: selectedPaymentMethod?.chain === chain,
-      addressExists: !!address,
-      adapterExists: !!adapter,
-      timestamp: new Date().toISOString(),
-      walletState: { isConnected, address, chain, adapter: adapter?.name }
-    })
-    
-    // Check if wallet is properly connected for the selected payment method
-    const isWalletConnectedForPayment = isConnected && 
-                                       selectedPaymentMethod?.chain === chain && 
-                                       address && 
-                                       adapter
-    
-    console.log('[renderStep3] Wallet connection check:', {
-      isWalletConnectedForPayment,
-      conditions: {
-        isConnected,
-        chainMatch: selectedPaymentMethod?.chain === chain,
-        hasAddress: !!address,
-        hasAdapter: !!adapter
-      }
+      timestamp: new Date().toISOString()
     })
     
     return (
@@ -665,8 +646,8 @@ export function UnifiedPurchaseInterfaceModal({
           </div>
         </Card>
 
-        {/* Wallet Connection Status */}
-        {isWalletConnectedForPayment ? (
+        {/* Wallet Connection Status - Fixed condition */}
+        {isConnected && selectedPaymentMethod?.chain === chain && address ? (
           <Card className="p-4 bg-green-50 border-green-200">
             <div className="flex items-center gap-3">
               <CheckCircle className="w-5 h-5 text-green-500" />
@@ -700,15 +681,6 @@ export function UnifiedPurchaseInterfaceModal({
                 "Please ensure your wallet is properly connected."
               )}
             </div>
-            {/* Debug info in development */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="mt-2 p-2 bg-gray-100 rounded text-xs font-mono">
-                <div>Connected: {isConnected.toString()}</div>
-                <div>Chain: {chain} (need: {selectedPaymentMethod?.chain})</div>
-                <div>Address: {address || 'none'}</div>
-                <div>Adapter: {adapter?.name || 'none'}</div>
-              </div>
-            )}
           </Card>
         )}
 
@@ -717,7 +689,7 @@ export function UnifiedPurchaseInterfaceModal({
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-          {!isWalletConnectedForPayment ? (
+          {!isConnected || selectedPaymentMethod?.chain !== chain || !address ? (
             <Button 
               onClick={handleWalletModalOpen}
               className="flex-1"
@@ -738,19 +710,6 @@ export function UnifiedPurchaseInterfaceModal({
       </div>
     )
   }
-
-  // Add effect to watch for wallet state changes
-  useEffect(() => {
-    console.log('[UnifiedPurchaseInterfaceModal] Wallet state changed:', {
-      isConnected,
-      address,
-      chain,
-      adapter: adapter?.name,
-      currentStep,
-      selectedPaymentMethod: selectedPaymentMethod?.chain,
-      timestamp: new Date().toISOString()
-    })
-  }, [isConnected, address, chain, adapter])
 
   return (
     <>

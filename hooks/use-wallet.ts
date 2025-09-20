@@ -38,26 +38,23 @@ export function useWallet() {
     console.log(`[useWallet] Manual connection initiated for ${adapter.name} to chain: ${chain}`)
     setWalletState((prev) => ({ ...prev, isConnecting: true, error: null }))
 
-    // Add connection timeout - longer for TronLink
-    const timeoutDuration = adapter.name === "TronLink" ? 30000 : 15000
+    // Add connection timeout
     const connectTimeout = setTimeout(() => {
       setWalletState((prev) => ({ 
         ...prev, 
         isConnecting: false, 
         error: "Connection timeout. Please try again." 
       }))
-    }, timeoutDuration)
+    }, 15000)
 
     try {
       const result = await adapter.connect(chain)
       clearTimeout(connectTimeout)
       
-      console.log(`[useWallet] Connection result for ${adapter.name}:`, result)
-      
       if (result.success) {
         const { address, balance, detectedChain } = result
         
-        const newState = {
+        setWalletState({
           isConnected: true,
           address,
           balance,
@@ -66,29 +63,14 @@ export function useWallet() {
           isConnecting: false,
           error: null,
           lastConnected: Date.now(),
-        }
-        
-        console.log(`[useWallet] Setting new wallet state:`, newState)
-        setWalletState(newState)
+        })
 
-        // Store connection info for potential reconnection (but not for TronLink)
-        if (adapter.name !== "TronLink") {
-          localStorage.setItem('wallet_connection', JSON.stringify({
-            adapterName: adapter.name,
-            chain: detectedChain || chain,
-            lastConnected: Date.now(),
-          }))
-        }
-        
-        // Force a re-render by triggering a small delay
-        setTimeout(() => {
-          console.log(`[useWallet] State verification:`, {
-            isConnected: true,
-            address,
-            adapter: adapter.name,
-            chain: detectedChain || chain
-          })
-        }, 100)
+        // Store connection info for potential reconnection
+        localStorage.setItem('wallet_connection', JSON.stringify({
+          adapterName: adapter.name,
+          chain: detectedChain || chain,
+          lastConnected: Date.now(),
+        }))
       } else {
         throw new Error(result.error || "Connection failed")
       }
@@ -99,29 +81,15 @@ export function useWallet() {
       let errorMessage = "Failed to connect wallet"
       let errorType: ConnectionError['type'] = 'UNKNOWN'
 
-      // Better error categorization for TronLink
-      if (adapter.name === "TronLink") {
-        if (error.message?.includes('rejected') || error.code === 4001) {
-          errorMessage = "Connection request was rejected in TronLink"
-          errorType = 'USER_REJECTED'
-        } else if (error.message?.includes('timeout') || error.message?.includes('failed to initialize')) {
-          errorMessage = "TronLink connection timed out. Please try again."
-          errorType = 'NETWORK_ERROR'
-        } else if (error.message?.includes('not ready')) {
-          errorMessage = "TronLink is not ready. Please unlock your wallet and try again."
-          errorType = 'WALLET_NOT_FOUND'
-        }
-      } else {
-        if (error.message?.includes('rejected') || error.code === 4001) {
-          errorMessage = "Connection request was rejected"
-          errorType = 'USER_REJECTED'
-        } else if (error.message?.includes('not found') || error.code === -32002) {
-          errorMessage = "Wallet extension not found or locked"
-          errorType = 'WALLET_NOT_FOUND'
-        } else if (error.message?.includes('network')) {
-          errorMessage = "Network connection error"
-          errorType = 'NETWORK_ERROR'
-        }
+      if (error.message?.includes('rejected') || error.code === 4001) {
+        errorMessage = "Connection request was rejected"
+        errorType = 'USER_REJECTED'
+      } else if (error.message?.includes('not found') || error.code === -32002) {
+        errorMessage = "Wallet extension not found or locked"
+        errorType = 'WALLET_NOT_FOUND'
+      } else if (error.message?.includes('network')) {
+        errorMessage = "Network connection error"
+        errorType = 'NETWORK_ERROR'
       }
 
       setWalletState((prev) => ({
@@ -221,20 +189,17 @@ export function useWallet() {
         // Only auto-reconnect if it was within the last hour and user hasn't interacted
         if (timeSinceLastConnection < 60 * 60 * 1000) {
           console.log('[useWallet] Attempting auto-reconnection...')
-          
-          // Skip auto-reconnection for TronLink to prevent initialization issues
-          if (connectionInfo.adapterName === "TronLink") {
-            console.log('[useWallet] Skipping auto-reconnection for TronLink - requires manual connection')
-            localStorage.removeItem('wallet_connection')
-            return
-          }
-          
           const adapters = getWalletAdapters(connectionInfo.chain)
           const adapter = adapters.find(a => a.name === connectionInfo.adapterName)
           
           if (adapter && adapter.isAvailable()) {
             // Set user interaction flag to prevent loops
             setHasUserInteracted(true)
+            
+            // For TronLink, add extra delay to ensure proper initialization
+            if (adapter.name === "TronLink") {
+              await new Promise(resolve => setTimeout(resolve, 2000))
+            }
             
             await connect(adapter, connectionInfo.chain)
           }
@@ -251,7 +216,7 @@ export function useWallet() {
     // Only attempt auto-reconnection once after component mounts
     if (!hasUserInteracted) {
       // Delay auto-reconnection to prevent immediate execution
-      const timer = setTimeout(attemptReconnection, 5000) // Increased delay
+      const timer = setTimeout(attemptReconnection, 3000) // Increased delay
       return () => clearTimeout(timer)
     }
   }, [connect, hasUserInteracted])
